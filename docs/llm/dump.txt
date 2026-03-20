@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Fri Mar 20 07:25:38 PM EDT 2026
+DATE: Fri Mar 20 07:27:43 PM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -3187,13 +3187,14 @@ dotnet publish src/ObserverMagazine.Web -c Release -o publish
 4. Run the content processor (or just push — CI does it automatically)
 5. The post appears on the blog page and in the RSS feed
 
+dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot
 
 -------------------------------------------------------------------------------
 FILE: global.json
 -------------------------------------------------------------------------------
 {
   "sdk": {
-    "version": "10.0.201",
+    "version": "10.0.104",
     "rollForward": "latestFeature"
   }
 }
