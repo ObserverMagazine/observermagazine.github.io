@@ -1,0 +1,15 @@
+---
+title: Hello, world!
+date: 2026-03-20
+author: Observer Team
+summary: In which I say Hello to you
+tags:
+  - introductions
+---
+
+## Hello, and welcome 
+
+Welcome to Observer Magazine. 
+It is great to have you with me here. 
+I hope you enjoy this website. 
+Wz

@@ -2822,3 +2822,199 @@ dotnet publish src/ObserverMagazine.Web -c Release -o publish
 5. The post appears on the blog page and in the RSS feed
 
 dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Please update all the nuget packages 
+also group them with variables so I need to touch as few lines as possible 
+please return the full csproj file for easy copy pasting 
+
+```xml
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Web -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+
+    <!-- Content Processing -->
+    <PackageVersion Include="Markdig" Version="1.1.1" />
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
+    <PackageVersion Include="bunit" Version="2.6.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+  </ItemGroup>
+</Project>
+
+```
+
+context 
+Project 'ObserverMagazine.Web' has the following package references
+   [net10.0]: 
+   Top-level Package                                        Requested      Resolved
+   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
+   > Microsoft.AspNetCore.Components.WebAssembly            10.0.0         10.0.0  
+   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
+   > Microsoft.Extensions.Http                              10.0.0         10.0.0  
+   > Microsoft.Extensions.Logging.Configuration             10.0.0         10.0.0  
+   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
+   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
+
+Project 'ObserverMagazine.Integration.Tests' has the following package references
+   [net10.0]: 
+   Top-level Package                Requested   Resolved
+   > Markdig                        1.1.1       1.1.1   
+   > Microsoft.NET.Test.Sdk         17.13.0     17.13.0 
+   > xunit.runner.visualstudio      3.0.2       3.0.2   
+   > xunit.v3                       3.2.2       3.2.2   
+   > YamlDotNet                     16.3.0      16.3.0  
+
+Project 'ObserverMagazine.Web.Tests' has the following package references
+   [net10.0]: 
+   Top-level Package                Requested   Resolved
+   > bunit                          2.6.2       2.6.2   
+   > Microsoft.NET.Test.Sdk         17.13.0     17.13.0 
+   > xunit.runner.visualstudio      3.0.2       3.0.2   
+   > xunit.v3                       3.2.2       3.2.2   
+
+Project 'ObserverMagazine.ContentProcessor' has the following package references
+   [net10.0]: 
+   Top-level Package      Requested   Resolved
+   > Markdig              1.1.1       1.1.1   
+   > YamlDotNet           16.3.0      16.3.0  
+
+(A) : Auto-referenced package.
+
+real	0m1.531s
+user	0m1.522s
+sys	0m0.325s
+Restore complete (0.5s)
+
+Build succeeded in 0.6s
+
+The following sources were used:
+   https://api.nuget.org/v3/index.json
+
+Project `ObserverMagazine.Web` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package                                  Requested   Resolved   Latest
+   > Microsoft.AspNetCore.Components.WebAssembly      10.0.0      10.0.0     10.0.5
+   > Microsoft.Extensions.Http                        10.0.0      10.0.0     10.0.5
+   > Microsoft.Extensions.Logging.Configuration       10.0.0      10.0.0     10.0.5
+
+Project `ObserverMagazine.Integration.Tests` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package                Requested   Resolved   Latest
+   > Microsoft.NET.Test.Sdk         17.13.0     17.13.0    18.3.0
+   > xunit.runner.visualstudio      3.0.2       3.0.2      3.1.5 
+
+Project `ObserverMagazine.Web.Tests` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package                Requested   Resolved   Latest
+   > Microsoft.NET.Test.Sdk         17.13.0     17.13.0    18.3.0
+   > xunit.runner.visualstudio      3.0.2       3.0.2      3.1.5 
+
+The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
+
+real	0m1.723s
+user	0m1.730s
+sys	0m0.317s
+
+02
+00
+Here's the updated file with version variables and all packages bumped to their latest versions:Three packages were updated based on your `dotnet outdated` output:
+
+| Package | Old | New |
+|---|---|---|
+| `Microsoft.AspNetCore.Components.WebAssembly` | 10.0.0 | **10.0.5** |
+| `Microsoft.Extensions.Http` | 10.0.0 | **10.0.5** |
+| `Microsoft.Extensions.Logging.Configuration` | 10.0.0 | **10.0.5** |
+| `Microsoft.NET.Test.Sdk` | 17.13.0 | **18.3.0** |
+| `xunit.runner.visualstudio` | 3.0.2 | **3.1.5** |
+
+The version variables mean that if Microsoft ships 10.0.6 patch releases, you change `MicrosoftAspNetCoreVersion` and `MicrosoftExtensionsVersion` in one place and all three web packages update together. Same idea for the xunit runner/core pair.
+
+05
+01
+
+
+
