@@ -12,4 +12,6 @@ tags:
 Welcome to Observer Magazine. 
 It is great to have you with me here. 
 I hope you enjoy this website. 
-Wz
+
+I have updated the nuget packages. 
+I would love to hear your thoughts about this magazine. 
