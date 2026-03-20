@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Observer Magazine</title>
+    <script>
+        // Single-page app redirect for GitHub Pages.
+        // Stores the path and redirects to index.html which picks it up.
+        sessionStorage.redirect = location.href;
+        location.replace(location.origin + location.pathname.split('/').slice(0, 1).join('/'));
+    </script>
+</head>
+<body></body>
+</html>

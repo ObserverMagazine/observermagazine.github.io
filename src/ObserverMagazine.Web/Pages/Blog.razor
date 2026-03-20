@@ -1,0 +1,64 @@
+@page "/blog"
+@inject IBlogService BlogService
+@inject ILogger<Blog> Logger
+
+<PageTitle>Blog — Observer Magazine</PageTitle>
+
+<h1>Blog</h1>
+
+@if (posts is null)
+{
+    <p><em>Loading posts...</em></p>
+}
+else if (posts.Length == 0)
+{
+    <p>No posts yet. Check back soon!</p>
+}
+else
+{
+    <div class="blog-list">
+        @foreach (var post in posts)
+        {
+            <article class="blog-card">
+                <h2><a href="blog/@post.Slug">@post.Title</a></h2>
+                <div class="blog-meta">
+                    <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                        @post.Date.ToString("MMMM d, yyyy")
+                    </time>
+                    @if (!string.IsNullOrEmpty(post.Author))
+                    {
+                        <span> · @post.Author</span>
+                    }
+                </div>
+                <p>@post.Summary</p>
+                @if (post.Tags is { Length: > 0 })
+                {
+                    <div class="tag-list">
+                        @foreach (var tag in post.Tags)
+                        {
+                            <span class="tag">@tag</span>
+                        }
+                    </div>
+                }
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private BlogPostMetadata[]? posts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Loading blog index");
+        try
+        {
+            posts = await BlogService.GetPostsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load blog index");
+            posts = [];
+        }
+    }
+}

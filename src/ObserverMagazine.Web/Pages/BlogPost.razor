@@ -1,0 +1,80 @@
+@page "/blog/{Slug}"
+@inject IBlogService BlogService
+@inject ILogger<BlogPost> Logger
+@inject NavigationManager Nav
+
+<PageTitle>@(metadata?.Title ?? "Post") — Observer Magazine</PageTitle>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (metadata is null)
+{
+    <h1>Post Not Found</h1>
+    <p>Sorry, we couldn't find that post. <a href="blog">Back to Blog</a></p>
+}
+else
+{
+    <article class="blog-post">
+        <header>
+            <h1>@metadata.Title</h1>
+            <div class="blog-meta">
+                <time datetime="@metadata.Date.ToString("yyyy-MM-dd")">
+                    @metadata.Date.ToString("MMMM d, yyyy")
+                </time>
+                @if (!string.IsNullOrEmpty(metadata.Author))
+                {
+                    <span> · @metadata.Author</span>
+                }
+            </div>
+            @if (metadata.Tags is { Length: > 0 })
+            {
+                <div class="tag-list">
+                    @foreach (var tag in metadata.Tags)
+                    {
+                        <span class="tag">@tag</span>
+                    }
+                </div>
+            }
+        </header>
+        <div class="blog-content">
+            @((MarkupString)htmlContent)
+        </div>
+        <footer class="blog-post-footer">
+            <a href="blog">&larr; Back to Blog</a>
+        </footer>
+    </article>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private BlogPostMetadata? metadata;
+    private string htmlContent = "";
+    private bool loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        Logger.LogInformation("Loading blog post: {Slug}", Slug);
+
+        try
+        {
+            metadata = await BlogService.GetPostMetadataAsync(Slug);
+            if (metadata is not null)
+            {
+                htmlContent = await BlogService.GetPostHtmlAsync(Slug);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load post {Slug}", Slug);
+            metadata = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

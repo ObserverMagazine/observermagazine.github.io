@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ObserverMagazine.ContentProcessor</RootNamespace>
+    <AssemblyName>ObserverMagazine.ContentProcessor</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,52 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+## NuGet
+**/packages/*
+*.nupkg
+**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+## Visual Studio
+.vs/
+*.rsuser
+*.csproj.user
+
+## JetBrains
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Publish output
+publish/
+
+## Test results
+TestResults/
+*.trx
+
+## Generated blog data (created by ContentProcessor at build time)
+src/ObserverMagazine.Web/wwwroot/blog-data/
+src/ObserverMagazine.Web/wwwroot/feed.xml

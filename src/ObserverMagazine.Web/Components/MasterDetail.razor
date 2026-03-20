@@ -1,0 +1,87 @@
+@inject HttpClient Http
+@inject ILogger<MasterDetail> Logger
+
+<div class="master-detail">
+    <div class="master-list">
+        <h3>Products</h3>
+        @if (products is null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var p in products)
+                {
+                    <li class="@(selected?.Name == p.Name ? "selected" : "")"
+                        @onclick="() => Select(p)">
+                        <span class="item-name">@p.Name</span>
+                        <span class="item-price">@p.Price.ToString("C")</span>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="detail-panel">
+        @if (selected is null)
+        {
+            <div class="detail-empty">
+                <p>Select an item from the list to view details.</p>
+            </div>
+        }
+        else
+        {
+            <div class="detail-content">
+                <h3>@selected.Name</h3>
+                <dl>
+                    <dt>Category</dt>
+                    <dd>@selected.Category</dd>
+
+                    <dt>Price</dt>
+                    <dd>@selected.Price.ToString("C")</dd>
+
+                    <dt>In Stock</dt>
+                    <dd>@selected.Stock units</dd>
+
+                    <dt>Rating</dt>
+                    <dd>
+                        @for (int i = 0; i < (int)Math.Round(selected.Rating); i++)
+                        {
+                            <span class="star">★</span>
+                        }
+                        (@selected.Rating.ToString("F1"))
+                    </dd>
+
+                    <dt>Description</dt>
+                    <dd>@selected.Description</dd>
+                </dl>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private Product[]? products;
+    private Product? selected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Loading product data for master-detail");
+        try
+        {
+            products = await Http.GetFromJsonAsync<Product[]>("sample-data/products.json");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load products for master-detail");
+            products = [];
+        }
+    }
+
+    private void Select(Product product)
+    {
+        selected = product;
+        Logger.LogInformation("Selected product: {Name}", product.Name);
+    }
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Ergonomic Keyboard",
+    "category": "Electronics",
+    "price": 89.99,
+    "stock": 142,
+    "rating": 4.5,
+    "description": "A split ergonomic keyboard with mechanical switches and adjustable tenting. Designed for long coding sessions with minimal wrist strain."
+  },
+  {
+    "name": "Standing Desk",
+    "category": "Furniture",
+    "price": 499.00,
+    "stock": 38,
+    "rating": 4.8,
+    "description": "Electric height-adjustable standing desk with bamboo top. Programmable presets for sit and stand heights. Supports up to 300 lbs."
+  },
+  {
+    "name": "Noise-Cancelling Headphones",
+    "category": "Electronics",
+    "price": 249.95,
+    "stock": 87,
+    "rating": 4.7,
+    "description": "Over-ear wireless headphones with adaptive noise cancellation and 30-hour battery life. Hi-res audio certified."
+  },
+  {
+    "name": "Webcam 4K",
+    "category": "Electronics",
+    "price": 129.00,
+    "stock": 204,
+    "rating": 4.2,
+    "description": "Ultra HD 4K webcam with auto-focus, built-in ring light, and noise-reducing dual microphones."
+  },
+  {
+    "name": "Monitor Light Bar",
+    "category": "Accessories",
+    "price": 59.99,
+    "stock": 315,
+    "rating": 4.6,
+    "description": "Asymmetric LED light bar that clips onto your monitor. Adjustable color temperature from 2700K to 6500K."
+  },
+  {
+    "name": "Mesh Office Chair",
+    "category": "Furniture",
+    "price": 349.00,
+    "stock": 56,
+    "rating": 4.4,
+    "description": "Full-mesh ergonomic office chair with lumbar support, adjustable arms, and headrest. Breathable design for all-day comfort."
+  },
+  {
+    "name": "USB-C Hub",
+    "category": "Accessories",
+    "price": 44.99,
+    "stock": 410,
+    "rating": 4.1,
+    "description": "7-in-1 USB-C hub with HDMI 4K, USB-A 3.0, SD card reader, and 100W power delivery pass-through."
+  },
+  {
+    "name": "Mechanical Numpad",
+    "category": "Electronics",
+    "price": 39.95,
+    "stock": 178,
+    "rating": 4.3,
+    "description": "Standalone mechanical numpad with programmable keys. Hot-swappable switches and RGB backlighting."
+  },
+  {
+    "name": "Desk Mat XL",
+    "category": "Accessories",
+    "price": 24.99,
+    "stock": 520,
+    "rating": 4.0,
+    "description": "Extra-large desk mat (900x400mm) with stitched edges and non-slip rubber base. Machine washable."
+  },
+  {
+    "name": "Portable SSD 2TB",
+    "category": "Electronics",
+    "price": 149.99,
+    "stock": 93,
+    "rating": 4.9,
+    "description": "Compact portable SSD with USB 3.2 Gen 2 speeds up to 1050 MB/s. IP55 water and dust resistant."
+  }
+]

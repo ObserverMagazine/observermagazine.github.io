@@ -1,0 +1,123 @@
+@inject HttpClient Http
+@inject ILogger<ResponsiveTable> Logger
+
+@if (products is null)
+{
+    <p><em>Loading data...</em></p>
+}
+else
+{
+    <div class="table-controls">
+        <input type="text"
+               placeholder="Filter by name..."
+               @bind="filterText"
+               @bind:event="oninput"
+               class="filter-input" />
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="sortable" @onclick='() => Sort("Name")'>
+                        Name @SortIndicator("Name")
+                    </th>
+                    <th class="sortable" @onclick='() => Sort("Category")'>
+                        Category @SortIndicator("Category")
+                    </th>
+                    <th class="sortable numeric" @onclick='() => Sort("Price")'>
+                        Price @SortIndicator("Price")
+                    </th>
+                    <th class="sortable numeric" @onclick='() => Sort("Stock")'>
+                        Stock @SortIndicator("Stock")
+                    </th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in FilteredAndSorted)
+                {
+                    <tr>
+                        <td data-label="Name">@p.Name</td>
+                        <td data-label="Category">@p.Category</td>
+                        <td data-label="Price" class="numeric">@p.Price.ToString("C")</td>
+                        <td data-label="Stock" class="numeric">@p.Stock</td>
+                        <td data-label="Rating">
+                            @for (int i = 0; i < (int)Math.Round(p.Rating); i++)
+                            {
+                                <span class="star">★</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="table-info">
+        Showing @FilteredAndSorted.Count() of @products.Length items
+    </p>
+}
+
+@code {
+    private Product[]? products;
+    private string filterText = "";
+    private string sortColumn = "Name";
+    private bool sortAscending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Loading product data for responsive table");
+        try
+        {
+            products = await Http.GetFromJsonAsync<Product[]>("sample-data/products.json");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load products");
+            products = [];
+        }
+    }
+
+    private IEnumerable<Product> FilteredAndSorted
+    {
+        get
+        {
+            if (products is null) return [];
+
+            var filtered = string.IsNullOrWhiteSpace(filterText)
+                ? products.AsEnumerable()
+                : products.Where(p =>
+                    p.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+
+            return sortColumn switch
+            {
+                "Name" => sortAscending ? filtered.OrderBy(p => p.Name) : filtered.OrderByDescending(p => p.Name),
+                "Category" => sortAscending ? filtered.OrderBy(p => p.Category) : filtered.OrderByDescending(p => p.Category),
+                "Price" => sortAscending ? filtered.OrderBy(p => p.Price) : filtered.OrderByDescending(p => p.Price),
+                "Stock" => sortAscending ? filtered.OrderBy(p => p.Stock) : filtered.OrderByDescending(p => p.Stock),
+                _ => filtered
+            };
+        }
+    }
+
+    private void Sort(string column)
+    {
+        if (sortColumn == column)
+        {
+            sortAscending = !sortAscending;
+        }
+        else
+        {
+            sortColumn = column;
+            sortAscending = true;
+        }
+        Logger.LogInformation("Sorted by {Column} {Direction}", column, sortAscending ? "asc" : "desc");
+    }
+
+    private string SortIndicator(string column)
+    {
+        if (sortColumn != column) return "";
+        return sortAscending ? "▲" : "▼";
+    }
+}

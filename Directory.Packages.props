@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Web -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
+
+    <!-- Content Processing -->
+    <PackageVersion Include="Markdig" Version="1.1.1" />
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
+    <PackageVersion Include="bunit" Version="2.6.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+  </ItemGroup>
+</Project>

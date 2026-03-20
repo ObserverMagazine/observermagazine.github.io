@@ -1,0 +1,27 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    <header class="top-bar">
+        <div class="container top-bar-inner">
+            <a class="brand" href="/">
+                <strong>Observer</strong> Magazine
+            </a>
+            <NavMenu />
+        </div>
+    </header>
+
+    <main class="container main-content">
+        @Body
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; @DateTime.UtcNow.Year Observer Magazine &mdash; Built with
+                <a href="https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor" target="_blank"
+                   rel="noopener noreferrer">Blazor WebAssembly</a>
+                on .NET 10.
+                <a href="/feed.xml">RSS Feed</a>
+            </p>
+        </div>
+    </footer>
+</div>

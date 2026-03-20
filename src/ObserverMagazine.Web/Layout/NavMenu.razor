@@ -1,0 +1,16 @@
+<nav class="nav-menu" role="navigation">
+    <button class="nav-toggle" @onclick="ToggleMenu" aria-label="Toggle navigation">
+        ☰
+    </button>
+    <ul class="nav-links @(isOpen ? "open" : "")">
+        <li><NavLink href="" Match="NavLinkMatch.All">Home</NavLink></li>
+        <li><NavLink href="blog">Blog</NavLink></li>
+        <li><NavLink href="showcase">Showcase</NavLink></li>
+        <li><NavLink href="about">About</NavLink></li>
+    </ul>
+</nav>
+
+@code {
+    private bool isOpen;
+    private void ToggleMenu() => isOpen = !isOpen;
+}
