@@ -66,7 +66,7 @@ public class ContentProcessorTests
         Assert.Contains("<strong>bold</strong>", html);
         Assert.Contains("<em>italic</em>", html);
     }
-    
+
     [Fact]
     public void MarkdownTwoWords_ConvertsToHtml()
     {
