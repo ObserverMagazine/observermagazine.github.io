@@ -35,4 +35,4 @@ The `ContentProcessor` runs at build time (in CI) to convert Markdown files into
 
 ## Next Steps
 
-Check out the [Showcase](/showcase) to see responsive tables and master-detail flows in action, or browse the [source code](https://github.com/ObserverMagazine/ObserverMagazine.github.io) to see how everything fits together.
+Check out the [Showcase](/showcase) to see responsive tables and master-detail flows in action, or browse the [source code](https://github.com/ObserverMagazine/observermagazine.github.io) to see how everything fits together.

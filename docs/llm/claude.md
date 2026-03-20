@@ -23,9 +23,9 @@ We should have extensive logging, metrics, etc using open telemetry.
 Application should be built from the ground up to be testable.
 All tests including Unit tests, integration tests should be automated and be performant so we can run them after every change. 
 The whole thing should fit in a single git repository. 
-the repo will be at https://github.com/ObserverMagazine/ObserverMagazine.github.io 
+the repo will be at https://github.com/ObserverMagazine/observermagazine.github.io 
 
-and we need to deploy to https://ObserverMagazine.github.io
+and we need to deploy to https://observermagazine.github.io
 use dotnet 10 
 use asp dotnet 10 
 generate the full project 
@@ -77,15 +77,15 @@ The CI pipeline (`.github/workflows/deploy.yml`) runs the content processor, the
 # Observer Magazine — Full Project Source
 
 > Blazor WebAssembly on .NET 10, deployed to GitHub Pages  
-> Repository: https://github.com/ObserverMagazine/ObserverMagazine.github.io  
-> Live site: https://ObserverMagazine.github.io
+> Repository: https://github.com/ObserverMagazine/observermagazine.github.io  
+> Live site: https://observermagazine.github.io
 
 ---
 
 ## Directory Structure
 
 ```
-ObserverMagazine.github.io/
+observermagazine.github.io/
 ├── .github/workflows/deploy.yml
 ├── .gitignore
 ├── .nojekyll
@@ -865,9 +865,9 @@ else
 
 <h2>Source Code</h2>
 <p>
-    <a href="https://github.com/ObserverMagazine/ObserverMagazine.github.io"
+    <a href="https://github.com/ObserverMagazine/observermagazine.github.io"
        target="_blank" rel="noopener noreferrer">
-        github.com/ObserverMagazine/ObserverMagazine.github.io
+        github.com/ObserverMagazine/observermagazine.github.io
     </a>
 </p>
 ```
@@ -1858,7 +1858,7 @@ var feedPath = Path.Combine(outputDir, "feed.xml");
 var rssXml = RssGenerator.Generate(
     title: "Observer Magazine",
     description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
-    siteUrl: "https://ObserverMagazine.github.io",
+    siteUrl: "https://observermagazine.github.io",
     posts: allPostMetadata
 );
 File.WriteAllText(feedPath, rssXml);
@@ -2103,7 +2103,7 @@ The `ContentProcessor` runs at build time (in CI) to convert Markdown files into
 
 ## Next Steps
 
-Check out the [Showcase](/showcase) to see responsive tables and master-detail flows in action, or browse the [source code](https://github.com/ObserverMagazine/ObserverMagazine.github.io) to see how everything fits together.
+Check out the [Showcase](/showcase) to see responsive tables and master-detail flows in action, or browse the [source code](https://github.com/ObserverMagazine/observermagazine.github.io) to see how everything fits together.
 ```
 
 ---
@@ -2778,8 +2778,8 @@ public sealed class RssPostEntry
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/ObserverMagazine/ObserverMagazine.github.io.git
-cd ObserverMagazine.github.io
+git clone https://github.com/ObserverMagazine/observermagazine.github.io.git
+cd observermagazine.github.io
 
 # 2. Restore packages
 dotnet restore

@@ -85,7 +85,7 @@ var feedPath = Path.Combine(outputDir, "feed.xml");
 var rssXml = RssGenerator.Generate(
     title: "Observer Magazine",
     description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
-    siteUrl: "https://ObserverMagazine.github.io",
+    siteUrl: "https://observermagazine.github.io",
     posts: allPostMetadata
 );
 File.WriteAllText(feedPath, rssXml);
