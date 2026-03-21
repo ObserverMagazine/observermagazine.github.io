@@ -35,6 +35,24 @@ public static class FrontMatterParser
     }
 
     /// <summary>
+    /// Parses an author YAML file into an AuthorProfile.
+    /// </summary>
+    public static AuthorProfile? ParseAuthor(string yamlContent, string id)
+    {
+        try
+        {
+            var profile = Deserializer.Deserialize<AuthorProfile>(yamlContent);
+            if (profile is null) return null;
+            profile.Id = id;
+            return profile;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Derives a slug from a filename like "2026-01-15-welcome-to-observer-magazine".
     /// Strips the leading date prefix if present.
     /// </summary>
@@ -51,13 +69,40 @@ public static class FrontMatterParser
         }
         return fileName;
     }
+
+    /// <summary>
+    /// Calculates estimated reading time in minutes from markdown text.
+    /// Uses 200 words per minute, minimum 1 minute.
+    /// </summary>
+    public static int CalculateReadingTime(string markdownBody)
+    {
+        var wordCount = markdownBody
+            .Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
+            .Length;
+        return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+    }
 }
 
 public sealed class FrontMatter
 {
     public string Title { get; set; } = "";
     public DateTime Date { get; set; } = DateTime.MinValue;
+    public DateTime? Updated { get; set; }
     public string? Author { get; set; }
     public string? Summary { get; set; }
     public string[]? Tags { get; set; }
+    public bool Draft { get; set; }
+    public bool Featured { get; set; }
+    public string? Series { get; set; }
+    public string? Image { get; set; }
+}
+
+public sealed class AuthorProfile
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string? Email { get; set; }
+    public string? Bio { get; set; }
+    public string? Avatar { get; set; }
+    public Dictionary<string, string>? Socials { get; set; }
 }

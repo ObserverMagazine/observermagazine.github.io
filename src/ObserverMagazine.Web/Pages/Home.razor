@@ -1,5 +1,6 @@
 @page "/"
 @inject IAnalyticsService Analytics
+@inject IBlogService BlogService
 
 <PageTitle>Observer Magazine</PageTitle>
 
@@ -11,23 +12,49 @@
         for your own projects.
     </p>
     <div class="hero-actions">
-        <a class="btn btn-primary" href="showcase">View Showcase</a>
-        <a class="btn btn-secondary" href="blog">Read the Blog</a>
+        <a class="btn btn-primary" href="blog">Read the Blog</a>
+        <a class="btn btn-secondary" href="showcase">View Showcases</a>
     </div>
 </section>
+
+@if (featuredPosts is { Length: > 0 })
+{
+    <section>
+        <h2>Featured</h2>
+        <div class="blog-list">
+            @foreach (var post in featuredPosts)
+            {
+                <article class="blog-card">
+                    <span class="featured-badge">Featured</span>
+                    <h3><a href="blog/@post.Slug">@post.Title</a></h3>
+                    <div class="blog-meta">
+                        <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                            @post.Date.ToString("MMMM d, yyyy")
+                        </time>
+                        @if (post.ReadingTimeMinutes > 0)
+                        {
+                            <span> · @post.ReadingTimeMinutes min read</span>
+                        }
+                    </div>
+                    <p>@post.Summary</p>
+                </article>
+            }
+        </div>
+    </section>
+}
 
 <section class="features-grid">
     <div class="feature-card">
         <h3>Responsive Tables</h3>
-        <p>Sortable, filterable data tables that adapt from desktop to mobile.</p>
+        <p>Sortable, filterable data tables that adapt gracefully to any screen size.</p>
     </div>
     <div class="feature-card">
         <h3>Master-Detail Flow</h3>
-        <p>Click a list item, see its details — a pattern used in dashboards everywhere.</p>
+        <p>Click an item in a list to view its full details — a common app pattern.</p>
     </div>
     <div class="feature-card">
-        <h3>Markdown Blog</h3>
-        <p>Write posts in Markdown with YAML front matter. Compiled to static JSON at build time.</p>
+        <h3>Blog Engine</h3>
+        <p>Write in Markdown with YAML front matter. Compiled to static JSON at build time.</p>
     </div>
     <div class="feature-card">
         <h3>RSS Feed</h3>
@@ -44,8 +71,20 @@
 </section>
 
 @code {
+    private BlogPostMetadata[]? featuredPosts;
+
     protected override async Task OnInitializedAsync()
     {
         await Analytics.TrackPageViewAsync("Home");
+
+        try
+        {
+            var allPosts = await BlogService.GetPostsAsync();
+            featuredPosts = allPosts.Where(p => p.Featured).Take(3).ToArray();
+        }
+        catch
+        {
+            featuredPosts = [];
+        }
     }
 }

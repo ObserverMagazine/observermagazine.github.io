@@ -3,40 +3,36 @@ using Microsoft.Extensions.Logging;
 
 namespace ObserverMagazine.Web.Services;
 
-public sealed class AnalyticsService : IAnalyticsService
+public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> logger) : IAnalyticsService
 {
     private const string BackendBaseUrl = "https://my-api.2w7sp317.workers.dev";
-    private readonly HttpClient http;
-    private readonly ILogger<AnalyticsService> logger;
+    private static readonly TimeSpan HealthCacheDuration = TimeSpan.FromMinutes(5);
+
     private bool backendAvailable;
     private DateTime lastHealthCheck = DateTime.MinValue;
-    private static readonly TimeSpan HealthCheckInterval = TimeSpan.FromMinutes(5);
-
-    public AnalyticsService(HttpClient http, ILogger<AnalyticsService> logger)
-    {
-        this.http = http;
-        this.logger = logger;
-    }
 
     public bool IsBackendAvailable => backendAvailable;
 
     public async Task CheckHealthAsync()
     {
-        if (DateTime.UtcNow - lastHealthCheck < HealthCheckInterval)
+        // Cache health check result for 5 minutes
+        if (DateTime.UtcNow - lastHealthCheck < HealthCacheDuration)
             return;
 
         try
         {
             var response = await http.GetAsync($"{BackendBaseUrl}/api/health");
             backendAvailable = response.IsSuccessStatusCode;
-            lastHealthCheck = DateTime.UtcNow;
             logger.LogInformation("Backend health check: {Status}", backendAvailable ? "available" : "unavailable");
         }
         catch (Exception ex)
         {
             backendAvailable = false;
+            logger.LogDebug(ex, "Backend health check failed — running without backend");
+        }
+        finally
+        {
             lastHealthCheck = DateTime.UtcNow;
-            logger.LogDebug(ex, "Backend health check failed — running in offline mode");
         }
     }
 
@@ -64,6 +60,70 @@ public sealed class AnalyticsService : IAnalyticsService
         await SendEventAsync($"Interaction: {action}", content);
     }
 
+    public async Task IncrementViewAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        try
+        {
+            await http.PostAsync($"{BackendBaseUrl}/api/views/{slug}", null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to increment view for {Slug}", slug);
+        }
+    }
+
+    public async Task<int?> GetViewCountAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return null;
+
+        try
+        {
+            var result = await http.GetFromJsonAsync<ViewCountResponse>($"{BackendBaseUrl}/api/views/{slug}");
+            return result?.Count;
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to get view count for {Slug}", slug);
+            return null;
+        }
+    }
+
+    public async Task AddReactionAsync(string slug, string reactionType)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        try
+        {
+            var payload = new { type = reactionType };
+            await http.PostAsJsonAsync($"{BackendBaseUrl}/api/reactions/{slug}", payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to add reaction for {Slug}", slug);
+        }
+    }
+
+    public async Task<Dictionary<string, int>?> GetReactionsAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return null;
+
+        try
+        {
+            return await http.GetFromJsonAsync<Dictionary<string, int>>($"{BackendBaseUrl}/api/reactions/{slug}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to get reactions for {Slug}", slug);
+            return null;
+        }
+    }
+
     private async Task EnsureHealthChecked()
     {
         if (lastHealthCheck == DateTime.MinValue)
@@ -84,8 +144,9 @@ public sealed class AnalyticsService : IAnalyticsService
         }
         catch (Exception ex)
         {
-            // Never crash the app due to analytics failure
             logger.LogDebug(ex, "Failed to send analytics event: {Title}", title);
         }
     }
+
+    private sealed record ViewCountResponse(int Count);
 }

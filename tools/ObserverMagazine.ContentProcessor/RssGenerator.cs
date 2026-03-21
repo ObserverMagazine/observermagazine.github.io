@@ -7,9 +7,7 @@ public static class RssGenerator
     private static readonly XNamespace ContentNs = "http://purl.org/rss/1.0/modules/content/";
 
     public static string Generate(
-        string title,
-        string description,
-        string siteUrl,
+        string title, string description, string siteUrl,
         IReadOnlyList<PostIndexEntry> posts,
         Func<string, string?>? getPostHtml = null)
     {
@@ -23,6 +21,17 @@ public static class RssGenerator
                 new XElement("pubDate", p.Date.ToString("R")),
                 new XElement("guid", $"{siteUrl}/blog/{p.Slug}")
             };
+
+            // Include author email if available (RSS spec: email (name))
+            if (!string.IsNullOrEmpty(p.AuthorEmail))
+            {
+                itemElements.Add(new XElement("author", $"{p.AuthorEmail} ({p.AuthorName})"));
+            }
+            else if (!string.IsNullOrEmpty(p.AuthorName))
+            {
+                // dc:creator could be used here, but for simplicity just skip <author>
+                // when no email is available (RSS spec requires email in <author>)
+            }
 
             // Include full HTML content if available
             var html = getPostHtml?.Invoke(p.Slug);

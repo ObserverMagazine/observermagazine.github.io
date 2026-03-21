@@ -7,6 +7,7 @@ namespace ObserverMagazine.Web.Services;
 public sealed class BlogService(HttpClient http, ILogger<BlogService> logger) : IBlogService
 {
     private BlogPostMetadata[]? cachedIndex;
+    private AuthorProfile[]? cachedAuthors;
 
     public async Task<BlogPostMetadata[]> GetPostsAsync()
     {
@@ -49,5 +50,32 @@ public sealed class BlogService(HttpClient http, ILogger<BlogService> logger) : 
             logger.LogError(ex, "Failed to load HTML for post: {Slug}", slug);
             return "<p>Could not load post content.</p>";
         }
+    }
+
+    public async Task<AuthorProfile[]> GetAllAuthorsAsync()
+    {
+        if (cachedAuthors is not null) return cachedAuthors;
+
+        logger.LogInformation("Fetching authors index");
+        try
+        {
+            var authors = await http.GetFromJsonAsync<AuthorProfile[]>("blog-data/authors.json");
+            cachedAuthors = authors ?? [];
+            logger.LogInformation("Loaded {Count} author profiles", cachedAuthors.Length);
+            return cachedAuthors;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "Authors index not found");
+            cachedAuthors = [];
+            return cachedAuthors;
+        }
+    }
+
+    public async Task<AuthorProfile?> GetAuthorAsync(string authorId)
+    {
+        var authors = await GetAllAuthorsAsync();
+        return authors.FirstOrDefault(a =>
+            string.Equals(a.Id, authorId, StringComparison.OrdinalIgnoreCase));
     }
 }

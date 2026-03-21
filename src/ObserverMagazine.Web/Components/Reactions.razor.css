@@ -1,0 +1,39 @@
+.reactions-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 99px;
+    background: var(--color-card-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 0.9rem;
+}
+
+.reaction-btn:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+}
+
+.reaction-btn.reacted {
+    border-color: var(--color-primary);
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.reaction-emoji {
+    font-size: 1.1rem;
+}
+
+.reaction-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+}

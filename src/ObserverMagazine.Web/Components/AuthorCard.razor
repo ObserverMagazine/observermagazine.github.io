@@ -1,0 +1,47 @@
+@using ObserverMagazine.Web.Models
+
+@if (Author is not null)
+{
+    <div class="author-card">
+        @if (!string.IsNullOrEmpty(Author.Avatar))
+        {
+            <img class="author-avatar" src="@Author.Avatar" alt="@Author.Name" loading="lazy" />
+        }
+        <div class="author-info">
+            <strong class="author-name">@Author.Name</strong>
+            @if (!string.IsNullOrEmpty(Author.Bio))
+            {
+                <p class="author-bio">@Author.Bio</p>
+            }
+            @if (Author.Socials is { Count: > 0 })
+            {
+                <div class="author-socials">
+                    @foreach (var (platform, handle) in Author.Socials)
+                    {
+                        <a href="@GetSocialUrl(platform, handle)"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="author-social-link"
+                           title="@platform">
+                            @platform
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public AuthorProfile? Author { get; set; }
+
+    private static string GetSocialUrl(string platform, string handle) => platform.ToLowerInvariant() switch
+    {
+        "github" => $"https://github.com/{handle}",
+        "twitter" or "x" => $"https://x.com/{handle}",
+        "mastodon" => handle.StartsWith("http") ? handle : $"https://mastodon.social/{handle}",
+        "linkedin" => $"https://linkedin.com/in/{handle}",
+        "bluesky" => $"https://bsky.app/profile/{handle}",
+        _ => handle.StartsWith("http") ? handle : $"https://{handle}"
+    };
+}

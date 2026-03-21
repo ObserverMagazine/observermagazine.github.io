@@ -24,9 +24,21 @@ else
                 <time datetime="@metadata.Date.ToString("yyyy-MM-dd")">
                     @metadata.Date.ToString("MMMM d, yyyy")
                 </time>
-                @if (!string.IsNullOrEmpty(metadata.Author))
+                @if (metadata.Updated.HasValue)
                 {
-                    <span> · @metadata.Author</span>
+                    <span> · Updated @metadata.Updated.Value.ToString("MMMM d, yyyy")</span>
+                }
+                @if (!string.IsNullOrEmpty(metadata.AuthorName))
+                {
+                    <span> · @metadata.AuthorName</span>
+                }
+                @if (metadata.ReadingTimeMinutes > 0)
+                {
+                    <span> · @metadata.ReadingTimeMinutes min read</span>
+                }
+                @if (viewCount.HasValue)
+                {
+                    <span> · @viewCount views</span>
                 }
             </div>
             @if (metadata.Tags is { Length: > 0 })
@@ -45,6 +57,11 @@ else
         <div class="blog-content">
             @((MarkupString)htmlContent)
         </div>
+
+        <Reactions Slug="@Slug" />
+
+        <AuthorCard Author="authorProfile" />
+
         <footer class="blog-post-footer">
             <a href="blog">&larr; Back to Blog</a>
         </footer>
@@ -57,6 +74,8 @@ else
     private BlogPostMetadata? metadata;
     private string htmlContent = "";
     private bool loading = true;
+    private AuthorProfile? authorProfile;
+    private int? viewCount;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -69,7 +88,17 @@ else
             if (metadata is not null)
             {
                 htmlContent = await BlogService.GetPostHtmlAsync(Slug);
+
+                // Load author profile (non-blocking if missing)
+                if (!string.IsNullOrEmpty(metadata.Author))
+                {
+                    authorProfile = await BlogService.GetAuthorAsync(metadata.Author);
+                }
+
+                // Track view + get count (non-blocking, backend optional)
                 await Analytics.TrackPageViewAsync("BlogPost", $"{metadata.Title} ({Slug})");
+                await Analytics.IncrementViewAsync(Slug);
+                viewCount = await Analytics.GetViewCountAsync(Slug);
             }
         }
         catch (Exception ex)

@@ -5761,3 +5761,2788 @@ dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir co
 
 08
 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+05
+10
+
+Looking at the code, does this allow multiple posts on a single day? 
+How about future dated posts? 
+Does the app care about dates on the posts at all? 
+Is this a future enhancement? 
+If so, can you please brainstorm some ideas... 
+Maybe github actions can run every day and publish posts for that day or older if present and not publish future posts? 
+or we can include email address and socials of the author? 
+just want to discuss some ideas... 
+
+Let me read the full dump.txt to understand the current state of the project.Now I have a thorough understanding of the current codebase. Let me answer your questions about how dates work in the current system, then brainstorm future enhancements.
+
+---
+
+## How the Current System Handles Dates
+
+**Does it allow multiple posts on a single day?** Yes. The filename convention is `YYYY-MM-DD-slug.md`, so you could have `2026-03-20-hello-world.md` and `2026-03-20-afternoon-thoughts.md`. The slug (everything after the date prefix) is what uniquely identifies each post, not the date itself. Both would appear in the index sorted by `Date` descending, and since `DateTime` comparisons with the same date would be equal, their relative order in that case is non-deterministic (depends on filesystem enumeration order and the stability of the sort).
+
+**How about future-dated posts?** The system processes and publishes *every* `.md` file in `content/blog/` regardless of date. If you add `2027-01-01-new-years.md` today, the content processor will happily convert it and include it in `posts-index.json` and the RSS feed. There is no date filtering at build time or at runtime. A future-dated post would actually appear *first* in the blog list since it sorts by date descending.
+
+**Does the app care about dates at all?** Only cosmetically. The `Date` from front matter is used for display formatting (`"MMMM d, yyyy"`) and for sort order. Neither the content processor nor the Blazor app compares dates against "now."
+
+**Is this a future enhancement?** Effectively, yes — scheduled publishing isn't implemented.
+
+---
+
+## Brainstorm: Future Enhancements
+
+Here are several ideas, roughly grouped by theme:
+
+### 1. Scheduled Publishing via GitHub Actions
+
+This is the most natural fit for a static site with no real backend. The idea: the content processor filters out posts whose `date` is in the future, and a scheduled GitHub Actions workflow rebuilds the site daily.
+
+**How it would work:**
+- Add a `--publish-before` flag to the content processor (defaults to `DateTime.UtcNow`). Any post with `date >` that value gets excluded from `posts-index.json`, its HTML isn't written, and it's excluded from the RSS feed.
+- Add a `schedule` trigger to the GitHub Actions workflow: `cron: '0 6 * * *'` (runs daily at 6 AM UTC). This way, when a post's date arrives, the next scheduled build publishes it automatically.
+- You'd commit future-dated posts to the repo whenever you want. They sit dormant in `content/blog/` until their date arrives.
+- The `workflow_dispatch` trigger (already present) lets you force-publish manually if needed.
+
+**Tradeoffs:** The site rebuilds daily even if nothing changed (a few seconds of CI time). You could optimize with a check step that skips publishing if no new posts are due, but the simplicity of "just rebuild daily" is probably worth the ~30 seconds of CI per day.
+
+### 2. Draft Support
+
+Separate from scheduled publishing: a `draft: true` field in front matter that the content processor always skips. This lets you commit work-in-progress posts without them ever appearing, regardless of date. You'd flip it to `draft: false` (or remove the line) when ready.
+
+### 3. Author Metadata
+
+Currently `author` is just a string. You could expand this to a richer model:
+
+- A separate `content/authors/` directory with YAML files like `observer-team.yml`:
+  ```yaml
+  name: Observer Team
+  email: hello@observermagazine.example
+  bio: The team behind Observer Magazine.
+  socials:
+    github: ObserverMagazine
+    twitter: observermag
+    mastodon: "@observer@mastodon.social"
+  avatar: /images/authors/observer-team.jpg
+  ```
+- The content processor would resolve `author: Observer Team` → the full author record, and include it in the post metadata JSON.
+- The Blazor app could then render author bios, social links, email (with `mailto:`), and avatar images on each post.
+- The RSS feed could include `<author>` elements with the email.
+
+### 4. Enhanced Front Matter Fields
+
+Other useful fields to consider:
+
+- **`updated: 2026-04-15`** — "Last updated" date, shown separately from the original publish date. Useful for evergreen content.
+- **`series: "Blazor Basics"`** — Group posts into a series with prev/next navigation.
+- **`featured: true`** — Pin certain posts to the top of the blog index or show them on the home page.
+- **`image: /images/posts/cover.jpg`** — Open Graph / social sharing image. Also useful for blog cards.
+- **`readingTime`** — Auto-calculated by the content processor from word count.
+
+### 5. Using the Cloudflare Workers Backend for Scheduling
+
+Since you already have `https://my-api.2w7sp317.workers.dev/`, you could store a "publish schedule" there:
+
+- POST a schedule entry: `{ slug: "future-post", publishDate: "2027-01-01" }`
+- GitHub Actions cron job calls the worker to check what's due, then triggers the content processor with the appropriate filter.
+- This decouples the schedule from the git repo — you could schedule/reschedule without commits.
+
+However, this adds complexity. The simpler "filter by date in content processor + daily cron" approach is more aligned with the "everything in git" philosophy.
+
+### 6. Backend-Enhanced Features (via Cloudflare Workers)
+
+Since you have the workers backend:
+
+- **View counts** — Already partially there with analytics. Could expose a `/api/views/{slug}` endpoint that the Blazor app calls to show "X views" on each post.
+- **Comments/reactions** — Simple reactions (thumbs up, heart, etc.) stored in the worker's KV store. No auth needed for basic reactions.
+- **Search index** — The content processor could build a search index (JSON with stemmed tokens) and the Blazor app could do client-side full-text search. Or the worker could hold the index server-side.
+- **Newsletter/subscription** — A simple email collection form that POSTs to the worker, which stores subscribers. Combined with the daily cron, new post notifications could be sent.
+
+### 7. Multi-Author Blog / Contributor Workflow
+
+If you ever want multiple people contributing:
+
+- Each author gets their own YAML profile in `content/authors/`.
+- Posts reference authors by ID (the filename without extension).
+- The blog index could have an "Authors" page listing all contributors with their bios and post counts.
+- GitHub branch protection + PR reviews would be the editorial workflow.
+
+---
+
+### What I'd Recommend Starting With
+
+If I were prioritizing, I'd do these in order:
+
+1. **Scheduled publishing** (content processor `--publish-before` flag + daily cron) — highest value for lowest effort, maybe 20 lines of code change.
+2. **Draft support** (`draft: true` in front matter) — 5 lines in the content processor.
+3. **Author profiles** with email and socials — nice for credibility and discoverability.
+4. **Reading time** auto-calculation — trivial to add, nice UX touch.
+
+Want me to implement any of these? The scheduled publishing + draft support would be a small change to `Program.cs` and the GitHub Actions workflow, and I could generate the full updated files.
+
+07
+10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+07
+10
+
+Good idea, 
+lets keep the cloudflare workers as an optional dependency 
+nothing should break even if cloudflare is offline 
+so we should rebuild daily and publish as mentioned in
+1. Scheduled Publishing via GitHub Actions
+Lets also add a draft: true support 
+lets also add an author folder 
+along with the default observer team so I can copy paste easily for everyone else 
+give me specific instructions on where to put that placeholder image for observer team 
+this one also sounds good lets do this as well
+4. Enhanced Front Matter Fields
+cloudflare for scheduling sounds like too much
+lets not do this one 
+5. Using the Cloudflare Workers Backend for Scheduling
+I do like the idea of number six 
+6. Backend-Enhanced Features (via Cloudflare Workers)
+we should remember though that the site should be resilient
+even if the backend fails, everything else should work just fine 
+7. Multi-Author Blog / Contributor Workflow
+I like the idea of anyone anywhere being able to contribute with a pull request 
+the problem is we can't actually see the blog post until the merge is complete, right? 
+is there a way to see a preview of the blog post 
+or to build the application without deploying to "production"? 
+if so, lets do that 
+if not, lets at least verify the code builds and tests pass upon each pull request and each new change to the pull request 
+Reading time calculation is also a good idea. lets do that too 
+please give me full files for all files that would need to change 
+
+I've read the full dump.txt carefully. Let me now generate every changed and new file. This is a substantial set of changes across ~29 files, so I'll organize them by category.
+
+**Avatar image placement:** Put a placeholder image at `src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.jpg` (you'll need to create the `images/authors/` directory). Any square-ish JPG or PNG works — 200×200px is plenty.
+
+**PR preview answer:** GitHub Pages doesn't support deploy previews from pull requests natively. What we *can* do is build the full site in the PR check workflow and upload it as a downloadable artifact — reviewers download the zip, unzip, and open `index.html` locally. The PR check also runs all tests, so you know the code is sound before merging.
+
+Here are all the files:
+
+---
+
+## FILE: `content/authors/observer-team.yml` (NEW)To copy-paste a new author, duplicate this file as `content/authors/your-name.yml` and fill in the fields.
+
+Now here are all the remaining files. I'll give you each one in full:
+
+---
+
+## FILE: `.github/workflows/deploy.yml` (CHANGED — added daily cron schedule)
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Rebuild daily at 6 AM UTC to publish scheduled posts
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run content processor (markdown → JSON + HTML)
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      - name: Run tests
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Prepare GitHub Pages artifacts
+        run: |
+          cp publish/wwwroot/.nojekyll publish/wwwroot/.nojekyll 2>/dev/null || touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: publish/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+---
+
+## FILE: `.github/workflows/pr-check.yml` (NEW)
+
+```yaml
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run content processor
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      - name: Run tests
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Prepare preview
+        run: |
+          touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Upload preview site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: publish/wwwroot
+          retention-days: 7
+```
+
+---
+
+## FILE: `tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs` (CHANGED)
+
+```csharp
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace ObserverMagazine.ContentProcessor;
+
+public static class FrontMatterParser
+{
+    private static readonly IDeserializer Deserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    /// <summary>
+    /// Splits a markdown file into YAML front matter and markdown body.
+    /// Front matter is delimited by --- at the start and end.
+    /// </summary>
+    public static (FrontMatter FrontMatter, string MarkdownBody) Parse(string rawContent)
+    {
+        if (!rawContent.StartsWith("---"))
+        {
+            return (new FrontMatter(), rawContent);
+        }
+
+        var endIndex = rawContent.IndexOf("---", 3, StringComparison.Ordinal);
+        if (endIndex < 0)
+        {
+            return (new FrontMatter(), rawContent);
+        }
+
+        var yamlBlock = rawContent[3..endIndex].Trim();
+        var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
+
+        var frontMatter = Deserializer.Deserialize<FrontMatter>(yamlBlock);
+        return (frontMatter ?? new FrontMatter(), body);
+    }
+
+    /// <summary>
+    /// Parses an author YAML file into an AuthorProfile.
+    /// </summary>
+    public static AuthorProfile? ParseAuthor(string yamlContent, string id)
+    {
+        try
+        {
+            var profile = Deserializer.Deserialize<AuthorProfile>(yamlContent);
+            if (profile is null) return null;
+            profile.Id = id;
+            return profile;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Derives a slug from a filename like "2026-01-15-welcome-to-observer-magazine".
+    /// Strips the leading date prefix if present.
+    /// </summary>
+    public static string DeriveSlug(string fileName)
+    {
+        // Pattern: YYYY-MM-DD-rest-of-slug
+        if (fileName.Length > 11 &&
+            char.IsDigit(fileName[0]) &&
+            fileName[4] == '-' &&
+            fileName[7] == '-' &&
+            fileName[10] == '-')
+        {
+            return fileName[11..];
+        }
+        return fileName;
+    }
+
+    /// <summary>
+    /// Calculates estimated reading time in minutes from markdown text.
+    /// Uses 200 words per minute, minimum 1 minute.
+    /// </summary>
+    public static int CalculateReadingTime(string markdownBody)
+    {
+        var wordCount = markdownBody
+            .Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
+            .Length;
+        return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+    }
+}
+
+public sealed class FrontMatter
+{
+    public string Title { get; set; } = "";
+    public DateTime Date { get; set; } = DateTime.MinValue;
+    public DateTime? Updated { get; set; }
+    public string? Author { get; set; }
+    public string? Summary { get; set; }
+    public string[]? Tags { get; set; }
+    public bool Draft { get; set; }
+    public bool Featured { get; set; }
+    public string? Series { get; set; }
+    public string? Image { get; set; }
+}
+
+public sealed class AuthorProfile
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string? Email { get; set; }
+    public string? Bio { get; set; }
+    public string? Avatar { get; set; }
+    public Dictionary<string, string>? Socials { get; set; }
+}
+```
+
+---
+
+## FILE: `tools/ObserverMagazine.ContentProcessor/Program.cs` (CHANGED)
+
+```csharp
+using System.Text.Json;
+using ObserverMagazine.ContentProcessor;
+
+// Parse command-line arguments
+string contentDir = "content/blog";
+string outputDir = "src/ObserverMagazine.Web/wwwroot";
+string authorsDir = "content/authors";
+DateTime publishBefore = DateTime.UtcNow;
+
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--content-dir" && i + 1 < args.Length)
+        contentDir = args[++i];
+    else if (args[i] == "--output-dir" && i + 1 < args.Length)
+        outputDir = args[++i];
+    else if (args[i] == "--authors-dir" && i + 1 < args.Length)
+        authorsDir = args[++i];
+    else if (args[i] == "--publish-before" && i + 1 < args.Length)
+        publishBefore = DateTime.Parse(args[++i]);
+}
+
+Console.WriteLine($"Content directory: {contentDir}");
+Console.WriteLine($"Output directory:  {outputDir}");
+Console.WriteLine($"Authors directory: {authorsDir}");
+Console.WriteLine($"Publish before:    {publishBefore:yyyy-MM-dd HH:mm:ss} UTC");
+
+// --- Process author profiles ---
+var authorProfiles = new Dictionary<string, AuthorProfile>(StringComparer.OrdinalIgnoreCase);
+
+if (Directory.Exists(authorsDir))
+{
+    var authorFiles = Directory.GetFiles(authorsDir, "*.yml", SearchOption.TopDirectoryOnly);
+    Console.WriteLine($"Found {authorFiles.Length} author profile(s)");
+
+    foreach (var authorFile in authorFiles)
+    {
+        var authorId = Path.GetFileNameWithoutExtension(authorFile);
+        var yamlContent = File.ReadAllText(authorFile);
+        var profile = FrontMatterParser.ParseAuthor(yamlContent, authorId);
+
+        if (profile is not null)
+        {
+            authorProfiles[authorId] = profile;
+            Console.WriteLine($"  Loaded author: {authorId} ({profile.Name})");
+        }
+        else
+        {
+            Console.WriteLine($"  WARNING: Could not parse author file {authorFile}");
+        }
+    }
+}
+else
+{
+    Console.WriteLine($"Authors directory '{authorsDir}' does not exist. No author profiles loaded.");
+}
+
+// Write authors.json
+string blogDataDir = Path.Combine(outputDir, "blog-data");
+Directory.CreateDirectory(blogDataDir);
+
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true
+};
+
+var authorsPath = Path.Combine(blogDataDir, "authors.json");
+var authorsJson = JsonSerializer.Serialize(authorProfiles.Values.ToArray(), jsonOptions);
+File.WriteAllText(authorsPath, authorsJson);
+Console.WriteLine($"Wrote authors index: {authorsPath} ({authorProfiles.Count} authors)");
+
+// --- Process blog posts ---
+if (!Directory.Exists(contentDir))
+{
+    Console.WriteLine($"Content directory '{contentDir}' does not exist. Creating with no posts.");
+    Directory.CreateDirectory(contentDir);
+}
+
+var markdownFiles = Directory.GetFiles(contentDir, "*.md", SearchOption.TopDirectoryOnly);
+Console.WriteLine($"Found {markdownFiles.Length} markdown files");
+
+var allPostMetadata = new List<PostIndexEntry>();
+var postHtmlMap = new Dictionary<string, string>();
+int skippedDrafts = 0;
+int skippedFuture = 0;
+
+foreach (var mdFile in markdownFiles)
+{
+    Console.WriteLine($"Processing: {Path.GetFileName(mdFile)}");
+
+    var rawContent = File.ReadAllText(mdFile);
+    var (frontMatter, markdownBody) = FrontMatterParser.Parse(rawContent);
+
+    if (string.IsNullOrEmpty(frontMatter.Title))
+    {
+        Console.WriteLine($"  WARNING: No title in front matter, skipping {mdFile}");
+        continue;
+    }
+
+    // Skip drafts
+    if (frontMatter.Draft)
+    {
+        Console.WriteLine($"  SKIPPED: Draft post '{frontMatter.Title}'");
+        skippedDrafts++;
+        continue;
+    }
+
+    // Skip future-dated posts
+    if (frontMatter.Date > publishBefore)
+    {
+        Console.WriteLine($"  SKIPPED: Future post '{frontMatter.Title}' (date: {frontMatter.Date:yyyy-MM-dd}, publish-before: {publishBefore:yyyy-MM-dd})");
+        skippedFuture++;
+        continue;
+    }
+
+    // Derive slug from filename
+    var fileName = Path.GetFileNameWithoutExtension(mdFile);
+    var slug = FrontMatterParser.DeriveSlug(fileName);
+
+    var html = MarkdownProcessor.ToHtml(markdownBody);
+    var readingTime = FrontMatterParser.CalculateReadingTime(markdownBody);
+
+    // Resolve author display name
+    var authorId = frontMatter.Author ?? "";
+    var authorName = authorId;
+    string? authorEmail = null;
+    if (authorProfiles.TryGetValue(authorId, out var authorProfile))
+    {
+        authorName = authorProfile.Name;
+        authorEmail = authorProfile.Email;
+    }
+    else if (!string.IsNullOrEmpty(authorId))
+    {
+        Console.WriteLine($"  WARNING: No author profile found for '{authorId}'");
+    }
+
+    // Write individual post HTML
+    var htmlPath = Path.Combine(blogDataDir, $"{slug}.html");
+    File.WriteAllText(htmlPath, html);
+    Console.WriteLine($"  Wrote: {htmlPath} (~{readingTime} min read)");
+
+    postHtmlMap[slug] = html;
+
+    allPostMetadata.Add(new PostIndexEntry
+    {
+        Slug = slug,
+        Title = frontMatter.Title,
+        Date = frontMatter.Date,
+        Updated = frontMatter.Updated,
+        Author = authorId,
+        AuthorName = authorName,
+        AuthorEmail = authorEmail,
+        Summary = frontMatter.Summary ?? "",
+        Tags = frontMatter.Tags ?? [],
+        Featured = frontMatter.Featured,
+        Series = frontMatter.Series,
+        Image = frontMatter.Image,
+        ReadingTimeMinutes = readingTime
+    });
+}
+
+// Sort by date descending
+allPostMetadata.Sort((a, b) => b.Date.CompareTo(a.Date));
+
+// Write posts index JSON
+var indexPath = Path.Combine(blogDataDir, "posts-index.json");
+var indexJson = JsonSerializer.Serialize(allPostMetadata, jsonOptions);
+File.WriteAllText(indexPath, indexJson);
+Console.WriteLine($"Wrote posts index: {indexPath} ({allPostMetadata.Count} posts, {skippedDrafts} drafts skipped, {skippedFuture} future posts skipped)");
+
+// Generate RSS feed with full post content
+var feedPath = Path.Combine(outputDir, "feed.xml");
+var rssXml = RssGenerator.Generate(
+    title: "Observer Magazine",
+    description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
+    siteUrl: "https://observermagazine.github.io",
+    posts: allPostMetadata,
+    getPostHtml: slug => postHtmlMap.GetValueOrDefault(slug)
+);
+File.WriteAllText(feedPath, rssXml);
+Console.WriteLine($"Wrote RSS feed: {feedPath}");
+
+Console.WriteLine("Content processing complete.");
+
+// --- Types used by the index ---
+public sealed class PostIndexEntry
+{
+    public string Slug { get; init; } = "";
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string Author { get; init; } = "";
+    public string AuthorName { get; init; } = "";
+    public string? AuthorEmail { get; init; }
+    public string Summary { get; init; } = "";
+    public string[] Tags { get; init; } = [];
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
+    public int ReadingTimeMinutes { get; init; }
+}
+```
+
+---
+
+## FILE: `tools/ObserverMagazine.ContentProcessor/RssGenerator.cs` (CHANGED)
+
+```csharp
+using System.Xml.Linq;
+
+namespace ObserverMagazine.ContentProcessor;
+
+public static class RssGenerator
+{
+    private static readonly XNamespace ContentNs = "http://purl.org/rss/1.0/modules/content/";
+
+    public static string Generate(
+        string title, string description, string siteUrl,
+        IReadOnlyList<PostIndexEntry> posts,
+        Func<string, string?>? getPostHtml = null)
+    {
+        var items = posts.Select(p =>
+        {
+            var itemElements = new List<object>
+            {
+                new XElement("title", p.Title),
+                new XElement("link", $"{siteUrl}/blog/{p.Slug}"),
+                new XElement("description", p.Summary),
+                new XElement("pubDate", p.Date.ToString("R")),
+                new XElement("guid", $"{siteUrl}/blog/{p.Slug}")
+            };
+
+            // Include author email if available (RSS spec: email (name))
+            if (!string.IsNullOrEmpty(p.AuthorEmail))
+            {
+                itemElements.Add(new XElement("author", $"{p.AuthorEmail} ({p.AuthorName})"));
+            }
+            else if (!string.IsNullOrEmpty(p.AuthorName))
+            {
+                // dc:creator could be used here, but for simplicity just skip <author>
+                // when no email is available (RSS spec requires email in <author>)
+            }
+
+            // Include full HTML content if available
+            var html = getPostHtml?.Invoke(p.Slug);
+            if (!string.IsNullOrEmpty(html))
+            {
+                itemElements.Add(new XElement(ContentNs + "encoded", new XCData(html)));
+            }
+
+            if (p.Tags.Length > 0)
+            {
+                itemElements.AddRange(p.Tags.Select(t => new XElement("category", t)));
+            }
+
+            return new XElement("item", itemElements);
+        });
+
+        var rss = new XDocument(
+            new XDeclaration("1.0", "utf-8", null),
+            new XElement("rss",
+                new XAttribute("version", "2.0"),
+                new XAttribute(XNamespace.Xmlns + "content", ContentNs),
+                new XElement("channel",
+                    new XElement("title", title),
+                    new XElement("link", siteUrl),
+                    new XElement("description", description),
+                    new XElement("language", "en-us"),
+                    new XElement("lastBuildDate", DateTime.UtcNow.ToString("R")),
+                    items
+                )
+            )
+        );
+
+        return rss.Declaration + Environment.NewLine + rss;
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Models/BlogPostMetadata.cs` (CHANGED)
+
+```csharp
+namespace ObserverMagazine.Web.Models;
+
+public sealed record BlogPostMetadata
+{
+    public required string Slug { get; init; }
+    public required string Title { get; init; }
+    public required DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string Author { get; init; } = "";
+    public string AuthorName { get; init; } = "";
+    public string Summary { get; init; } = "";
+    public string[] Tags { get; init; } = [];
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
+    public int ReadingTimeMinutes { get; init; }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Models/AuthorProfile.cs` (NEW)
+
+```csharp
+namespace ObserverMagazine.Web.Models;
+
+public sealed record AuthorProfile
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
+    public string? Email { get; init; }
+    public string? Bio { get; init; }
+    public string? Avatar { get; init; }
+    public Dictionary<string, string>? Socials { get; init; }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Services/IBlogService.cs` (CHANGED)
+
+```csharp
+using ObserverMagazine.Web.Models;
+
+namespace ObserverMagazine.Web.Services;
+
+public interface IBlogService
+{
+    Task<BlogPostMetadata[]> GetPostsAsync();
+    Task<BlogPostMetadata?> GetPostMetadataAsync(string slug);
+    Task<string> GetPostHtmlAsync(string slug);
+    Task<AuthorProfile?> GetAuthorAsync(string authorId);
+    Task<AuthorProfile[]> GetAllAuthorsAsync();
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Services/BlogService.cs` (CHANGED)
+
+```csharp
+using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
+using ObserverMagazine.Web.Models;
+
+namespace ObserverMagazine.Web.Services;
+
+public sealed class BlogService(HttpClient http, ILogger<BlogService> logger) : IBlogService
+{
+    private BlogPostMetadata[]? cachedIndex;
+    private AuthorProfile[]? cachedAuthors;
+
+    public async Task<BlogPostMetadata[]> GetPostsAsync()
+    {
+        if (cachedIndex is not null) return cachedIndex;
+
+        logger.LogInformation("Fetching blog posts index");
+        try
+        {
+            var posts = await http.GetFromJsonAsync<BlogPostMetadata[]>("blog-data/posts-index.json");
+            cachedIndex = posts?
+                .OrderByDescending(p => p.Date)
+                .ToArray() ?? [];
+            logger.LogInformation("Loaded {Count} blog posts", cachedIndex.Length);
+            return cachedIndex;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "Blog index not found — content processor may not have run");
+            cachedIndex = [];
+            return cachedIndex;
+        }
+    }
+
+    public async Task<BlogPostMetadata?> GetPostMetadataAsync(string slug)
+    {
+        var posts = await GetPostsAsync();
+        return posts.FirstOrDefault(p =>
+            string.Equals(p.Slug, slug, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public async Task<string> GetPostHtmlAsync(string slug)
+    {
+        logger.LogInformation("Fetching HTML for post: {Slug}", slug);
+        try
+        {
+            return await http.GetStringAsync($"blog-data/{slug}.html");
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogError(ex, "Failed to load HTML for post: {Slug}", slug);
+            return "<p>Could not load post content.</p>";
+        }
+    }
+
+    public async Task<AuthorProfile[]> GetAllAuthorsAsync()
+    {
+        if (cachedAuthors is not null) return cachedAuthors;
+
+        logger.LogInformation("Fetching authors index");
+        try
+        {
+            var authors = await http.GetFromJsonAsync<AuthorProfile[]>("blog-data/authors.json");
+            cachedAuthors = authors ?? [];
+            logger.LogInformation("Loaded {Count} author profiles", cachedAuthors.Length);
+            return cachedAuthors;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "Authors index not found");
+            cachedAuthors = [];
+            return cachedAuthors;
+        }
+    }
+
+    public async Task<AuthorProfile?> GetAuthorAsync(string authorId)
+    {
+        var authors = await GetAllAuthorsAsync();
+        return authors.FirstOrDefault(a =>
+            string.Equals(a.Id, authorId, StringComparison.OrdinalIgnoreCase));
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Services/IAnalyticsService.cs` (CHANGED)
+
+```csharp
+namespace ObserverMagazine.Web.Services;
+
+/// <summary>
+/// Sends analytics events to the Cloudflare Workers backend.
+/// Gracefully degrades if the backend is unavailable.
+/// </summary>
+public interface IAnalyticsService
+{
+    Task TrackPageViewAsync(string pageName, string? detail = null);
+    Task TrackInteractionAsync(string action, string? detail = null);
+    bool IsBackendAvailable { get; }
+    Task CheckHealthAsync();
+
+    // --- View counts (backend-enhanced, optional) ---
+    Task IncrementViewAsync(string slug);
+    Task<int?> GetViewCountAsync(string slug);
+
+    // --- Reactions (backend-enhanced, optional) ---
+    Task AddReactionAsync(string slug, string reactionType);
+    Task<Dictionary<string, int>?> GetReactionsAsync(string slug);
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Services/AnalyticsService.cs` (CHANGED)
+
+```csharp
+using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
+
+namespace ObserverMagazine.Web.Services;
+
+public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> logger) : IAnalyticsService
+{
+    private const string BackendBaseUrl = "https://my-api.2w7sp317.workers.dev";
+    private static readonly TimeSpan HealthCacheDuration = TimeSpan.FromMinutes(5);
+
+    private bool backendAvailable;
+    private DateTime lastHealthCheck = DateTime.MinValue;
+
+    public bool IsBackendAvailable => backendAvailable;
+
+    public async Task CheckHealthAsync()
+    {
+        // Cache health check result for 5 minutes
+        if (DateTime.UtcNow - lastHealthCheck < HealthCacheDuration)
+            return;
+
+        try
+        {
+            var response = await http.GetAsync($"{BackendBaseUrl}/api/health");
+            backendAvailable = response.IsSuccessStatusCode;
+            logger.LogInformation("Backend health check: {Status}", backendAvailable ? "available" : "unavailable");
+        }
+        catch (Exception ex)
+        {
+            backendAvailable = false;
+            logger.LogDebug(ex, "Backend health check failed — running without backend");
+        }
+        finally
+        {
+            lastHealthCheck = DateTime.UtcNow;
+        }
+    }
+
+    public async Task TrackPageViewAsync(string pageName, string? detail = null)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        var content = detail is not null
+            ? $"[PageView] {pageName} — {detail}"
+            : $"[PageView] {pageName}";
+
+        await SendEventAsync($"PageView: {pageName}", content);
+    }
+
+    public async Task TrackInteractionAsync(string action, string? detail = null)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        var content = detail is not null
+            ? $"[Interaction] {action} — {detail}"
+            : $"[Interaction] {action}";
+
+        await SendEventAsync($"Interaction: {action}", content);
+    }
+
+    public async Task IncrementViewAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        try
+        {
+            await http.PostAsync($"{BackendBaseUrl}/api/views/{slug}", null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to increment view for {Slug}", slug);
+        }
+    }
+
+    public async Task<int?> GetViewCountAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return null;
+
+        try
+        {
+            var result = await http.GetFromJsonAsync<ViewCountResponse>($"{BackendBaseUrl}/api/views/{slug}");
+            return result?.Count;
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to get view count for {Slug}", slug);
+            return null;
+        }
+    }
+
+    public async Task AddReactionAsync(string slug, string reactionType)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return;
+
+        try
+        {
+            var payload = new { type = reactionType };
+            await http.PostAsJsonAsync($"{BackendBaseUrl}/api/reactions/{slug}", payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to add reaction for {Slug}", slug);
+        }
+    }
+
+    public async Task<Dictionary<string, int>?> GetReactionsAsync(string slug)
+    {
+        await EnsureHealthChecked();
+        if (!backendAvailable) return null;
+
+        try
+        {
+            return await http.GetFromJsonAsync<Dictionary<string, int>>($"{BackendBaseUrl}/api/reactions/{slug}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to get reactions for {Slug}", slug);
+            return null;
+        }
+    }
+
+    private async Task EnsureHealthChecked()
+    {
+        if (lastHealthCheck == DateTime.MinValue)
+            await CheckHealthAsync();
+    }
+
+    private async Task SendEventAsync(string title, string content)
+    {
+        try
+        {
+            var payload = new { title, content };
+            var response = await http.PostAsJsonAsync($"{BackendBaseUrl}/api/notes", payload);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogDebug("Analytics POST returned {StatusCode}", response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to send analytics event: {Title}", title);
+        }
+    }
+
+    private sealed record ViewCountResponse(int Count);
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Components/AuthorCard.razor` (NEW)
+
+```razor
+@using ObserverMagazine.Web.Models
+
+@if (Author is not null)
+{
+    <div class="author-card">
+        @if (!string.IsNullOrEmpty(Author.Avatar))
+        {
+            <img class="author-avatar" src="@Author.Avatar" alt="@Author.Name" loading="lazy" />
+        }
+        <div class="author-info">
+            <strong class="author-name">@Author.Name</strong>
+            @if (!string.IsNullOrEmpty(Author.Bio))
+            {
+                <p class="author-bio">@Author.Bio</p>
+            }
+            @if (Author.Socials is { Count: > 0 })
+            {
+                <div class="author-socials">
+                    @foreach (var (platform, handle) in Author.Socials)
+                    {
+                        <a href="@GetSocialUrl(platform, handle)"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="author-social-link"
+                           title="@platform">
+                            @platform
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public AuthorProfile? Author { get; set; }
+
+    private static string GetSocialUrl(string platform, string handle) => platform.ToLowerInvariant() switch
+    {
+        "github" => $"https://github.com/{handle}",
+        "twitter" or "x" => $"https://x.com/{handle}",
+        "mastodon" => handle.StartsWith("http") ? handle : $"https://mastodon.social/{handle}",
+        "linkedin" => $"https://linkedin.com/in/{handle}",
+        "bluesky" => $"https://bsky.app/profile/{handle}",
+        _ => handle.StartsWith("http") ? handle : $"https://{handle}"
+    };
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Components/AuthorCard.razor.css` (NEW)
+
+```css
+.author-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    margin: 1.5rem 0;
+}
+
+.author-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.author-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.author-name {
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.author-bio {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0 0 0.5rem;
+}
+
+.author-socials {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.author-social-link {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-transform: capitalize;
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Components/Reactions.razor` (NEW)
+
+```razor
+@inject IAnalyticsService Analytics
+
+@if (reactions is not null)
+{
+    <div class="reactions-bar">
+        @foreach (var (emoji, type) in reactionTypes)
+        {
+            var count = reactions.GetValueOrDefault(type, 0);
+            <button class="reaction-btn @(userReacted == type ? "reacted" : "")"
+                    @onclick="() => React(type)"
+                    title="@type">
+                <span class="reaction-emoji">@emoji</span>
+                @if (count > 0)
+                {
+                    <span class="reaction-count">@count</span>
+                }
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private static readonly (string Emoji, string Type)[] reactionTypes =
+    [
+        ("👍", "like"),
+        ("❤️", "love"),
+        ("🎉", "celebrate"),
+        ("🤔", "thinking")
+    ];
+
+    private Dictionary<string, int>? reactions;
+    private string? userReacted;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(Slug)) return;
+
+        reactions = await Analytics.GetReactionsAsync(Slug);
+        // If backend returned null, reactions stays null and the UI is hidden
+    }
+
+    private async Task React(string type)
+    {
+        if (reactions is null || userReacted == type) return;
+
+        userReacted = type;
+        await Analytics.AddReactionAsync(Slug, type);
+
+        // Optimistic update
+        reactions[type] = reactions.GetValueOrDefault(type, 0) + 1;
+        await Analytics.TrackInteractionAsync("Reaction", $"{Slug}: {type}");
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Components/Reactions.razor.css` (NEW)
+
+```css
+.reactions-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 99px;
+    background: var(--color-card-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 0.9rem;
+}
+
+.reaction-btn:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+}
+
+.reaction-btn.reacted {
+    border-color: var(--color-primary);
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.reaction-emoji {
+    font-size: 1.1rem;
+}
+
+.reaction-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Pages/Blog.razor` (CHANGED)
+
+```razor
+@page "/blog"
+@inject IBlogService BlogService
+@inject ILogger<Blog> Logger
+@inject IAnalyticsService Analytics
+
+<PageTitle>Blog — Observer Magazine</PageTitle>
+
+<h1>Blog</h1>
+
+@if (posts is null)
+{
+    <p><em>Loading posts...</em></p>
+}
+else if (posts.Length == 0)
+{
+    <p>No posts yet. Check back soon!</p>
+}
+else
+{
+    <div class="blog-list">
+        @foreach (var post in posts)
+        {
+            <article class="blog-card">
+                @if (post.Featured)
+                {
+                    <span class="featured-badge">Featured</span>
+                }
+                <h2><a href="blog/@post.Slug">@post.Title</a></h2>
+                <div class="blog-meta">
+                    <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                        @post.Date.ToString("MMMM d, yyyy")
+                    </time>
+                    @if (!string.IsNullOrEmpty(post.AuthorName))
+                    {
+                        <span> · @post.AuthorName</span>
+                    }
+                    @if (post.ReadingTimeMinutes > 0)
+                    {
+                        <span> · @post.ReadingTimeMinutes min read</span>
+                    }
+                    @if (!string.IsNullOrEmpty(post.Series))
+                    {
+                        <span> · Series: @post.Series</span>
+                    }
+                </div>
+                <p>@post.Summary</p>
+                @if (post.Tags is { Length: > 0 })
+                {
+                    <div class="tag-list">
+                        @foreach (var tag in post.Tags)
+                        {
+                            <span class="tag">@tag</span>
+                        }
+                    </div>
+                }
+            </article>
+        }
+    </div>
+}
+
+@code {
+    private BlogPostMetadata[]? posts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Loading blog index");
+        try
+        {
+            posts = await BlogService.GetPostsAsync();
+            await Analytics.TrackPageViewAsync("Blog", $"{posts?.Length ?? 0} posts");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load blog index");
+            posts = [];
+        }
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Pages/BlogPost.razor` (CHANGED)
+
+```razor
+@page "/blog/{Slug}"
+@inject IBlogService BlogService
+@inject ILogger<BlogPost> Logger
+@inject NavigationManager Nav
+@inject IAnalyticsService Analytics
+
+<PageTitle>@(metadata?.Title ?? "Post") — Observer Magazine</PageTitle>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (metadata is null)
+{
+    <h1>Post Not Found</h1>
+    <p>Sorry, we couldn't find that post. <a href="blog">Back to Blog</a></p>
+}
+else
+{
+    <article class="blog-post">
+        <header>
+            <h1>@metadata.Title</h1>
+            <div class="blog-meta">
+                <time datetime="@metadata.Date.ToString("yyyy-MM-dd")">
+                    @metadata.Date.ToString("MMMM d, yyyy")
+                </time>
+                @if (metadata.Updated.HasValue)
+                {
+                    <span> · Updated @metadata.Updated.Value.ToString("MMMM d, yyyy")</span>
+                }
+                @if (!string.IsNullOrEmpty(metadata.AuthorName))
+                {
+                    <span> · @metadata.AuthorName</span>
+                }
+                @if (metadata.ReadingTimeMinutes > 0)
+                {
+                    <span> · @metadata.ReadingTimeMinutes min read</span>
+                }
+                @if (viewCount.HasValue)
+                {
+                    <span> · @viewCount views</span>
+                }
+            </div>
+            @if (metadata.Tags is { Length: > 0 })
+            {
+                <div class="tag-list">
+                    @foreach (var tag in metadata.Tags)
+                    {
+                        <span class="tag">@tag</span>
+                    }
+                </div>
+            }
+        </header>
+
+        <BlogTtsPlayer Slug="@Slug" />
+
+        <div class="blog-content">
+            @((MarkupString)htmlContent)
+        </div>
+
+        <Reactions Slug="@Slug" />
+
+        <AuthorCard Author="authorProfile" />
+
+        <footer class="blog-post-footer">
+            <a href="blog">&larr; Back to Blog</a>
+        </footer>
+    </article>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private BlogPostMetadata? metadata;
+    private string htmlContent = "";
+    private bool loading = true;
+    private AuthorProfile? authorProfile;
+    private int? viewCount;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        Logger.LogInformation("Loading blog post: {Slug}", Slug);
+
+        try
+        {
+            metadata = await BlogService.GetPostMetadataAsync(Slug);
+            if (metadata is not null)
+            {
+                htmlContent = await BlogService.GetPostHtmlAsync(Slug);
+
+                // Load author profile (non-blocking if missing)
+                if (!string.IsNullOrEmpty(metadata.Author))
+                {
+                    authorProfile = await BlogService.GetAuthorAsync(metadata.Author);
+                }
+
+                // Track view + get count (non-blocking, backend optional)
+                await Analytics.TrackPageViewAsync("BlogPost", $"{metadata.Title} ({Slug})");
+                await Analytics.IncrementViewAsync(Slug);
+                viewCount = await Analytics.GetViewCountAsync(Slug);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load post {Slug}", Slug);
+            metadata = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/Pages/Home.razor` (CHANGED)
+
+```razor
+@page "/"
+@inject IAnalyticsService Analytics
+@inject IBlogService BlogService
+
+<PageTitle>Observer Magazine</PageTitle>
+
+<section class="hero">
+    <h1>Observer Magazine</h1>
+    <p class="lead">
+        A free, open-source Blazor WebAssembly showcase built on .NET 10.
+        Explore modern web patterns, read our blog, and use this as a starting point
+        for your own projects.
+    </p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="blog">Read the Blog</a>
+        <a class="btn btn-secondary" href="showcase">View Showcases</a>
+    </div>
+</section>
+
+@if (featuredPosts is { Length: > 0 })
+{
+    <section>
+        <h2>Featured</h2>
+        <div class="blog-list">
+            @foreach (var post in featuredPosts)
+            {
+                <article class="blog-card">
+                    <span class="featured-badge">Featured</span>
+                    <h3><a href="blog/@post.Slug">@post.Title</a></h3>
+                    <div class="blog-meta">
+                        <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                            @post.Date.ToString("MMMM d, yyyy")
+                        </time>
+                        @if (post.ReadingTimeMinutes > 0)
+                        {
+                            <span> · @post.ReadingTimeMinutes min read</span>
+                        }
+                    </div>
+                    <p>@post.Summary</p>
+                </article>
+            }
+        </div>
+    </section>
+}
+
+<section class="features-grid">
+    <div class="feature-card">
+        <h3>Responsive Tables</h3>
+        <p>Sortable, filterable data tables that adapt gracefully to any screen size.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Master-Detail Flow</h3>
+        <p>Click an item in a list to view its full details — a common app pattern.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Blog Engine</h3>
+        <p>Write in Markdown with YAML front matter. Compiled to static JSON at build time.</p>
+    </div>
+    <div class="feature-card">
+        <h3>RSS Feed</h3>
+        <p>Auto-generated <code>feed.xml</code> so readers can subscribe in any RSS reader.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Structured Logging</h3>
+        <p>ILogger-based telemetry ready for OpenTelemetry export.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Full Test Suite</h3>
+        <p>bUnit component tests and xUnit integration tests run on every commit.</p>
+    </div>
+</section>
+
+@code {
+    private BlogPostMetadata[]? featuredPosts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Analytics.TrackPageViewAsync("Home");
+
+        try
+        {
+            var allPosts = await BlogService.GetPostsAsync();
+            featuredPosts = allPosts.Where(p => p.Featured).Take(3).ToArray();
+        }
+        catch
+        {
+            featuredPosts = [];
+        }
+    }
+}
+```
+
+---
+
+## FILE: `src/ObserverMagazine.Web/wwwroot/css/app.css` (CHANGED)
+
+```css
+/* ========== DESIGN TOKENS ========== */
+:root {
+    --color-bg: #ffffff;
+    --color-text: #1a1a2e;
+    --color-muted: #6b7280;
+    --color-primary: #2563eb;
+    --color-accent: #3b82f6;
+    --color-surface: #f3f4f6;
+    --color-border: #e5e7eb;
+    --color-card-bg: #ffffff;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Cascadia Code", "Fira Code", Consolas, monospace;
+    --radius: 6px;
+    --max-width: 960px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-bg: #0f172a;
+        --color-text: #e2e8f0;
+        --color-muted: #94a3b8;
+        --color-primary: #60a5fa;
+        --color-accent: #3b82f6;
+        --color-surface: #1e293b;
+        --color-border: #334155;
+        --color-card-bg: #1e293b;
+    }
+}
+
+/* ========== RESET ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container { max-width: var(--max-width); margin: 0 auto; padding: 0 1rem; }
+.page-content { min-height: calc(100vh - 200px); padding: 2rem 0; }
+
+/* ========== HEADER ========== */
+.site-header {
+    background: var(--color-primary);
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.brand { color: #fff; font-size: 1.25rem; }
+.brand:hover { text-decoration: none; opacity: 0.9; }
+
+/* Nav */
+.nav-menu { display: flex; align-items: center; }
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+}
+.nav-links a {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    transition: color 0.15s;
+}
+.nav-links a:hover, .nav-links a.active { color: #fff; text-decoration: none; }
+
+@media (max-width: 640px) {
+    .nav-toggle { display: block; }
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--color-primary);
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    .nav-links.open { display: flex; }
+}
+
+/* Footer */
+.site-footer {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+
+/* ========== HERO ========== */
+.hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+}
+.hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+.lead { font-size: 1.15rem; color: var(--color-muted); max-width: 700px; margin: 0 auto 1.5rem; }
+.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.88; text-decoration: none; }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-secondary { background: var(--color-accent); color: #fff; }
+
+/* ========== FEATURES GRID ========== */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 0;
+}
+.feature-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.feature-card h3 { margin-bottom: 0.5rem; color: var(--color-primary); }
+
+/* ========== BLOG ========== */
+.blog-list { display: flex; flex-direction: column; gap: 1.5rem; }
+.blog-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    position: relative;
+}
+.blog-card h2, .blog-card h3 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+.blog-meta { color: var(--color-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
+.tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+.tag {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.featured-badge {
+    display: inline-block;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+}
+
+/* Blog post */
+.blog-post header { margin-bottom: 2rem; }
+.blog-post h1 { font-size: 2rem; }
+.blog-content { line-height: 1.8; }
+.blog-content h2 { margin-top: 2rem; margin-bottom: 0.75rem; }
+.blog-content h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+.blog-content p { margin-bottom: 1rem; }
+.blog-content pre {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+.blog-content code { font-size: 0.9em; }
+.blog-content ul, .blog-content ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+.blog-post-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+
+/* ========== SHOWCASE ========== */
+.showcase-intro { margin-bottom: 2rem; }
+.showcase-section { margin-bottom: 3rem; }
+.showcase-section h2 { margin-bottom: 1rem; border-bottom: 2px solid var(--color-primary); padding-bottom: 0.5rem; }
+
+/* ========== TTS PLAYER ========== */
+.tts-player {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.tts-player audio { flex: 1; max-width: 100%; }
+.tts-label { font-size: 0.85rem; color: var(--color-muted); white-space: nowrap; }
+
+/* ========== LOADING ========== */
+.loading { text-align: center; padding: 2rem; color: var(--color-muted); }
+```
+
+---
+
+## FILE: `content/blog/2026-01-15-welcome-to-observer-magazine.md` (CHANGED — author is now ID)
+
+```markdown
+---
+title: Welcome to Observer Magazine
+date: 2026-01-15
+author: observer-team
+summary: Our first post — introducing Observer Magazine and what we're building.
+featured: true
+tags:
+  - announcement
+  - introduction
+---
+
+## Hello, World!
+
+Welcome to **Observer Magazine**, a free and open-source web application built with Blazor WebAssembly on .NET 10.
+
+This project serves two purposes:
+
+1. **A learning resource** for developers exploring Blazor WASM, modern .NET tooling (slnx, Directory.Build.props, central package management), and static site deployment on GitHub Pages.
+2. **A starting point** you can fork and adapt for your own projects — whether that's a personal blog, a product showcase, or a full SaaS application.
+
+## What's Inside
+
+- A responsive, accessible UI built entirely in C# and Razor
+- A blog engine powered by Markdown files with YAML front matter
+- An auto-generated RSS feed
+- Showcases of common web patterns: responsive tables, master-detail flows
+- Structured logging ready for OpenTelemetry
+- A full test suite using xUnit v3 and bUnit
+
+## Philosophy
+
+Every dependency we use is truly free — no "free for non-commercial" restrictions. We will never charge money for this software. The code is MIT-licensed and always will be.
+
+Stay tuned for more posts!
+```
+
+---
+
+## FILE: `content/blog/2026-02-20-getting-started-with-blazor-wasm.md` (CHANGED — author is now ID)
+
+```markdown
+---
+title: Getting Started with Blazor WebAssembly
+date: 2026-02-20
+author: observer-team
+summary: A quick tour of how Blazor WASM works and why it's a great choice for static sites.
+tags:
+  - blazor
+  - dotnet
+  - tutorial
+---
+
+## What is Blazor WebAssembly?
+
+Blazor WebAssembly (WASM) lets you build interactive web UIs using C# instead of JavaScript. Your .NET code runs directly in the browser via WebAssembly — no plugins, no server needed at runtime.
+
+## Why We Chose It
+
+For Observer Magazine, Blazor WASM is ideal because:
+
+- **Static hosting** — The compiled output is plain HTML, CSS, JS, and WASM files. Perfect for GitHub Pages.
+- **Full .NET ecosystem** — We use the same language, tooling, and libraries as backend .NET developers.
+- **Performance** — After the initial download, navigation is instant. The runtime is ahead-of-time compiled for speed.
+- **Testability** — With bUnit, we can unit-test every component without a browser.
+
+## Project Structure
+
+Our project follows a clean layout:
+
+    src/ObserverMagazine.Web/     — The Blazor WASM app
+    tools/ContentProcessor/        — Build-time markdown processor
+    tests/                         — xUnit + bUnit tests
+    content/blog/                  — Markdown blog posts
+
+The `ContentProcessor` runs at build time (in CI) to convert Markdown files into JSON and HTML that the Blazor app fetches at runtime.
+
+## Next Steps
+
+Check out the [Showcase](/showcase) to see responsive tables and master-detail flows in action, or browse the [source code](https://github.com/ObserverMagazine/observermagazine.github.io) to see how everything fits together.
+```
+
+---
+
+## FILE: `content/blog/2026-03-10-responsive-design-patterns.md` (CHANGED — author is now ID)
+
+```markdown
+---
+title: Responsive Design Patterns in Blazor
+date: 2026-03-10
+author: observer-team
+summary: How we built mobile-friendly data tables and master-detail layouts in pure Blazor.
+tags:
+  - blazor
+  - css
+  - responsive
+  - ui
+---
+
+## The Challenge
+
+Data-heavy UIs are notoriously hard to make responsive. Wide tables overflow on small screens, and complex layouts need fundamentally different structures on mobile vs. desktop.
+
+## Responsive Tables
+
+Our approach uses CSS to transform table rows into stacked cards on small screens:
+
+- On desktop: a traditional `<table>` with sortable column headers
+- On mobile: each row becomes a card with label-value pairs
+
+The key CSS trick is using `data-label` attributes on `<td>` elements and displaying them via `::before` pseudo-elements when the table header is hidden.
+
+## Master-Detail Flow
+
+The master-detail pattern uses CSS Grid:
+
+- On desktop: a two-column layout (list on left, details on right)
+- On mobile: the columns stack vertically, with the list on top
+
+No JavaScript media queries needed — it's all pure CSS with Blazor handling the state.
+
+## Key Takeaways
+
+1. **Use semantic HTML** — `<table>` for tabular data, not divs pretending to be tables.
+2. **CSS does the heavy lifting** — Blazor components stay clean; responsiveness lives in the stylesheet.
+3. **Test on real devices** — Emulators are fine for development, but nothing beats a real phone.
+
+See all these patterns live on the [Showcase page](/showcase).
+```
+
+---
+
+## FILE: `content/blog/2026-03-20-hello-world.md` (CHANGED — author is now ID)
+
+```markdown
+---
+title: Hello, world!
+date: 2026-03-20
+author: observer-team
+summary: In which I say Hello to you
+tags:
+  - introductions
+---
+
+## Hello, and welcome
+
+Welcome to Observer Magazine.
+It is great to have you with me here.
+I hope you enjoy this website.
+
+I have updated the nuget packages.
+I would love to hear your thoughts about this magazine.
+```
+
+---
+
+## FILE: `tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs` (CHANGED — fix BunitContext)
+
+```csharp
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using ObserverMagazine.Web.Components;
+using ObserverMagazine.Web.Services;
+using ObserverMagazine.Web.Tests.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Components;
+
+public class MasterDetailTests : IDisposable
+{
+    private readonly BunitContext ctx = new();
+
+    [Fact]
+    public void MasterDetail_RendersWithoutProducts()
+    {
+        ctx.Services.AddSingleton<IAnalyticsService>(new NoOpAnalyticsService());
+        var cut = ctx.Render<MasterDetail>();
+        Assert.NotNull(cut);
+    }
+
+    public void Dispose() => ctx.Dispose();
+}
+```
+
+---
+
+## FILE: `tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs` (CHANGED — fix BunitContext)
+
+```csharp
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using ObserverMagazine.Web.Components;
+using ObserverMagazine.Web.Services;
+using ObserverMagazine.Web.Tests.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Components;
+
+public class ResponsiveTableTests : IDisposable
+{
+    private readonly BunitContext ctx = new();
+
+    [Fact]
+    public void ResponsiveTable_RendersWithoutProducts()
+    {
+        ctx.Services.AddSingleton<IAnalyticsService>(new NoOpAnalyticsService());
+        var cut = ctx.Render<ResponsiveTable>();
+        Assert.NotNull(cut);
+    }
+
+    public void Dispose() => ctx.Dispose();
+}
+```
+
+---
+
+## FILE: `tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs` (CHANGED — add new interface methods)
+
+```csharp
+using ObserverMagazine.Web.Services;
+
+namespace ObserverMagazine.Web.Tests.Services;
+
+public sealed class NoOpAnalyticsService : IAnalyticsService
+{
+    public bool IsBackendAvailable => false;
+    public Task CheckHealthAsync() => Task.CompletedTask;
+    public Task TrackPageViewAsync(string pageName, string? detail = null) => Task.CompletedTask;
+    public Task TrackInteractionAsync(string action, string? detail = null) => Task.CompletedTask;
+    public Task IncrementViewAsync(string slug) => Task.CompletedTask;
+    public Task<int?> GetViewCountAsync(string slug) => Task.FromResult<int?>(null);
+    public Task AddReactionAsync(string slug, string reactionType) => Task.CompletedTask;
+    public Task<Dictionary<string, int>?> GetReactionsAsync(string slug) =>
+        Task.FromResult<Dictionary<string, int>?>(null);
+}
+```
+
+---
+
+## FILE: `tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs` (CHANGED — test new fields + author loading)
+
+```csharp
+using System.Net;
+using System.Text.Json;
+using Microsoft.Extensions.Logging.Abstractions;
+using ObserverMagazine.Web.Models;
+using ObserverMagazine.Web.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Services;
+
+public class BlogServiceTests
+{
+    private static readonly BlogPostMetadata[] SamplePosts =
+    [
+        new()
+        {
+            Slug = "first-post",
+            Title = "First Post",
+            Date = new DateTime(2026, 1, 15),
+            Author = "observer-team",
+            AuthorName = "Observer Team",
+            Summary = "The first post",
+            Tags = ["test", "intro"],
+            ReadingTimeMinutes = 2,
+            Featured = true
+        },
+        new()
+        {
+            Slug = "second-post",
+            Title = "Second Post",
+            Date = new DateTime(2026, 2, 20),
+            Author = "observer-team",
+            AuthorName = "Observer Team",
+            Summary = "The second post",
+            Tags = ["test"],
+            ReadingTimeMinutes = 3
+        }
+    ];
+
+    private static readonly AuthorProfile[] SampleAuthors =
+    [
+        new()
+        {
+            Id = "observer-team",
+            Name = "Observer Team",
+            Email = "hello@observermagazine.example",
+            Bio = "The team behind Observer Magazine.",
+            Socials = new Dictionary<string, string> { ["github"] = "ObserverMagazine" }
+        }
+    ];
+
+    private static BlogService CreateService(HttpClient httpClient)
+    {
+        var logger = NullLogger<BlogService>.Instance;
+        return new BlogService(httpClient, logger);
+    }
+
+    [Fact]
+    public async Task GetPostsAsync_ReturnsPostsSortedByDateDescending()
+    {
+        var json = JsonSerializer.Serialize(SamplePosts,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var posts = await service.GetPostsAsync();
+
+        Assert.Equal(2, posts.Length);
+        Assert.Equal("Second Post", posts[0].Title);
+        Assert.Equal("First Post", posts[1].Title);
+    }
+
+    [Fact]
+    public async Task GetPostsAsync_IncludesEnhancedMetadata()
+    {
+        var json = JsonSerializer.Serialize(SamplePosts,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var posts = await service.GetPostsAsync();
+        var featured = posts.FirstOrDefault(p => p.Featured);
+
+        Assert.NotNull(featured);
+        Assert.Equal("First Post", featured.Title);
+        Assert.Equal(2, featured.ReadingTimeMinutes);
+        Assert.Equal("observer-team", featured.Author);
+        Assert.Equal("Observer Team", featured.AuthorName);
+    }
+
+    [Fact]
+    public async Task GetPostMetadataAsync_ReturnsNullForUnknownSlug()
+    {
+        var json = JsonSerializer.Serialize(SamplePosts,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var result = await service.GetPostMetadataAsync("nonexistent");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetPostMetadataAsync_FindsBySlug()
+    {
+        var json = JsonSerializer.Serialize(SamplePosts,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var result = await service.GetPostMetadataAsync("first-post");
+
+        Assert.NotNull(result);
+        Assert.Equal("First Post", result.Title);
+    }
+
+    [Fact]
+    public async Task GetPostsAsync_ReturnsEmptyOnHttpError()
+    {
+        var handler = new FakeHttpHandler(HttpStatusCode.NotFound);
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var posts = await service.GetPostsAsync();
+
+        Assert.Empty(posts);
+    }
+
+    [Fact]
+    public async Task GetAllAuthorsAsync_ReturnsAuthors()
+    {
+        var json = JsonSerializer.Serialize(SampleAuthors,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var authors = await service.GetAllAuthorsAsync();
+
+        Assert.Single(authors);
+        Assert.Equal("Observer Team", authors[0].Name);
+    }
+
+    [Fact]
+    public async Task GetAuthorAsync_FindsById()
+    {
+        var json = JsonSerializer.Serialize(SampleAuthors,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var author = await service.GetAuthorAsync("observer-team");
+
+        Assert.NotNull(author);
+        Assert.Equal("hello@observermagazine.example", author.Email);
+    }
+
+    [Fact]
+    public async Task GetAuthorAsync_ReturnsNullForUnknown()
+    {
+        var json = JsonSerializer.Serialize(SampleAuthors,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var handler = new FakeHttpHandler(json, "application/json");
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
+        var service = CreateService(httpClient);
+
+        var author = await service.GetAuthorAsync("nonexistent");
+
+        Assert.Null(author);
+    }
+}
+
+/// <summary>
+/// Simple fake HTTP handler for unit testing without external dependencies.
+/// </summary>
+internal sealed class FakeHttpHandler : HttpMessageHandler
+{
+    private readonly HttpResponseMessage response;
+
+    public FakeHttpHandler(string content, string mediaType)
+    {
+        response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(content, System.Text.Encoding.UTF8, mediaType)
+        };
+    }
+
+    public FakeHttpHandler(HttpStatusCode statusCode)
+    {
+        response = new HttpResponseMessage(statusCode);
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(response);
+    }
+}
+```
+
+---
+
+## FILE: `tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs` (CHANGED — test new features)
+
+```csharp
+using System.Xml.Linq;
+using Markdig;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using Xunit;
+
+namespace ObserverMagazine.Integration.Tests;
+
+public class ContentProcessorTests
+{
+    private static readonly XNamespace ContentNs = "http://purl.org/rss/1.0/modules/content/";
+
+    [Fact]
+    public void FrontMatter_ParsesAllFields()
+    {
+        var markdown = """
+            ---
+            title: Test Post
+            date: 2026-03-01
+            author: observer-team
+            summary: A test summary
+            tags:
+              - test
+              - integration
+            featured: true
+            series: Test Series
+            image: /images/test.jpg
+            ---
+            ## Hello
+
+            This is the body.
+            """;
+
+        var (frontMatter, body) = ParseFrontMatter(markdown);
+
+        Assert.Equal("Test Post", frontMatter.Title);
+        Assert.Equal(new DateTime(2026, 3, 1), frontMatter.Date);
+        Assert.Equal("observer-team", frontMatter.Author);
+        Assert.Equal("A test summary", frontMatter.Summary);
+        Assert.Equal(["test", "integration"], frontMatter.Tags);
+        Assert.True(frontMatter.Featured);
+        Assert.Equal("Test Series", frontMatter.Series);
+        Assert.Equal("/images/test.jpg", frontMatter.Image);
+        Assert.False(frontMatter.Draft);
+        Assert.Contains("## Hello", body);
+    }
+
+    [Fact]
+    public void FrontMatter_HandlesMissingFields()
+    {
+        var markdown = """
+            ---
+            title: Minimal Post
+            date: 2026-01-01
+            ---
+            Body content.
+            """;
+
+        var (frontMatter, body) = ParseFrontMatter(markdown);
+
+        Assert.Equal("Minimal Post", frontMatter.Title);
+        Assert.Null(frontMatter.Author);
+        Assert.Null(frontMatter.Tags);
+        Assert.False(frontMatter.Featured);
+        Assert.False(frontMatter.Draft);
+        Assert.Null(frontMatter.Series);
+        Assert.Null(frontMatter.Image);
+        Assert.Contains("Body content.", body);
+    }
+
+    [Fact]
+    public void FrontMatter_ParsesDraftField()
+    {
+        var markdown = """
+            ---
+            title: Draft Post
+            date: 2026-06-01
+            draft: true
+            ---
+            Not ready yet.
+            """;
+
+        var (frontMatter, _) = ParseFrontMatter(markdown);
+
+        Assert.True(frontMatter.Draft);
+    }
+
+    [Fact]
+    public void FrontMatter_ParsesUpdatedDate()
+    {
+        var markdown = """
+            ---
+            title: Updated Post
+            date: 2026-01-01
+            updated: 2026-03-15
+            ---
+            Body.
+            """;
+
+        var (frontMatter, _) = ParseFrontMatter(markdown);
+
+        Assert.Equal(new DateTime(2026, 3, 15), frontMatter.Updated);
+    }
+
+    [Fact]
+    public void Markdown_ConvertsToHtml()
+    {
+        var md = "## Hello\n\nThis is **bold** and *italic*.";
+        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        var html = Markdown.ToHtml(md, pipeline);
+
+        Assert.Contains("<h2 id=\"hello\">Hello</h2>", html);
+        Assert.Contains("<strong>bold</strong>", html);
+        Assert.Contains("<em>italic</em>", html);
+    }
+
+    [Fact]
+    public void MarkdownTwoWords_ConvertsToHtml()
+    {
+        var md = "## Hello World\n\nThis is **bold** and *italic*.";
+        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        var html = Markdown.ToHtml(md, pipeline);
+
+        Assert.Contains("<h2 id=\"hello-world\">Hello World</h2>", html);
+        Assert.Contains("<strong>bold</strong>", html);
+        Assert.Contains("<em>italic</em>", html);
+    }
+
+    [Fact]
+    public void SlugDerivation_StripsDatePrefix()
+    {
+        Assert.Equal("welcome-post", DeriveSlug("2026-01-15-welcome-post"));
+        Assert.Equal("no-date", DeriveSlug("no-date"));
+        Assert.Equal("short", DeriveSlug("short"));
+    }
+
+    [Fact]
+    public void ReadingTime_CalculatesCorrectly()
+    {
+        // 200 words = 1 minute, 400 words = 2 minutes
+        var shortText = string.Join(" ", Enumerable.Repeat("word", 50));
+        Assert.Equal(1, CalculateReadingTime(shortText)); // minimum 1 minute
+
+        var mediumText = string.Join(" ", Enumerable.Repeat("word", 400));
+        Assert.Equal(2, CalculateReadingTime(mediumText));
+
+        var longText = string.Join(" ", Enumerable.Repeat("word", 1000));
+        Assert.Equal(5, CalculateReadingTime(longText));
+    }
+
+    [Fact]
+    public void GenerateRss_IncludesBasicElements()
+    {
+        var posts = new List<RssPostEntry>
+        {
+            new()
+            {
+                Slug = "test-post",
+                Title = "Test Post",
+                Date = new DateTime(2026, 1, 1),
+                Summary = "A test post",
+                Tags = ["test"]
+            }
+        };
+
+        var xml = GenerateRss("Test Blog", "A test blog", "https://example.com", posts);
+        var doc = XDocument.Parse(xml);
+        var channel = doc.Root!.Element("channel")!;
+
+        Assert.Equal("Test Blog", channel.Element("title")!.Value);
+        Assert.Equal("https://example.com", channel.Element("link")!.Value);
+
+        var item = channel.Element("item")!;
+        Assert.Equal("Test Post", item.Element("title")!.Value);
+        Assert.Equal("https://example.com/blog/test-post", item.Element("link")!.Value);
+    }
+
+    [Fact]
+    public void GenerateRss_HandlesEmptyPostList()
+    {
+        var xml = GenerateRss("Empty Blog", "Nothing here", "https://example.com", []);
+        var doc = XDocument.Parse(xml);
+        var items = doc.Root!.Element("channel")!.Elements("item");
+        Assert.Empty(items);
+    }
+
+    [Fact]
+    public void GenerateRss_IncludesCategoryTags()
+    {
+        var posts = new List<RssPostEntry>
+        {
+            new()
+            {
+                Slug = "tagged",
+                Title = "Tagged Post",
+                Date = new DateTime(2026, 1, 1),
+                Summary = "Has tags",
+                Tags = ["alpha", "beta"]
+            }
+        };
+
+        var xml = GenerateRss("Blog", "Desc", "https://example.com", posts);
+        var doc = XDocument.Parse(xml);
+        var categories = doc.Root!.Element("channel")!
+            .Element("item")!.Elements("category").Select(c => c.Value).ToArray();
+
+        Assert.Equal(["alpha", "beta"], categories);
+    }
+
+    [Fact]
+    public void GenerateRss_IncludesFullContentWhenProvided()
+    {
+        var posts = new List<RssPostEntry>
+        {
+            new()
+            {
+                Slug = "full-content",
+                Title = "Full Content Post",
+                Date = new DateTime(2026, 2, 1),
+                Summary = "Has full content",
+                Tags = []
+            }
+        };
+
+        var htmlMap = new Dictionary<string, string>
+        {
+            ["full-content"] = "<p>This is the <strong>full</strong> content.</p>"
+        };
+
+        var xml = GenerateRss("Blog", "Desc", "https://example.com", posts,
+            slug => htmlMap.GetValueOrDefault(slug));
+
+        var doc = XDocument.Parse(xml);
+        var item = doc.Root!.Element("channel")!.Element("item")!;
+        var encoded = item.Element(ContentNs + "encoded");
+
+        Assert.NotNull(encoded);
+        Assert.Contains("<strong>full</strong>", encoded.Value);
+    }
+
+    [Fact]
+    public void GenerateRss_IncludesAuthorWhenEmailProvided()
+    {
+        var posts = new List<RssPostEntry>
+        {
+            new()
+            {
+                Slug = "authored",
+                Title = "Authored Post",
+                Date = new DateTime(2026, 1, 1),
+                Summary = "Has author",
+                Tags = [],
+                AuthorName = "Observer Team",
+                AuthorEmail = "hello@observermagazine.example"
+            }
+        };
+
+        var xml = GenerateRss("Blog", "Desc", "https://example.com", posts);
+        var doc = XDocument.Parse(xml);
+        var author = doc.Root!.Element("channel")!.Element("item")!.Element("author");
+
+        Assert.NotNull(author);
+        Assert.Contains("hello@observermagazine.example", author.Value);
+        Assert.Contains("Observer Team", author.Value);
+    }
+
+    // --- Helpers duplicated from ContentProcessor for isolated testing ---
+
+    private static (TestFrontMatter, string) ParseFrontMatter(string rawContent)
+    {
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .IgnoreUnmatchedProperties()
+            .Build();
+
+        if (!rawContent.StartsWith("---"))
+            return (new TestFrontMatter(), rawContent);
+
+        var endIndex = rawContent.IndexOf("---", 3, StringComparison.Ordinal);
+        if (endIndex < 0)
+            return (new TestFrontMatter(), rawContent);
+
+        var yaml = rawContent[3..endIndex].Trim();
+        var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
+        var fm = deserializer.Deserialize<TestFrontMatter>(yaml);
+        return (fm ?? new TestFrontMatter(), body);
+    }
+
+    private static string DeriveSlug(string fileName)
+    {
+        if (fileName.Length > 11 &&
+            char.IsDigit(fileName[0]) &&
+            fileName[4] == '-' &&
+            fileName[7] == '-' &&
+            fileName[10] == '-')
+        {
+            return fileName[11..];
+        }
+        return fileName;
+    }
+
+    private static int CalculateReadingTime(string markdownBody)
+    {
+        var wordCount = markdownBody
+            .Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
+            .Length;
+        return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+    }
+
+    private static string GenerateRss(
+        string title, string description, string siteUrl,
+        IReadOnlyList<RssPostEntry> posts,
+        Func<string, string?>? getPostHtml = null)
+    {
+        var items = posts.Select(p =>
+        {
+            var itemElements = new List<object>
+            {
+                new XElement("title", p.Title),
+                new XElement("link", $"{siteUrl}/blog/{p.Slug}"),
+                new XElement("description", p.Summary),
+                new XElement("pubDate", p.Date.ToString("R")),
+                new XElement("guid", $"{siteUrl}/blog/{p.Slug}")
+            };
+
+            if (!string.IsNullOrEmpty(p.AuthorEmail))
+            {
+                itemElements.Add(new XElement("author", $"{p.AuthorEmail} ({p.AuthorName})"));
+            }
+
+            var html = getPostHtml?.Invoke(p.Slug);
+            if (!string.IsNullOrEmpty(html))
+            {
+                itemElements.Add(new XElement(ContentNs + "encoded", new XCData(html)));
+            }
+
+            if (p.Tags.Length > 0)
+            {
+                itemElements.AddRange(p.Tags.Select(t => new XElement("category", t)));
+            }
+
+            return new XElement("item", itemElements);
+        });
+
+        var rss = new XDocument(
+            new XDeclaration("1.0", "utf-8", null),
+            new XElement("rss",
+                new XAttribute("version", "2.0"),
+                new XAttribute(XNamespace.Xmlns + "content", ContentNs),
+                new XElement("channel",
+                    new XElement("title", title),
+                    new XElement("link", siteUrl),
+                    new XElement("description", description),
+                    new XElement("language", "en-us"),
+                    new XElement("lastBuildDate", DateTime.UtcNow.ToString("R")),
+                    items
+                )
+            )
+        );
+
+        return rss.Declaration + Environment.NewLine + rss;
+    }
+}
+
+public sealed class TestFrontMatter
+{
+    public string Title { get; set; } = "";
+    public DateTime Date { get; set; }
+    public DateTime? Updated { get; set; }
+    public string? Author { get; set; }
+    public string? Summary { get; set; }
+    public string[]? Tags { get; set; }
+    public bool Draft { get; set; }
+    public bool Featured { get; set; }
+    public string? Series { get; set; }
+    public string? Image { get; set; }
+}
+
+public sealed class RssPostEntry
+{
+    public string Slug { get; init; } = "";
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public string Summary { get; init; } = "";
+    public string[] Tags { get; init; } = [];
+    public string AuthorName { get; init; } = "";
+    public string? AuthorEmail { get; init; }
+}
+```
+
+---
+
+## Summary of all changes
+
+**What changed and why:**
+
+| # | Feature | Files affected |
+|---|---------|---------------|
+| 1 | **Scheduled publishing** | `Program.cs` (content processor) — `--publish-before` flag, defaults to `DateTime.UtcNow`, skips future posts. `deploy.yml` — added `schedule: cron: '0 6 * * *'` for daily rebuilds at 6 AM UTC. |
+| 2 | **Draft support** | `FrontMatterParser.cs` — added `Draft` field to `FrontMatter`. `Program.cs` — skips posts with `draft: true`. |
+| 3 | **Author profiles** | New `content/authors/observer-team.yml`. `FrontMatterParser.cs` — added `ParseAuthor()` and `AuthorProfile` class. `Program.cs` — reads `--authors-dir`, writes `authors.json`. New `AuthorProfile.cs` model in Blazor. `BlogService.cs` — loads and caches authors. New `AuthorCard.razor` + `.razor.css`. `BlogPost.razor` — shows author card. All 4 blog posts changed `author: Observer Team` → `author: observer-team`. |
+| 4 | **Enhanced front matter** | `FrontMatterParser.cs` — added `Updated`, `Featured`, `Series`, `Image` fields. `PostIndexEntry` and `BlogPostMetadata` — added matching fields. `Blog.razor` — shows featured badge, reading time, series. `BlogPost.razor` — shows updated date. `Home.razor` — shows featured posts section. |
+| 5 | **Reading time** | `FrontMatterParser.cs` — added `CalculateReadingTime()`. `Program.cs` — calculates and includes in metadata. `Blog.razor` + `BlogPost.razor` — display "X min read". |
+| 6 | **Backend features** (resilient) | `IAnalyticsService` + `AnalyticsService` — added `IncrementViewAsync`, `GetViewCountAsync`, `AddReactionAsync`, `GetReactionsAsync`. New `Reactions.razor` + `.razor.css`. `BlogPost.razor` — shows view count + reactions. All gracefully return null/no-op if backend is down. |
+| 7 | **PR validation** | New `.github/workflows/pr-check.yml` — builds, runs content processor, runs tests, uploads built site as downloadable artifact for reviewers. |
+| 8 | **Fix broken Web.Tests** | `MasterDetailTests.cs` + `ResponsiveTableTests.cs` — migrated from `Bunit.TestContext` to `BunitContext` + `IDisposable`, `RenderComponent` → `Render`. `NoOpAnalyticsService.cs` — added new interface methods. |
+
+**Avatar image:** Create `src/ObserverMagazine.Web/wwwroot/images/authors/` and drop in `observer-team.jpg` (any square image, 200×200px is fine).
+
+**To add a new author:** Copy `content/authors/observer-team.yml` → `content/authors/jane-doe.yml`, fill in the fields, then use `author: jane-doe` in your blog posts' front matter.
+
+**Cloudflare Workers endpoints needed** (implement when ready — everything works without them):
+- `GET/POST /api/views/{slug}` — view counts
+- `GET/POST /api/reactions/{slug}` — reactions (POST body: `{ "type": "like" }`)
+
+17
+12
+
+
+this looks wrong 
+claude gave: 
+
+```csharp
+using Bunit;
+using Microsoft.Extensions.DependencyInjection;
+using ObserverMagazine.Web.Components;
+using ObserverMagazine.Web.Services;
+using ObserverMagazine.Web.Tests.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Components;
+
+public class ResponsiveTableTests : IDisposable
+{
+    private readonly BunitContext ctx = new();
+
+    [Fact]
+    public void ResponsiveTable_RendersWithoutProducts()
+    {
+        ctx.Services.AddSingleton<IAnalyticsService>(new NoOpAnalyticsService());
+        var cut = ctx.Render<ResponsiveTable>();
+        Assert.NotNull(cut);
+    }
+
+    public void Dispose() => ctx.Dispose();
+}
+```
+

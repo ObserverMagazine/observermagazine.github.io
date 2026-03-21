@@ -1,7 +1,7 @@
 ---
 title: Getting Started with Blazor WebAssembly
 date: 2026-02-20
-author: Observer Team
+author: observer-team
 summary: A quick tour of how Blazor WASM works and why it's a great choice for static sites.
 tags:
   - blazor

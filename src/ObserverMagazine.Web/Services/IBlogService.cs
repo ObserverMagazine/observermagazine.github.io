@@ -7,4 +7,6 @@ public interface IBlogService
     Task<BlogPostMetadata[]> GetPostsAsync();
     Task<BlogPostMetadata?> GetPostMetadataAsync(string slug);
     Task<string> GetPostHtmlAsync(string slug);
+    Task<AuthorProfile?> GetAuthorAsync(string authorId);
+    Task<AuthorProfile[]> GetAllAuthorsAsync();
 }

@@ -21,14 +21,26 @@ else
         @foreach (var post in posts)
         {
             <article class="blog-card">
+                @if (post.Featured)
+                {
+                    <span class="featured-badge">Featured</span>
+                }
                 <h2><a href="blog/@post.Slug">@post.Title</a></h2>
                 <div class="blog-meta">
                     <time datetime="@post.Date.ToString("yyyy-MM-dd")">
                         @post.Date.ToString("MMMM d, yyyy")
                     </time>
-                    @if (!string.IsNullOrEmpty(post.Author))
+                    @if (!string.IsNullOrEmpty(post.AuthorName))
                     {
-                        <span> · @post.Author</span>
+                        <span> · @post.AuthorName</span>
+                    }
+                    @if (post.ReadingTimeMinutes > 0)
+                    {
+                        <span> · @post.ReadingTimeMinutes min read</span>
+                    }
+                    @if (!string.IsNullOrEmpty(post.Series))
+                    {
+                        <span> · Series: @post.Series</span>
                     }
                 </div>
                 <p>@post.Summary</p>

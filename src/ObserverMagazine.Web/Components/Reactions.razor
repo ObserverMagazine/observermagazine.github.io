@@ -1,0 +1,55 @@
+@inject IAnalyticsService Analytics
+
+@if (reactions is not null)
+{
+    <div class="reactions-bar">
+        @foreach (var (emoji, type) in reactionTypes)
+        {
+            var count = reactions.GetValueOrDefault(type, 0);
+            <button class="reaction-btn @(userReacted == type ? "reacted" : "")"
+                    @onclick="() => React(type)"
+                    title="@type">
+                <span class="reaction-emoji">@emoji</span>
+                @if (count > 0)
+                {
+                    <span class="reaction-count">@count</span>
+                }
+            </button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private static readonly (string Emoji, string Type)[] reactionTypes =
+    [
+        ("👍", "like"),
+        ("❤️", "love"),
+        ("🎉", "celebrate"),
+        ("🤔", "thinking")
+    ];
+
+    private Dictionary<string, int>? reactions;
+    private string? userReacted;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(Slug)) return;
+
+        reactions = await Analytics.GetReactionsAsync(Slug);
+        // If backend returned null, reactions stays null and the UI is hidden
+    }
+
+    private async Task React(string type)
+    {
+        if (reactions is null || userReacted == type) return;
+
+        userReacted = type;
+        await Analytics.AddReactionAsync(Slug, type);
+
+        // Optimistic update
+        reactions[type] = reactions.GetValueOrDefault(type, 0) + 1;
+        await Analytics.TrackInteractionAsync("Reaction", $"{Slug}: {type}");
+    }
+}
