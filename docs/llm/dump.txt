@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sat Mar 21 08:54:15 AM EDT 2026
+DATE: Sat Mar 21 08:56:13 AM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -3132,17 +3132,6 @@ public sealed class TestFrontMatter
     public string? Image { get; set; }
 }
 
-public sealed class RssPostEntry
-{
-    public string Slug { get; init; } = "";
-    public string Title { get; init; } = "";
-    public DateTime Date { get; init; }
-    public string Summary { get; init; } = "";
-    public string[] Tags { get; init; } = [];
-    public string AuthorName { get; init; } = "";
-    public string? AuthorEmail { get; init; }
-}
-
 
 -------------------------------------------------------------------------------
 FILE: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
@@ -3327,7 +3316,10 @@ public sealed class RssPostEntry
     public DateTime Date { get; init; }
     public string Summary { get; init; } = "";
     public string[] Tags { get; init; } = [];
+    public string AuthorName { get; init; } = "";
+    public string? AuthorEmail { get; init; }
 }
+
 
 
 -------------------------------------------------------------------------------
