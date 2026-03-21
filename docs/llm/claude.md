@@ -5598,3 +5598,58 @@ Only **one file** changes:
 
 
 
+44
+08
+Ran into another error 
+also on github actions 
+after the change 
+Run python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
+  
+2026-03-21 02:38:10.192815703 [W:onnxruntime:Default, device_discovery.cc:132 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/VMBUS:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename ""5620e0c7-8062-4dce-aeb7-520c7ef76171"" dit not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Traceback (most recent call last):
+Found 4 markdown file(s) in content/blog
+  File "/home/runner/work/observermagazine.github.io/observermagazine.github.io/tools/generate_audio.py", line 309, in <module>
+    main()
+  File "/home/runner/work/observermagazine.github.io/observermagazine.github.io/tools/generate_audio.py", line 294, in main
+    if generate_audio(text, mp3_path, voice=args.voice, model_name=args.model):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/observermagazine.github.io/observermagazine.github.io/tools/generate_audio.py", line 206, in generate_audio
+    result = subprocess.run(
+             ^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/subprocess.py", line 548, in run
+
+Processing: 2026-01-15-welcome-to-observer-magazine.md → welcome-to-observer-magazine.mp3
+  Text: 1024 chars
+  Loading model: KittenML/kitten-tts-nano-0.8
+  Model loaded in 2.6s
+  Processing 3 text chunk(s), voice=Bella
+    Chunk 1/3: 487 chars
+Generating audio for text: Hello, World!. Welcome to Observer Magazine, a free and open-source web application built with Blazor WebAssembly on .NET ten.. This project serves two purposes: A learning resource for developers exploring Blazor WASM, modern .NET tooling (slnx, Directory.Build.props, central package management), and static site deployment on GitHub Pages. A starting point you can fork and adapt for your own projects — whether that's a personal blog, a product showcase, or a full SaaS application..
+    Chunk 2/3: 463 chars
+Generating audio for text: What's Inside A responsive, accessible UI built entirely in C# and Razor A blog engine powered by Markdown files with YAML front matter An auto-generated RSS feed Showcases of common web patterns: responsive tables, master-detail flows Structured logging ready for OpenTelemetry A full test suite using xUnit v3 and bUnit. Philosophy. Every dependency we use is truly free — no "free for non-commercial" restrictions. We will never charge money for this software.
+    Chunk 3/3: 72 chars
+Generating audio for text: The code is MIT-licensed and always will be.. Stay tuned for more posts!
+  Audio duration: 126.6s
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/subprocess.py", line 1955, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'ffmpeg'
+Error: Process completed with exit code 1.
+
+`ffmpeg` isn't installed. It just needs to be added to the existing `apt-get install` step. One file, one line change.
+
+**CHANGED FILE: `.github/workflows/deploy.yml`** (full file)The only change is on the `apt-get install` line — added `ffmpeg` alongside `espeak-ng`:
+
+```
+- sudo apt-get install -y espeak-ng
++ sudo apt-get install -y espeak-ng ffmpeg
+```
+
+The good news from that log is that KittenTTS itself is working perfectly — the model loaded in 2.6s, generated 126.6s of audio across 3 chunks for the first blog post. It just couldn't find `ffmpeg` for the WAV→MP3 conversion step.
+
+48
+09
