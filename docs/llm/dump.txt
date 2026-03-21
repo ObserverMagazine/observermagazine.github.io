@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Fri Mar 20 08:27:22 PM EDT 2026
+DATE: Fri Mar 20 08:31:57 PM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -2252,12 +2252,15 @@ using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using ObserverMagazine.Web.Components;
 using ObserverMagazine.Web.Services;
+using ObserverMagazine.Web.Tests.Services;
 using Xunit;
 
 namespace ObserverMagazine.Web.Tests.Components;
 
-public class MasterDetailTests : Bunit.TestContext
+public class MasterDetailTests : IDisposable
 {
+    private readonly BunitContext ctx = new();
+
     private const string SampleJson = """
         [
           { "name": "Alpha", "category": "Cat1", "price": 10.00, "stock": 5, "rating": 4.0, "description": "Alpha desc" },
@@ -2269,8 +2272,8 @@ public class MasterDetailTests : Bunit.TestContext
     {
         var handler = new MasterDetailFakeHandler(SampleJson);
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://test.local/") };
-        Services.AddSingleton(httpClient);
-        Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
+        ctx.Services.AddSingleton(httpClient);
+        ctx.Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
     }
 
     [Fact]
@@ -2278,7 +2281,7 @@ public class MasterDetailTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<MasterDetail>();
+        var cut = ctx.Render<MasterDetail>();
         cut.WaitForElement(".md-list ul");
 
         Assert.Contains("Select an item", cut.Markup);
@@ -2289,7 +2292,7 @@ public class MasterDetailTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<MasterDetail>();
+        var cut = ctx.Render<MasterDetail>();
         cut.WaitForElement(".md-list ul");
 
         var firstItem = cut.Find(".md-list li");
@@ -2303,7 +2306,7 @@ public class MasterDetailTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<MasterDetail>();
+        var cut = ctx.Render<MasterDetail>();
         cut.WaitForElement(".md-list ul");
 
         var items = cut.FindAll(".md-list li");
@@ -2311,6 +2314,8 @@ public class MasterDetailTests : Bunit.TestContext
 
         Assert.Contains("Bravo desc", cut.Markup);
     }
+
+    public void Dispose() => ctx.Dispose();
 }
 
 internal sealed class MasterDetailFakeHandler : HttpMessageHandler
@@ -2340,12 +2345,15 @@ using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using ObserverMagazine.Web.Components;
 using ObserverMagazine.Web.Services;
+using ObserverMagazine.Web.Tests.Services;
 using Xunit;
 
 namespace ObserverMagazine.Web.Tests.Components;
 
-public class ResponsiveTableTests : Bunit.TestContext
+public class ResponsiveTableTests : IDisposable
 {
+    private readonly BunitContext ctx = new();
+
     private const string SampleProductsJson = """
         [
           { "name": "Widget A", "category": "Tools", "price": 9.99, "stock": 100, "rating": 4.5, "description": "A widget" },
@@ -2357,8 +2365,8 @@ public class ResponsiveTableTests : Bunit.TestContext
     {
         var fakeHandler = new ComponentFakeHttpHandler(SampleProductsJson);
         var httpClient = new HttpClient(fakeHandler) { BaseAddress = new Uri("https://test.local/") };
-        Services.AddSingleton(httpClient);
-        Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
+        ctx.Services.AddSingleton(httpClient);
+        ctx.Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
     }
 
     [Fact]
@@ -2366,7 +2374,7 @@ public class ResponsiveTableTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<ResponsiveTable>();
+        var cut = ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         Assert.Contains("Widget A", cut.Markup);
@@ -2378,7 +2386,7 @@ public class ResponsiveTableTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<ResponsiveTable>();
+        var cut = ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         var filterInput = cut.Find(".rt-filter-input");
@@ -2393,7 +2401,7 @@ public class ResponsiveTableTests : Bunit.TestContext
     {
         SetupServices();
 
-        var cut = RenderComponent<ResponsiveTable>();
+        var cut = ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         var priceHeader = cut.FindAll("th.rt-sortable")[2];
@@ -2401,6 +2409,8 @@ public class ResponsiveTableTests : Bunit.TestContext
 
         Assert.Contains("▲", cut.Markup);
     }
+
+    public void Dispose() => ctx.Dispose();
 }
 
 internal sealed class ComponentFakeHttpHandler : HttpMessageHandler
@@ -2452,11 +2462,7 @@ FILE: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
 FILE: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
 -------------------------------------------------------------------------------
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
-using Bunit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using ObserverMagazine.Web.Models;
 using ObserverMagazine.Web.Services;
