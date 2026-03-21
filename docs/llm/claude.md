@@ -5498,3 +5498,103 @@ Everything else stays the same — no regressions. Program.cs, services, models,
 
 
 
+ran into an error on github action 
+Run pip install onnxruntime
+Collecting onnxruntime
+  Downloading onnxruntime-1.24.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.2 kB)
+Collecting flatbuffers (from onnxruntime)
+  Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+Collecting numpy>=1.21.6 (from onnxruntime)
+  Downloading numpy-2.4.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+Collecting packaging (from onnxruntime)
+  Downloading packaging-26.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting protobuf (from onnxruntime)
+  Downloading protobuf-7.34.1-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+Collecting sympy (from onnxruntime)
+  Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy->onnxruntime)
+  Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Downloading onnxruntime-1.24.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (17.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.2/17.2 MB 114.2 MB/s  0:00:00
+Downloading numpy-2.4.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.6/16.6 MB 161.7 MB/s  0:00:00
+Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+Downloading packaging-26.0-py3-none-any.whl (74 kB)
+Downloading protobuf-7.34.1-cp310-abi3-manylinux2014_x86_64.whl (324 kB)
+Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 245.8 MB/s  0:00:00
+Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 83.0 MB/s  0:00:00
+Installing collected packages: mpmath, flatbuffers, sympy, protobuf, packaging, numpy, onnxruntime
+
+Successfully installed flatbuffers-25.12.19 mpmath-1.3.0 numpy-2.4.3 onnxruntime-1.24.4 packaging-26.0 protobuf-7.34.1 sympy-1.14.0
+Collecting kittentts==0.8.1 (from -r tools/requirements-audio.txt (line 3))
+  Downloading https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl (22 kB)
+Collecting soundfile>=0.13.0 (from -r tools/requirements-audio.txt (line 6))
+  Downloading soundfile-0.13.1-py2.py3-none-manylinux_2_28_x86_64.whl.metadata (16 kB)
+Collecting num2words>=0.5.14 (from -r tools/requirements-audio.txt (line 9))
+  Downloading num2words-0.5.14-py3-none-any.whl.metadata (13 kB)
+Collecting spacy (from kittentts==0.8.1->-r tools/requirements-audio.txt (line 3))
+  Downloading spacy-3.8.11-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (27 kB)
+Collecting espeakng_loader (from kittentts==0.8.1->-r tools/requirements-audio.txt (line 3))
+  Downloading espeakng_loader-0.2.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+INFO: pip is looking at multiple versions of kittentts to determine which version is compatible with other requirements. This could take a while.
+ERROR: Ignored the following versions that require a different python version: 0.7.10 Requires-Python >=3.8,<3.13; 0.7.11 Requires-Python >=3.8,<3.13; 0.7.12 Requires-Python >=3.8,<3.13; 0.7.13 Requires-Python >=3.8,<3.13; 0.7.14 Requires-Python >=3.8,<3.13; 0.7.15 Requires-Python >=3.8,<3.13; 0.7.16 Requires-Python >=3.8,<3.13; 0.7.17 Requires-Python >=3.8,<3.13; 0.7.5 Requires-Python >=3.8,<3.13; 0.7.6 Requires-Python >=3.8,<3.13; 0.7.7 Requires-Python >=3.8,<3.13; 0.7.8 Requires-Python >=3.8,<3.13; 0.7.9 Requires-Python >=3.8,<3.13; 0.8.0 Requires-Python >=3.8,<3.13; 0.8.1 Requires-Python >=3.8,<3.13; 0.8.2 Requires-Python >=3.8,<3.13; 0.8.3 Requires-Python >=3.8,<3.13; 0.8.4 Requires-Python >=3.8,<3.13; 0.9.0 Requires-Python >=3.8,<3.13; 0.9.2 Requires-Python >=3.8,<3.13; 0.9.3 Requires-Python >=3.8,<3.13; 0.9.4 Requires-Python >=3.8,<3.13; 3.8.3 Requires-Python >=3.9,<3.13; 3.8.5 Requires-Python >=3.9,<3.13; 3.8.6 Requires-Python >=3.9,<3.13
+ERROR: Could not find a version that satisfies the requirement misaki>=0.9.4 (from kittentts) (from versions: 0.1.0, 0.3.0, 0.3.5, 0.3.9, 0.4.0, 0.4.4, 0.4.5, 0.4.6, 0.4.7, 0.4.8, 0.4.9, 0.5.0, 0.5.1, 0.5.2, 0.5.3, 0.5.4, 0.5.5, 0.5.6, 0.5.7, 0.5.8, 0.5.9, 0.6.0, 0.6.1, 0.6.2, 0.6.3, 0.6.4, 0.6.5, 0.6.6, 0.6.7, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4)
+ERROR: No matching distribution found for misaki>=0.9.4
+Error: Process completed with exit code 1.
+
+33
+06
+
+The error is clear: KittenTTS 0.8.1 requires `Python >=3.8,<3.13`, and its dependency `misaki>=0.9.4` also has no build for Python 3.13. The fix is simple — use Python 3.12 instead.
+
+Only **one file** changes:
+
+**CHANGED FILE: `.github/workflows/deploy.yml`** (full file)That's the only change. The root cause from the error log: KittenTTS 0.8.1 declares `Requires-Python >=3.8,<3.13`, and its dependency `misaki>=0.9.4` has no wheel for Python 3.13 either. Python 3.12 is the latest version within that constraint.
+
+44
+08
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
