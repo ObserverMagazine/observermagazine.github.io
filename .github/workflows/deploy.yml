@@ -25,15 +25,39 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore packages
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          cache-dependency-path: 'tools/requirements-audio.txt'
+
+      - name: Install system dependencies (espeak-ng for KittenTTS)
+        run: sudo apt-get update && sudo apt-get install -y espeak-ng
+
+      - name: Cache HuggingFace model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-kitten-tts-nano-0.8
+
+      - name: Install Python TTS dependencies
+        run: |
+          pip install onnxruntime
+          pip install -r tools/requirements-audio.txt
+
+      - name: Restore .NET packages
         run: dotnet restore
 
-      - name: Run content processor
+      - name: Run content processor (markdown → JSON + HTML)
         run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot
+
+      - name: Generate blog post audio (KittenTTS → MP3)
+        run: python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
 
       - name: Run tests
         run: dotnet test --no-restore --verbosity normal

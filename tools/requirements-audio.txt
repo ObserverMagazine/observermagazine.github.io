@@ -1,0 +1,9 @@
+# KittenTTS 0.8.1 — Apache 2.0 license
+# Install from official GitHub release wheel
+https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl
+
+# Audio file I/O
+soundfile>=0.13.0
+
+# Number-to-words (KittenTTS number pronunciation bug workaround)
+num2words>=0.5.14

@@ -49,4 +49,14 @@ TestResults/
 
 ## Generated blog data (created by ContentProcessor at build time)
 src/ObserverMagazine.Web/wwwroot/blog-data/
+
+## Generated RSS feed
 src/ObserverMagazine.Web/wwwroot/feed.xml
+
+## Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/

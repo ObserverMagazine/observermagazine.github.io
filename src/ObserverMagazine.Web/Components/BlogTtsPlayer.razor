@@ -1,0 +1,74 @@
+@inject IAnalyticsService Analytics
+@inject ILogger<BlogTtsPlayer> Logger
+@inject HttpClient Http
+
+@if (audioAvailable)
+{
+    <div class="tts-player">
+        <span class="tts-icon">🔊</span>
+        <span class="tts-label">Listen to this post</span>
+        <audio controls preload="none" @ref="audioElement"
+               src="blog-data/@(Slug).mp3"
+               @onplay="OnPlay"
+               @onpause="OnPause"
+               @onended="OnEnded"
+               @onerror="OnError">
+            Your browser does not support audio playback.
+        </audio>
+    </div>
+}
+
+@code {
+    /// <summary>Blog post slug — matches the MP3 filename in blog-data/</summary>
+    [Parameter, EditorRequired]
+    public string Slug { get; set; } = "";
+
+    private ElementReference audioElement;
+    private bool audioAvailable;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Check if the MP3 file exists (HEAD request, no body download)
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Head, $"blog-data/{Slug}.mp3");
+            var response = await Http.SendAsync(request);
+            audioAvailable = response.IsSuccessStatusCode;
+
+            if (!audioAvailable)
+            {
+                Logger.LogDebug("No audio file found for {Slug}", Slug);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Failed to check audio availability for {Slug}", Slug);
+            audioAvailable = false;
+        }
+    }
+
+    private async Task OnPlay()
+    {
+        Logger.LogInformation("TTS play: {Slug}", Slug);
+        await Analytics.TrackInteractionAsync("TTS.Play", Slug);
+    }
+
+    private async Task OnPause()
+    {
+        Logger.LogInformation("TTS pause: {Slug}", Slug);
+        await Analytics.TrackInteractionAsync("TTS.Pause", Slug);
+    }
+
+    private async Task OnEnded()
+    {
+        Logger.LogInformation("TTS finished: {Slug}", Slug);
+        await Analytics.TrackInteractionAsync("TTS.Finished", Slug);
+    }
+
+    private async Task OnError()
+    {
+        Logger.LogWarning("TTS audio error: {Slug}", Slug);
+        await Analytics.TrackInteractionAsync("TTS.Error", Slug);
+        audioAvailable = false;
+    }
+}
