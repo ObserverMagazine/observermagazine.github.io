@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sun Mar 22 10:23:05 AM EDT 2026
+DATE: Sun Mar 22 10:32:46 AM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -6594,7 +6594,9 @@ internal sealed class ComponentFakeHttpHandler : HttpMessageHandler
 FILE: tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs
 -------------------------------------------------------------------------------
 using System.Text.Json;
+using ObserverMagazine.Web.Models;
 using ObserverMagazine.Web.Services;
+using Xunit;
 using static ObserverMagazine.Web.Pages.Showcase;
 
 namespace ObserverMagazine.Web.Tests.Components;

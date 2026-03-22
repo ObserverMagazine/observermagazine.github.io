@@ -15198,3 +15198,84 @@ These don't match — `"Discontinued"` is generated but not in the expected set,
 
 
 
+These tests are still failing 
+kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+
+real	0m7.064s
+user	0m12.220s
+sys	0m0.811s
+Restore complete (0.5s)
+
+Build succeeded in 0.6s
+
+real	0m0.726s
+user	0m0.764s
+sys	0m0.147s
+Content directory: content/blog
+Output directory:  src/ObserverMagazine.Web/wwwroot
+Authors directory: content/authors
+Publish before:    2026-03-22 14:32:38 UTC
+Found 2 author profile(s)
+  Loaded author: observer-team (Observer Team)
+  Loaded author: kushal (kushal)
+Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (2 authors)
+Found 7 markdown files
+Processing: 2026-01-15-welcome-to-observer-magazine.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
+Processing: 2026-02-20-getting-started-with-blazor-wasm.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
+Processing: 2026-03-10-responsive-design-patterns.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
+Processing: 2026-03-20-hello-world.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
+Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
+  WARNING: No author profile found for 'Observer Team'
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
+Processing: 2099-01-01-draft-template.md
+  SKIPPED: Draft post 'Your Post Title Here'
+Processing: 2027-01-01-happy-new-year-2027.md
+  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-03-22)
+Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 1 drafts skipped, 1 future posts skipped)
+Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
+Content processing complete.
+Restore complete (0.5s)
+  ObserverMagazine.Integration.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
+[xUnit.net 00:00:00.15]   Discovering: ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.30]   Discovered:  ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.45]   Starting:    ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.67]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
+  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.2s)
+  ObserverMagazine.Web net10.0 browser-wasm succeeded (1.5s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
+  ObserverMagazine.Web.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
+[xUnit.net 00:00:00.15]   Discovering: ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.32]   Discovered:  ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.47]   Starting:    ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.62]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_StatusesAreValid [FAIL]
+[xUnit.net 00:00:00.62]       Assert.Contains() Failure: Item not found in set
+[xUnit.net 00:00:00.62]       Set:       ["Active", "Draft", "Archived", "Out of Stock"]
+[xUnit.net 00:00:00.62]       Not found: "Discontinued"
+[xUnit.net 00:00:00.62]       Stack Trace:
+[xUnit.net 00:00:00.62]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(117,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_StatusesAreValid()
+[xUnit.net 00:00:00.62]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.62]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.92]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
+  ObserverMagazine.Web.Tests test net10.0 failed with 1 error(s) (1.5s)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(117): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_StatusesAreValid (3ms): Error Message: Assert.Contains() Failure: Item not found in set
+      Set:       ["Active", "Draft", "Archived", "Out of Stock"]
+      Not found: "Discontinued"
+      Stack Trace:
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_StatusesAreValid() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTe
+      sts.cs:line 117
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Test summary: total: 81, failed: 1, succeeded: 80, skipped: 0, duration: 3.0s
+Build failed with 1 error(s) in 3.9s
+
+real	0m4.080s
+user	0m2.939s
+sys	0m0.398s
+Restore complete (0.5s)
