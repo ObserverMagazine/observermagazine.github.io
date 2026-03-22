@@ -14681,3 +14681,120 @@ Build failed with 10 error(s) in 5.9s
 31
 20
 
+The bug is in `CreateDeterministicGuid` — the multiplications `index * 2654435761` and `seed * 2246822519` overflow `int` and become `long`, so `BitConverter.GetBytes` returns 8 bytes instead of 4, which overflows the 16-byte array.
+
+Replace the `CreateDeterministicGuid` method in `src/ObserverMagazine.Web/Services/ProductDataGenerator.cs`. Here's the fixed method — just cast to `int`:
+
+```csharp
+    private static Guid CreateDeterministicGuid(int seed, int index)
+    {
+        var bytes = new byte[16];
+        BitConverter.GetBytes(seed).CopyTo(bytes, 0);
+        BitConverter.GetBytes(index).CopyTo(bytes, 4);
+        BitConverter.GetBytes(seed ^ unchecked((int)(index * 2654435761u))).CopyTo(bytes, 8);
+        BitConverter.GetBytes(index ^ unchecked((int)(seed * 2246822519u))).CopyTo(bytes, 12);
+        return new Guid(bytes);
+    }
+```
+
+The two changed lines use `unchecked((int)(...))` to keep the result as 4 bytes. The `u` suffix makes the literal an unsigned int so the multiplication stays 32-bit, and the `unchecked` cast to `int` avoids overflow exceptions with `TreatWarningsAsErrors`.
+
+37
+22
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

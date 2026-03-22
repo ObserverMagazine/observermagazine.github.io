@@ -130,13 +130,13 @@ public static class ProductDataGenerator
     /// Creates a deterministic GUID from a seed and index so we get the same IDs every time.
     /// </summary>
     private static Guid CreateDeterministicGuid(int seed, int index)
+private static Guid CreateDeterministicGuid(int seed, int index)
     {
         var bytes = new byte[16];
         BitConverter.GetBytes(seed).CopyTo(bytes, 0);
         BitConverter.GetBytes(index).CopyTo(bytes, 4);
-        // Fill rest with a hash-like pattern
-        BitConverter.GetBytes(seed ^ (index * 2654435761)).CopyTo(bytes, 8);
-        BitConverter.GetBytes(index ^ (seed * 2246822519)).CopyTo(bytes, 12);
+        BitConverter.GetBytes(seed ^ unchecked((int)(index * 2654435761u))).CopyTo(bytes, 8);
+        BitConverter.GetBytes(index ^ unchecked((int)(seed * 2246822519u))).CopyTo(bytes, 12);
         return new Guid(bytes);
     }
 }
