@@ -29,6 +29,6 @@ This project serves two purposes:
 
 ## Philosophy
 
-Every dependency we use is truly free — no "free for non-commercial" restrictions. We will never charge money for this software. The code is MIT-licensed and always will be.
+Every dependency we use is truly free — no "free for non-commercial" restrictions. We will never charge money for this software. The code is AGPLv3-licensed and always will be.
 
 Stay tuned for more posts!
