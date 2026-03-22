@@ -1,395 +1,19 @@
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m7.430s
-user	0m9.941s
-sys	0m0.996s
+real	0m7.682s
+user	0m11.659s
+sys	0m1.014s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
 
-real	0m0.765s
-user	0m0.818s
-sys	0m0.170s
+real	0m0.713s
+user	0m0.756s
+sys	0m0.156s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-03-22 11:27:37 UTC
-Authors directory 'content/authors' does not exist. No author profiles loaded.
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (0 authors)
-Found 5 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  WARNING: No author profile found for 'Observer Team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 0 drafts skipped, 0 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.4s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.15]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.31]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.48]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.73]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.3s)
-  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.3s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
-  ObserverMagazine.Web.Tests net10.0 succeeded (0.3s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.30]   Discovered:  ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.47]   Starting:    ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.88]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
-  ObserverMagazine.Web.Tests test net10.0 succeeded (1.4s)
-
-Test summary: total: 33, failed: 0, succeeded: 33, skipped: 0, duration: 4.6s
-Build succeeded in 5.7s
-
-real	0m5.862s
-user	0m3.115s
-sys	0m0.448s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.5         10.0.5  
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
-   > Microsoft.Extensions.Http                              10.0.5         10.0.5  
-   > Microsoft.Extensions.Logging.Configuration             10.0.5         10.0.5  
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
-
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > Markdig                        1.1.1       1.1.1   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-   > YamlDotNet                     16.3.0      16.3.0  
-
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > bunit                          2.6.2       2.6.2   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.1.1       1.1.1   
-   > YamlDotNet           16.3.0      16.3.0  
-
-(A) : Auto-referenced package.
-
-real	0m1.523s
-user	0m1.478s
-sys	0m0.346s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-The following sources were used:
-   https://api.nuget.org/v3/index.json
-
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
-
-real	0m2.834s
-user	0m2.069s
-sys	0m0.393s
-🚀 Starting export of git-tracked files...
-📄 Adding: .github/workflows/deploy.yml
-📄 Adding: .github/workflows/pr-check.yml
-📄 Adding: .gitignore
-⏩ Skipping binary: .nojekyll
-📄 Adding: Directory.Build.props
-📄 Adding: Directory.Packages.props
-📄 Adding: ObserverMagazine.slnx
-📄 Adding: README.md
-📄 Adding: content/blog/2026-01-15-welcome-to-observer-magazine.md
-📄 Adding: content/blog/2026-02-20-getting-started-with-blazor-wasm.md
-📄 Adding: content/blog/2026-03-10-responsive-design-patterns.md
-📄 Adding: content/blog/2026-03-20-hello-world.md
-📄 Adding: content/blog/2026-03-21-aspnet-lifecycle-deep-dive.md
-📄 Adding: global.json
-📄 Adding: src/ObserverMagazine.Web/App.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-📄 Adding: src/ObserverMagazine.Web/Layout/MainLayout.razor
-📄 Adding: src/ObserverMagazine.Web/Layout/NavMenu.razor
-📄 Adding: src/ObserverMagazine.Web/Models/AuthorProfile.cs
-📄 Adding: src/ObserverMagazine.Web/Models/BlogPostMetadata.cs
-📄 Adding: src/ObserverMagazine.Web/Models/Product.cs
-📄 Adding: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor
-📄 Adding: src/ObserverMagazine.Web/Program.cs
-📄 Adding: src/ObserverMagazine.Web/Services/AnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/BlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IAnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IBlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/TelemetryService.cs
-📄 Adding: src/ObserverMagazine.Web/_Imports.razor
-📄 Adding: src/ObserverMagazine.Web/wwwroot/404.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/css/app.css
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.png
-📄 Adding: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.txt
-📄 Adding: src/ObserverMagazine.Web/wwwroot/index.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/sample-data/products.json
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Integration.Tests/RssGeneratorTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
-📄 Adding: tools/ObserverMagazine.ContentProcessor/Program.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
-📄 Adding: tools/generate_audio.py
-📄 Adding: tools/requirements-audio.txt
-
-✅ Export complete! 62 files written to docs/llm/dump.txt
-
-real	0m0.391s
-user	0m0.184s
-sys	0m0.226s
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
-
-real	0m6.642s
-user	0m9.171s
-sys	0m0.901s
-Restore complete (0.5s)
-
-Build succeeded in 0.7s
-
-real	0m0.800s
-user	0m0.862s
-sys	0m0.153s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-03-22 11:56:49 UTC
-Authors directory 'content/authors' does not exist. No author profiles loaded.
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (0 authors)
-Found 5 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  WARNING: No author profile found for 'observer-team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  WARNING: No author profile found for 'Observer Team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 0 drafts skipped, 0 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.30]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.45]   Starting:    ObserverMagazine.Integration.Tests
-  ObserverMagazine.Web net10.0 browser-wasm succeeded (1.1s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
-[xUnit.net 00:00:00.68]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Web.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.2s)
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.12]   Discovering: ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.27]   Discovered:  ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.41]   Starting:    ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.81]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
-  ObserverMagazine.Web.Tests test net10.0 succeeded (1.3s)
-
-Test summary: total: 33, failed: 0, succeeded: 33, skipped: 0, duration: 2.4s
-Build succeeded in 3.3s
-
-real	0m3.454s
-user	0m2.099s
-sys	0m0.392s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.5         10.0.5  
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
-   > Microsoft.Extensions.Http                              10.0.5         10.0.5  
-   > Microsoft.Extensions.Logging.Configuration             10.0.5         10.0.5  
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
-
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > Markdig                        1.1.1       1.1.1   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-   > YamlDotNet                     16.3.0      16.3.0  
-
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > bunit                          2.6.2       2.6.2   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.1.1       1.1.1   
-   > YamlDotNet           16.3.0      16.3.0  
-
-(A) : Auto-referenced package.
-
-real	0m1.506s
-user	0m1.485s
-sys	0m0.332s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-The following sources were used:
-   https://api.nuget.org/v3/index.json
-
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
-
-real	0m1.733s
-user	0m1.709s
-sys	0m0.339s
-🚀 Starting export of git-tracked files...
-📄 Adding: .github/workflows/deploy.yml
-📄 Adding: .github/workflows/pr-check.yml
-📄 Adding: .gitignore
-⏩ Skipping binary: .nojekyll
-📄 Adding: Directory.Build.props
-📄 Adding: Directory.Packages.props
-📄 Adding: ObserverMagazine.slnx
-📄 Adding: README.md
-📄 Adding: content/blog/2026-01-15-welcome-to-observer-magazine.md
-📄 Adding: content/blog/2026-02-20-getting-started-with-blazor-wasm.md
-📄 Adding: content/blog/2026-03-10-responsive-design-patterns.md
-📄 Adding: content/blog/2026-03-20-hello-world.md
-📄 Adding: content/blog/2026-03-21-aspnet-lifecycle-deep-dive.md
-📄 Adding: global.json
-📄 Adding: src/ObserverMagazine.Web/App.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-📄 Adding: src/ObserverMagazine.Web/Layout/MainLayout.razor
-📄 Adding: src/ObserverMagazine.Web/Layout/NavMenu.razor
-📄 Adding: src/ObserverMagazine.Web/Models/AuthorProfile.cs
-📄 Adding: src/ObserverMagazine.Web/Models/BlogPostMetadata.cs
-📄 Adding: src/ObserverMagazine.Web/Models/Product.cs
-📄 Adding: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor
-📄 Adding: src/ObserverMagazine.Web/Program.cs
-📄 Adding: src/ObserverMagazine.Web/Services/AnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/BlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IAnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IBlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/TelemetryService.cs
-📄 Adding: src/ObserverMagazine.Web/_Imports.razor
-📄 Adding: src/ObserverMagazine.Web/wwwroot/404.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/css/app.css
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.png
-📄 Adding: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.txt
-📄 Adding: src/ObserverMagazine.Web/wwwroot/index.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/sample-data/products.json
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Integration.Tests/RssGeneratorTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
-📄 Adding: tools/ObserverMagazine.ContentProcessor/Program.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
-📄 Adding: tools/generate_audio.py
-📄 Adding: tools/requirements-audio.txt
-
-✅ Export complete! 62 files written to docs/llm/dump.txt
-
-real	0m0.339s
-user	0m0.180s
-sys	0m0.217s
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
-
-real	0m7.968s
-user	0m11.764s
-sys	0m1.022s
-Restore complete (0.5s)
-
-Build succeeded in 0.7s
-
-real	0m0.822s
-user	0m0.850s
-sys	0m0.164s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-03-22 12:41:04 UTC
+Publish before:    2026-03-22 14:22:56 UTC
 Found 2 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -418,25 +42,115 @@ Restore complete (0.5s)
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
 [xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Integration.Tests
 [xUnit.net 00:00:00.30]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.44]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.68]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
+[xUnit.net 00:00:00.47]   Starting:    ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.70]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
   ObserverMagazine.Integration.Tests test net10.0 succeeded (1.2s)
-  ObserverMagazine.Web net10.0 browser-wasm failed with 8 error(s) (2.4s)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Pages/Showcase.razor(60,86): error CS1525: Invalid expression term ')'
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/obj/Debug/net10.0/Microsoft.CodeAnalysis.Razor.Compiler/Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/Pages_Showcase_razor.g.cs(439,15): error CS1026: ) expected
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Pages/Showcase.razor(67,89): error CS1525: Invalid expression term ')'
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/obj/Debug/net10.0/Microsoft.CodeAnalysis.Razor.Compiler/Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/Pages_Showcase_razor.g.cs(476,15): error CS1026: ) expected
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Pages/Showcase.razor(70,89): error CS1525: Invalid expression term ')'
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/obj/Debug/net10.0/Microsoft.CodeAnalysis.Razor.Compiler/Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/Pages_Showcase_razor.g.cs(501,15): error CS1026: ) expected
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Pages/Showcase.razor(75,112): error CS1525: Invalid expression term ')'
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/obj/Debug/net10.0/Microsoft.CodeAnalysis.Razor.Compiler/Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator/Pages_Showcase_razor.g.cs(534,15): error CS1026: ) expected
+  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.6s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
+  ObserverMagazine.Web.Tests net10.0 failed with 97 error(s) (0.3s)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(303,25): error CS0246: The type or namespace name 'CatalogProduct' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(13,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(13,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(136,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(136,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(200,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(200,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(145,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(145,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(241,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(20,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(241,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(20,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(352,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(352,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(157,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(157,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(27,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(257,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(27,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(257,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(168,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(168,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(360,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(360,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(181,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(181,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(270,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(35,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(270,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(35,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(369,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(369,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(377,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(377,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(43,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(43,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(283,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(283,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(385,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(385,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(62,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(62,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(393,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(393,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(403,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(403,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(70,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(70,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(411,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(411,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(78,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(78,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(419,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(419,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(429,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(429,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(93,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(93,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(437,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(437,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(445,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(445,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(108,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(108,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(455,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(455,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(467,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(467,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(119,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(119,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(477,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(477,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(486,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(486,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(495,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(495,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(504,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(504,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(513,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(513,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(523,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(523,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(532,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(532,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(541,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(541,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(550,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(550,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(559,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(559,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(568,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(568,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(579,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(579,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(589,6): error CS0246: The type or namespace name 'FactAttribute' could not be found (are you missing a using directive or an assembly reference?)
+    /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(589,6): error CS0246: The type or namespace name 'Fact' could not be found (are you missing a using directive or an assembly reference?)
 
 Test summary: total: 17, failed: 0, succeeded: 17, skipped: 0, duration: 1.2s
-Build failed with 8 error(s) in 3.2s
+Build failed with 97 error(s) in 4.6s
 
-real	0m3.353s
-user	0m1.562s
-sys	0m0.277s
+real	0m4.765s
+user	0m2.205s
+sys	0m0.420s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -476,933 +190,8 @@ Project 'ObserverMagazine.ContentProcessor' has the following package references
 
 (A) : Auto-referenced package.
 
-real	0m1.552s
-user	0m1.516s
-sys	0m0.333s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-The following sources were used:
-   https://api.nuget.org/v3/index.json
-
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
-
-real	0m2.730s
-user	0m2.116s
-sys	0m0.407s
-🚀 Starting export of git-tracked files...
-📄 Adding: .github/workflows/deploy.yml
-📄 Adding: .github/workflows/pr-check.yml
-📄 Adding: .gitignore
-⏩ Skipping binary: .nojekyll
-📄 Adding: Directory.Build.props
-📄 Adding: Directory.Packages.props
-📄 Adding: ObserverMagazine.slnx
-📄 Adding: README.md
-📄 Adding: content/authors/kushal.yml
-📄 Adding: content/authors/observer-team.yml
-📄 Adding: content/blog/2026-01-15-welcome-to-observer-magazine.md
-📄 Adding: content/blog/2026-02-20-getting-started-with-blazor-wasm.md
-📄 Adding: content/blog/2026-03-10-responsive-design-patterns.md
-📄 Adding: content/blog/2026-03-20-hello-world.md
-📄 Adding: content/blog/2026-03-21-aspnet-lifecycle-deep-dive.md
-📄 Adding: content/blog/2027-01-01-happy-new-year-2027.md
-📄 Adding: content/blog/2099-01-01-draft-template.md
-📄 Adding: global.json
-📄 Adding: src/ObserverMagazine.Web/App.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-📄 Adding: src/ObserverMagazine.Web/Layout/MainLayout.razor
-📄 Adding: src/ObserverMagazine.Web/Layout/NavMenu.razor
-📄 Adding: src/ObserverMagazine.Web/Models/AuthorProfile.cs
-📄 Adding: src/ObserverMagazine.Web/Models/BlogPostMetadata.cs
-📄 Adding: src/ObserverMagazine.Web/Models/CatalogProduct.cs
-📄 Adding: src/ObserverMagazine.Web/Models/Product.cs
-📄 Adding: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Program.cs
-📄 Adding: src/ObserverMagazine.Web/Services/AnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/BlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IAnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IBlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/ProductDataGenerator.cs
-📄 Adding: src/ObserverMagazine.Web/Services/TelemetryService.cs
-📄 Adding: src/ObserverMagazine.Web/_Imports.razor
-📄 Adding: src/ObserverMagazine.Web/wwwroot/404.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/css/app.css
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/kushal.png
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.png
-📄 Adding: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.txt
-📄 Adding: src/ObserverMagazine.Web/wwwroot/index.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/sample-data/products.json
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Integration.Tests/RssGeneratorTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
-📄 Adding: tools/ObserverMagazine.ContentProcessor/Program.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
-📄 Adding: tools/generate_audio.py
-📄 Adding: tools/requirements-audio.txt
-
-✅ Export complete! 76 files written to docs/llm/dump.txt
-
-real	0m0.422s
-user	0m0.198s
-sys	0m0.286s
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/ts/cloudflare/my-api/; time bash export.sh; time yarn install; time yarn outdated; time yarn deploy;
-🚀 Starting export of git-tracked files...
-📄 Adding: .gitignore
-📄 Adding: README.md
-⏩ Skipping binary: docs/llm/.gitkeep
-📄 Adding: docs/llm/claude.md
-📄 Adding: docs/llm/commands.txt
-📄 Adding: docs/llm/gemini.md
-📄 Adding: docs/llm/grok.md
-📄 Adding: docs/llm/newpage.md
-📄 Adding: docs/llm/output.txt
-📄 Adding: package.json
-📄 Adding: schema.sql
-📄 Adding: src/index.ts
-📄 Adding: src/uuid.ts
-📄 Adding: tsconfig.json
-📄 Adding: worker-configuration.d.ts
-📄 Adding: wrangler.jsonc
-📄 Adding: yarn.lock
-
-✅ Export complete! 16 files written to docs/llm/dump.txt
-
-real	0m0.107s
-user	0m0.051s
-sys	0m0.064s
-yarn install v1.22.22
-warning package.json: No license field
-warning my-api: No license field
-[1/4] Resolving packages...
-success Already up-to-date.
-Done in 0.09s.
-
-real	0m0.566s
-user	0m0.203s
-sys	0m0.105s
-yarn outdated v1.22.22
-warning package.json: No license field
-warning my-api: No license field
-Done in 0.52s.
-
-real	0m0.647s
-user	0m0.389s
-sys	0m0.184s
-yarn run v1.22.22
-warning package.json: No license field
-$ wrangler deploy --minify
-
- ⛅️ wrangler 4.76.0
-───────────────────
-Total Upload: 711.11 KiB / gzip: 169.26 KiB
-Worker Startup Time: 28 ms
-Your Worker has access to the following bindings:
-Binding           Resource         
-env.DB (kus)      D1 Database      
-
-Uploaded my-api (3.99 sec)
-Deployed my-api triggers (1.37 sec)
-  https://my-api.2w7sp317.workers.dev
-Current Version ID: 46eaaf3b-575b-4f16-b796-0da9bb769768
-Done in 8.08s.
-
-real	0m8.194s
-user	0m0.767s
-sys	0m0.308s
-kushal@fedora:~/src/ts/cloudflare/my-api$ time npx wrangler d1 execute kus --remote --file=./migrations-2026-03-22-0001.sql
-
- ⛅️ wrangler 4.76.0
-───────────────────
-Resource location: remote 
-
-✔ ⚠️ This process may take some time, during which your D1 database will be unavailable to serve queries.
-  Ok to proceed? … yes
-🌀 Executing on remote database kus (ad214355-75f7-42ad-8dba-6526a6ffc0d4):
-🌀 To execute on your local development database, remove the --remote flag from your wrangler command.
-Note: if the execution fails to complete, your DB will return to its original state and you can safely retry.
-├ 🌀 Uploading ad214355-75f7-42ad-8dba-6526a6ffc0d4.5a53bbbd90871c1e.sql
-│ 🌀 Uploading complete.
-│
-🌀 Starting import...
-🌀 Processed 4 queries.
-🚣 Executed 4 queries in 4.08ms (5 rows read, 10 rows written)
-   Database is currently at bookmark 00000383-00000006-00005036-3112ad1e4687f08bfd32a78262e6c905.
-┌────────────────────────┬───────────┬──────────────┬────────────────────┐
-│ Total queries executed │ Rows read │ Rows written │ Database size (MB) │
-├────────────────────────┼───────────┼──────────────┼────────────────────┤
-│ 4                      │ 5         │ 10           │ 1.12               │
-└────────────────────────┴───────────┴──────────────┴────────────────────┘
-npm notice
-npm notice New minor version of npm available! 11.6.2 -> 11.12.0
-npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.0
-npm notice To update run: npm install -g npm@11.12.0
-npm notice
-
-real	0m5.349s
-user	0m0.803s
-sys	0m0.251s
-kushal@fedora:~/src/ts/cloudflare/my-api$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
-
-real	0m7.691s
-user	0m11.434s
-sys	0m0.948s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-real	0m0.776s
-user	0m0.833s
-sys	0m0.143s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-03-22 12:58:49 UTC
-Found 2 author profile(s)
-  Loaded author: observer-team (Observer Team)
-  Loaded author: kushal (kushal)
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (2 authors)
-Found 7 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  WARNING: No author profile found for 'Observer Team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Processing: 2099-01-01-draft-template.md
-  SKIPPED: Draft post 'Your Post Title Here'
-Processing: 2027-01-01-happy-new-year-2027.md
-  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-03-22)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 1 drafts skipped, 1 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.4s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.29]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.45]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.67]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.2s)
-  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.4s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
-  ObserverMagazine.Web.Tests net10.0 succeeded (0.3s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.29]   Discovered:  ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.44]   Starting:    ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.54]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData [FAIL]
-[xUnit.net 00:00:00.54]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.54]       Stack Trace:
-[xUnit.net 00:00:00.54]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(106,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData()
-[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic [FAIL]
-[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(26,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic()
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice [FAIL]
-[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(86,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice()
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice [FAIL]
-[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(95,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice()
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories [FAIL]
-[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(70,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories()
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000 [FAIL]
-[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(19,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000()
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique [FAIL]
-[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.58]       Stack Trace:
-[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(62,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique()
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields [FAIL]
-[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.58]       Stack Trace:
-[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(40,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields()
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount [FAIL]
-[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.58]       Stack Trace:
-[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(12,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount()
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands [FAIL]
-[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-[xUnit.net 00:00:00.58]       Stack Trace:
-[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
-[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(78,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands()
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.87]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
-  ObserverMagazine.Web.Tests test net10.0 failed with 10 error(s) (1.4s)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData (21ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the
-       destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Com
-      ponents/ShowcaseTests.cs:line 106
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination index
-      , length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTes
-      ts.cs:line 26
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the de
-      stination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Compone
-      nts/ShowcaseTests.cs:line 86
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the des
-      tination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Componen
-      ts/ShowcaseTests.cs:line 95
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destinatio
-      n index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Show
-      caseTests.cs:line 70
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000 (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination in
-      dex, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showcase
-      Tests.cs:line 19
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination index, 
-      length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests
-      .cs:line 62
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the des
-      tination index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Componen
-      ts/ShowcaseTests.cs:line 40
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination
-       index, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showc
-      aseTests.cs:line 12
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
-      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination in
-      dex, length, and the array's lower bounds. (Parameter 'destinationArray')
-      Stack Trace:
-         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
-         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
-      enerator.cs:line 139
-         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
-      e 105
-         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showcase
-      Tests.cs:line 78
-         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
-         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-
-Test summary: total: 43, failed: 10, succeeded: 33, skipped: 0, duration: 4.8s
-Build failed with 10 error(s) in 5.9s
-
-real	0m6.073s
-user	0m2.988s
-sys	0m0.465s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.5         10.0.5  
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
-   > Microsoft.Extensions.Http                              10.0.5         10.0.5  
-   > Microsoft.Extensions.Logging.Configuration             10.0.5         10.0.5  
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
-
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > Markdig                        1.1.1       1.1.1   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-   > YamlDotNet                     16.3.0      16.3.0  
-
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > bunit                          2.6.2       2.6.2   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.1.1       1.1.1   
-   > YamlDotNet           16.3.0      16.3.0  
-
-(A) : Auto-referenced package.
-
-real	0m1.514s
-user	0m1.493s
-sys	0m0.338s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-The following sources were used:
-   https://api.nuget.org/v3/index.json
-
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
-
-real	0m1.692s
-user	0m1.644s
-sys	0m0.361s
-🚀 Starting export of git-tracked files...
-📄 Adding: .github/workflows/deploy.yml
-📄 Adding: .github/workflows/pr-check.yml
-📄 Adding: .gitignore
-⏩ Skipping binary: .nojekyll
-📄 Adding: Directory.Build.props
-📄 Adding: Directory.Packages.props
-📄 Adding: ObserverMagazine.slnx
-📄 Adding: README.md
-📄 Adding: content/authors/kushal.yml
-📄 Adding: content/authors/observer-team.yml
-📄 Adding: content/blog/2026-01-15-welcome-to-observer-magazine.md
-📄 Adding: content/blog/2026-02-20-getting-started-with-blazor-wasm.md
-📄 Adding: content/blog/2026-03-10-responsive-design-patterns.md
-📄 Adding: content/blog/2026-03-20-hello-world.md
-📄 Adding: content/blog/2026-03-21-aspnet-lifecycle-deep-dive.md
-📄 Adding: content/blog/2027-01-01-happy-new-year-2027.md
-📄 Adding: content/blog/2099-01-01-draft-template.md
-📄 Adding: global.json
-📄 Adding: src/ObserverMagazine.Web/App.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-📄 Adding: src/ObserverMagazine.Web/Layout/MainLayout.razor
-📄 Adding: src/ObserverMagazine.Web/Layout/NavMenu.razor
-📄 Adding: src/ObserverMagazine.Web/Models/AuthorProfile.cs
-📄 Adding: src/ObserverMagazine.Web/Models/BlogPostMetadata.cs
-📄 Adding: src/ObserverMagazine.Web/Models/CatalogProduct.cs
-📄 Adding: src/ObserverMagazine.Web/Models/Product.cs
-📄 Adding: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Program.cs
-📄 Adding: src/ObserverMagazine.Web/Services/AnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/BlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IAnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IBlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/ProductDataGenerator.cs
-📄 Adding: src/ObserverMagazine.Web/Services/TelemetryService.cs
-📄 Adding: src/ObserverMagazine.Web/_Imports.razor
-📄 Adding: src/ObserverMagazine.Web/wwwroot/404.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/css/app.css
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/kushal.png
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.png
-📄 Adding: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.txt
-📄 Adding: src/ObserverMagazine.Web/wwwroot/index.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/sample-data/products.json
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Integration.Tests/RssGeneratorTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
-📄 Adding: tools/ObserverMagazine.ContentProcessor/Program.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
-📄 Adding: tools/generate_audio.py
-📄 Adding: tools/requirements-audio.txt
-
-✅ Export complete! 76 files written to docs/llm/dump.txt
-
-real	0m0.423s
-user	0m0.222s
-sys	0m0.256s
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
-
-real	0m6.599s
-user	0m10.494s
-sys	0m0.832s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-real	0m0.714s
-user	0m0.768s
-sys	0m0.135s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-03-22 13:11:24 UTC
-Found 2 author profile(s)
-  Loaded author: observer-team (Observer Team)
-  Loaded author: kushal (kushal)
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (2 authors)
-Found 7 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  WARNING: No author profile found for 'Observer Team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Processing: 2099-01-01-draft-template.md
-  SKIPPED: Draft post 'Your Post Title Here'
-Processing: 2027-01-01-happy-new-year-2027.md
-  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-03-22)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 1 drafts skipped, 1 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
-  ObserverMagazine.Web net10.0 browser-wasm failed with 1 error(s) (0.3s)
-    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(132,69): error CS1002: ; expected
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.13]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.28]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.42]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.62]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.1s)
-
-Test summary: total: 17, failed: 0, succeeded: 17, skipped: 0, duration: 1.1s
-Build failed with 1 error(s) in 2.0s
-
-real	0m2.168s
-user	0m1.398s
-sys	0m0.253s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.5         10.0.5  
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
-   > Microsoft.Extensions.Http                              10.0.5         10.0.5  
-   > Microsoft.Extensions.Logging.Configuration             10.0.5         10.0.5  
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
-
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > Markdig                        1.1.1       1.1.1   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-   > YamlDotNet                     16.3.0      16.3.0  
-
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > bunit                          2.6.2       2.6.2   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.1.1       1.1.1   
-   > YamlDotNet           16.3.0      16.3.0  
-
-(A) : Auto-referenced package.
-
-real	0m1.484s
-user	0m1.507s
-sys	0m0.314s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-The following sources were used:
-   https://api.nuget.org/v3/index.json
-
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
-
-real	0m2.897s
-user	0m1.988s
-sys	0m0.404s
-🚀 Starting export of git-tracked files...
-📄 Adding: .github/workflows/deploy.yml
-📄 Adding: .github/workflows/pr-check.yml
-📄 Adding: .gitignore
-⏩ Skipping binary: .nojekyll
-📄 Adding: Directory.Build.props
-📄 Adding: Directory.Packages.props
-📄 Adding: ObserverMagazine.slnx
-📄 Adding: README.md
-📄 Adding: content/authors/kushal.yml
-📄 Adding: content/authors/observer-team.yml
-📄 Adding: content/blog/2026-01-15-welcome-to-observer-magazine.md
-📄 Adding: content/blog/2026-02-20-getting-started-with-blazor-wasm.md
-📄 Adding: content/blog/2026-03-10-responsive-design-patterns.md
-📄 Adding: content/blog/2026-03-20-hello-world.md
-📄 Adding: content/blog/2026-03-21-aspnet-lifecycle-deep-dive.md
-📄 Adding: content/blog/2027-01-01-happy-new-year-2027.md
-📄 Adding: content/blog/2099-01-01-draft-template.md
-📄 Adding: global.json
-📄 Adding: src/ObserverMagazine.Web/App.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor
-📄 Adding: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
-📄 Adding: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor
-📄 Adding: src/ObserverMagazine.Web/Components/Reactions.razor.css
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
-📄 Adding: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-📄 Adding: src/ObserverMagazine.Web/Layout/MainLayout.razor
-📄 Adding: src/ObserverMagazine.Web/Layout/NavMenu.razor
-📄 Adding: src/ObserverMagazine.Web/Models/AuthorProfile.cs
-📄 Adding: src/ObserverMagazine.Web/Models/BlogPostMetadata.cs
-📄 Adding: src/ObserverMagazine.Web/Models/CatalogProduct.cs
-📄 Adding: src/ObserverMagazine.Web/Models/Product.cs
-📄 Adding: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/About.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Blog.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Home.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/Showcase.razor.css
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
-📄 Adding: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
-📄 Adding: src/ObserverMagazine.Web/Program.cs
-📄 Adding: src/ObserverMagazine.Web/Services/AnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/BlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IAnalyticsService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/IBlogService.cs
-📄 Adding: src/ObserverMagazine.Web/Services/ProductDataGenerator.cs
-📄 Adding: src/ObserverMagazine.Web/Services/TelemetryService.cs
-📄 Adding: src/ObserverMagazine.Web/_Imports.razor
-📄 Adding: src/ObserverMagazine.Web/wwwroot/404.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/css/app.css
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/kushal.png
-⏩ Skipping binary: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.png
-📄 Adding: src/ObserverMagazine.Web/wwwroot/images/authors/observer-team.txt
-📄 Adding: src/ObserverMagazine.Web/wwwroot/index.html
-📄 Adding: src/ObserverMagazine.Web/wwwroot/sample-data/products.json
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ContentProcessorTests.cs
-📄 Adding: tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Integration.Tests/RssGeneratorTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/MasterDetailTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ResponsiveTableTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/BlogServiceTests.cs
-📄 Adding: tests/ObserverMagazine.Web.Tests/Services/NoOpAnalyticsService.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
-📄 Adding: tools/ObserverMagazine.ContentProcessor/Program.cs
-📄 Adding: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
-📄 Adding: tools/generate_audio.py
-📄 Adding: tools/requirements-audio.txt
-
-✅ Export complete! 76 files written to docs/llm/dump.txt
-
-real	0m0.416s
-user	0m0.210s
-sys	0m0.291s
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
-
-real	0m6.543s
-user	0m10.544s
-sys	0m0.933s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-
-real	0m0.708s
-user	0m0.756s
-sys	0m0.137s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-03-22 13:12:15 UTC
-Found 2 author profile(s)
-  Loaded author: observer-team (Observer Team)
-  Loaded author: kushal (kushal)
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (2 authors)
-Found 7 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  WARNING: No author profile found for 'Observer Team'
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Processing: 2099-01-01-draft-template.md
-  SKIPPED: Draft post 'Your Post Title Here'
-Processing: 2027-01-01-happy-new-year-2027.md
-  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-03-22)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 1 drafts skipped, 1 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.1s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.13]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.28]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.41]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.62]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.1s)
-  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.0s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
-  ObserverMagazine.Web.Tests net10.0 succeeded (0.2s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.13]   Discovering: ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.28]   Discovered:  ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.42]   Starting:    ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.82]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
-  ObserverMagazine.Web.Tests test net10.0 succeeded (1.3s)
-
-Test summary: total: 43, failed: 0, succeeded: 43, skipped: 0, duration: 4.5s
-Build succeeded in 5.2s
-
-real	0m5.392s
-user	0m3.063s
-sys	0m0.348s
-Restore complete (0.5s)
-
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.4, )     10.0.4  
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.5         10.0.5  
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.104, )   10.0.104
-   > Microsoft.Extensions.Http                              10.0.5         10.0.5  
-   > Microsoft.Extensions.Logging.Configuration             10.0.5         10.0.5  
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.4, )     10.0.4  
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
-
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > Markdig                        1.1.1       1.1.1   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-   > YamlDotNet                     16.3.0      16.3.0  
-
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package                Requested   Resolved
-   > bunit                          2.6.2       2.6.2   
-   > Microsoft.NET.Test.Sdk         18.3.0      18.3.0  
-   > xunit.runner.visualstudio      3.1.5       3.1.5   
-   > xunit.v3                       3.2.2       3.2.2   
-
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.1.1       1.1.1   
-   > YamlDotNet           16.3.0      16.3.0  
-
-(A) : Auto-referenced package.
-
-real	0m1.455s
-user	0m1.450s
+real	0m1.687s
+user	0m1.673s
 sys	0m0.339s
 Restore complete (0.5s)
 
@@ -1416,9 +205,9 @@ The given project `ObserverMagazine.Integration.Tests` has no updates given the 
 The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
 The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-real	0m1.631s
-user	0m1.629s
-sys	0m0.325s
+real	0m2.839s
+user	0m2.027s
+sys	0m0.457s
 🚀 Starting export of git-tracked files...
 📄 Adding: .github/workflows/deploy.yml
 📄 Adding: .github/workflows/pr-check.yml
@@ -1502,7 +291,7 @@ sys	0m0.325s
 
 ✅ Export complete! 76 files written to docs/llm/dump.txt
 
-real	0m0.387s
-user	0m0.205s
-sys	0m0.264s
+real	0m0.482s
+user	0m0.231s
+sys	0m0.275s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 

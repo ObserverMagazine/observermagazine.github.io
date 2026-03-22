@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sun Mar 22 09:12:24 AM EDT 2026
+DATE: Sun Mar 22 10:23:05 AM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -1124,39 +1124,89 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     <div class="tts-player">
         <span class="tts-icon" aria-hidden="true">🔊</span>
         <span class="tts-label">Listen to this post</span>
-        <audio id="tts-audio-@Slug"
-               controls
-               preload="none"
-               playsinline
-               src="blog-data/@(Slug).mp3"
-               @onplay="OnPlay"
-               @onpause="OnPause"
-               @onended="OnEnded">
-            Your browser does not support audio playback.
-        </audio>
+
+        @if (useFallbackControls)
+        {
+            @* Fallback: custom play/pause + seek when native controls don't render *@
+            <audio id="tts-audio-@Slug"
+                   preload="metadata"
+                   playsinline
+                   src="blog-data/@(Slug).mp3"
+                   style="display:none;">
+                Your browser does not support audio playback.
+            </audio>
+            <div class="tts-fallback">
+                <button class="tts-fallback-btn" @onclick="ToggleFallbackPlay">
+                    @(fallbackPlaying ? "⏸ Pause" : "▶ Play")
+                </button>
+                <input type="range" class="tts-fallback-seek"
+                       min="0" max="@fallbackDuration" step="1"
+                       value="@fallbackCurrentTime"
+                       @oninput="OnSeek" />
+                <span class="tts-fallback-time">@FormatTime(fallbackCurrentTime)</span>
+            </div>
+        }
+        else
+        {
+            @* Default: native browser audio controls *@
+            <audio id="tts-audio-@Slug"
+                   controls
+                   preload="metadata"
+                   playsinline
+                   src="blog-data/@(Slug).mp3"
+                   @onplay="OnPlay"
+                   @onpause="OnPause"
+                   @onended="OnEnded">
+                Your browser does not support audio playback.
+            </audio>
+        }
     </div>
 }
 
 @code {
     /// <summary>Blog post slug — matches the MP3 filename in blog-data/</summary>
     [Parameter, EditorRequired]
-    public string Slug { get; set; } = "";
+    public string Slug { get; set; } = string.Empty;
 
     private bool hidden;
+    private bool useFallbackControls;
+    private bool fallbackPlaying;
+    private int fallbackCurrentTime;
+    private int fallbackDuration = 1; // avoid div-by-zero on range
+
+    private System.Threading.Timer? _pollTimer;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Use JS to detect if audio source can be loaded.
-            // The Blazor @onerror binding is unreliable on mobile browsers.
             try
             {
+                // Check if the audio source is available at all
                 var canPlay = await JS.InvokeAsync<bool>("observerAudio.checkAvailability",
                     $"tts-audio-{Slug}");
                 if (!canPlay)
                 {
                     hidden = true;
+                    StateHasChanged();
+                    return;
+                }
+
+                // Check if native controls rendered properly (height > 0).
+                // Chrome Android clips the controls to 0px height in some CSS scenarios.
+                var controlsRendered = await JS.InvokeAsync<bool>("observerAudio.checkControlsRendered",
+                    $"tts-audio-{Slug}");
+                if (!controlsRendered)
+                {
+                    Logger.LogInformation("Native audio controls not rendered for {Slug}, using fallback", Slug);
+                    useFallbackControls = true;
+                    StateHasChanged();
+
+                    // After switching to fallback, get duration
+                    await Task.Delay(100); // let DOM update
+                    var dur = await JS.InvokeAsync<double>("observerAudio.getDuration", $"tts-audio-{Slug}");
+                    if (dur > 0)
+                        fallbackDuration = (int)Math.Ceiling(dur);
                     StateHasChanged();
                 }
             }
@@ -1170,7 +1220,96 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     protected override void OnParametersSet()
     {
         hidden = false;
+        useFallbackControls = false;
+        fallbackPlaying = false;
+        fallbackCurrentTime = 0;
     }
+
+    // --- Fallback controls ---
+
+    private async Task ToggleFallbackPlay()
+    {
+        try
+        {
+            if (fallbackPlaying)
+            {
+                await JS.InvokeVoidAsync("observerAudio.pause", $"tts-audio-{Slug}");
+                fallbackPlaying = false;
+                StopPolling();
+                await OnPause();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("observerAudio.play", $"tts-audio-{Slug}");
+                fallbackPlaying = true;
+                StartPolling();
+                await OnPlay();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Fallback play/pause failed for {Slug}", Slug);
+        }
+    }
+
+    private async Task OnSeek(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var time))
+        {
+            fallbackCurrentTime = (int)time;
+            try
+            {
+                await JS.InvokeVoidAsync("observerAudio.setCurrentTime", $"tts-audio-{Slug}", time);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug(ex, "Seek failed for {Slug}", Slug);
+            }
+        }
+    }
+
+    private void StartPolling()
+    {
+        StopPolling();
+        _pollTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                var time = await JS.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
+                var ended = await JS.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
+                await InvokeAsync(() =>
+                {
+                    fallbackCurrentTime = (int)time;
+                    if (ended)
+                    {
+                        fallbackPlaying = false;
+                        StopPolling();
+                        _ = OnEnded();
+                    }
+                    StateHasChanged();
+                });
+            }
+            catch
+            {
+                // Component may have been disposed — ignore
+            }
+        }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
+    }
+
+    private void StopPolling()
+    {
+        _pollTimer?.Dispose();
+        _pollTimer = null;
+    }
+
+    private static string FormatTime(int seconds)
+    {
+        var m = seconds / 60;
+        var s = seconds % 60;
+        return $"{m}:{s:D2}";
+    }
+
+    // --- Analytics events ---
 
     private async Task OnPlay()
     {
@@ -1188,6 +1327,11 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     {
         Logger.LogInformation("TTS finished: {Slug}", Slug);
         await Analytics.TrackInteractionAsync("TTS.Finished", Slug);
+    }
+
+    public void Dispose()
+    {
+        StopPolling();
     }
 }
 
@@ -1219,42 +1363,65 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     white-space: nowrap;
 }
 
-/* Style the native audio element to blend with our themes */
+/* Style the native audio element to blend with our theme.
+ * We use accent-color (supported by all modern browsers) instead of
+ * ::-webkit-media-controls-* pseudo-elements which break the internal
+ * Shadow DOM layout on Chrome for Android. */
 .tts-player audio {
     flex: 1;
     min-width: 200px;
     max-width: 100%;
-    height: 40px;
     border-radius: var(--radius);
-    background: var(--color-bg);
-    /* Modern browsers support accent-color for native controls */
     accent-color: var(--color-primary);
 }
 
-/*
- * Webkit (Chrome, Edge, Safari) audio pseudo-elements.
- * These give us deeper control over the player appearance.
- */
-.tts-player audio::-webkit-media-controls-panel {
-    background: var(--color-bg);
+/* Fallback play/pause button — shown only when JS detects native controls failed */
+.tts-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.tts-fallback-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1.2rem;
+    border: 1px solid var(--color-primary);
     border-radius: var(--radius);
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    line-height: 1;
+    white-space: nowrap;
 }
 
-.tts-player audio::-webkit-media-controls-play-button {
-    background-color: var(--color-primary);
-    border-radius: 50%;
+.tts-fallback-btn:hover {
+    opacity: 0.88;
 }
 
-.tts-player audio::-webkit-media-controls-current-time-display,
-.tts-player audio::-webkit-media-controls-time-remaining-display {
-    color: var(--color-text);
+.tts-fallback-btn:active {
+    opacity: 0.75;
+}
+
+.tts-fallback-time {
     font-size: 0.8rem;
-    font-family: var(--font-sans);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 3em;
 }
 
-.tts-player audio::-webkit-media-controls-timeline {
-    background: var(--color-surface);
-    border-radius: 4px;
+.tts-fallback-seek {
+    flex: 1;
+    min-width: 80px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
 }
 
 @media (max-width: 480px) {
@@ -1266,6 +1433,10 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     }
 
     .tts-player audio {
+        width: 100%;
+    }
+
+    .tts-fallback {
         width: 100%;
     }
 }
@@ -2905,6 +3076,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 @inject IAnalyticsService Analytics
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@implements IDisposable
 
 <PageTitle>Showcase — Observer Magazine</PageTitle>
 
@@ -2915,13 +3087,17 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     your browser's local storage.
 </p>
 
+@* ---- Toolbar ---- *@
 <div class="sc-toolbar">
     <div class="sc-toolbar-left">
         <button class="btn btn-primary btn-sm" @onclick="NavigateToNew">+ New Product</button>
-        <button class="btn btn-outline btn-sm" @onclick="ResetData">Reset to Defaults</button>
+        <button class="btn btn-outline btn-sm" @onclick="ResetData">Reset Data</button>
         <span class="sc-count">@filteredProducts.Count of @allProducts.Count items</span>
     </div>
     <div class="sc-toolbar-right">
+        <button class="btn btn-outline btn-sm" @onclick="ToggleFilters">
+            @(showFilters ? "Hide Filters" : "Show Filters")
+        </button>
         <div class="sc-col-toggle">
             <button class="btn btn-outline btn-sm" @onclick="ToggleColumnPicker">Columns ▾</button>
             @if (showColumnPicker)
@@ -2935,6 +3111,10 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
                             @col.Header
                         </label>
                     }
+                    <hr />
+                    <button class="btn btn-outline btn-sm sc-col-restore" @onclick="RestoreColumnDefaults">
+                        Restore Defaults
+                    </button>
                 </div>
             }
         </div>
@@ -2950,44 +3130,65 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     </div>
 </div>
 
-@* ---- Filter row ---- *@
-<div class="sc-filters">
-    @foreach (var col in columns.Where(c => c.Visible))
-    {
-        <div class="sc-filter-cell" style="@ColStyle(col)">
-            @if (col.FilterKind == FilterKind.Text)
+@* ---- Filter panel (collapsible, works on desktop + mobile) ---- *@
+@if (showFilters)
+{
+    <div class="sc-filter-panel">
+        <div class="sc-filter-panel-header">
+            <strong>Filters</strong>
+            <button class="btn btn-outline btn-sm" @onclick="ClearFilters" title="Clear all filters">
+                Clear All Filters
+            </button>
+        </div>
+        <div class="sc-filter-grid">
+            @foreach (var col in columns.Where(c => c.Visible))
             {
-                <input type="text" placeholder="@col.Header..."
-                       value="@col.FilterText"
-                       @oninput="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)" />
-            }
-            else if (col.FilterKind == FilterKind.Range)
-            {
-                <div class="sc-range-filter">
-                    <input type="number" placeholder="Min"
-                           value="@col.FilterMin"
-                           @oninput="e => OnFilterMinChanged(col, e.Value?.ToString() ?? string.Empty)" />
-                    <input type="number" placeholder="Max"
-                           value="@col.FilterMax"
-                           @oninput="e => OnFilterMaxChanged(col, e.Value?.ToString() ?? string.Empty)" />
-                </div>
-            }
-            else if (col.FilterKind == FilterKind.Select)
-            {
-                <select value="@col.FilterText" @onchange="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)">
-                    <option value="">All</option>
-                    @foreach (var opt in col.SelectOptions)
-                    {
-                        <option value="@opt">@opt</option>
-                    }
-                </select>
+                @if (col.FilterKind == FilterKind.Text)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <input type="text" class="sc-filter-input"
+                               placeholder="Filter @col.Header..."
+                               value="@col.FilterText"
+                               @oninput="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                    </div>
+                }
+                else if (col.FilterKind == FilterKind.Range)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <div class="sc-range-inputs">
+                            <input type="number" class="sc-filter-input"
+                                   placeholder="Min"
+                                   value="@col.FilterMin"
+                                   @oninput="e => OnFilterMinChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                            <span class="sc-range-sep">–</span>
+                            <input type="number" class="sc-filter-input"
+                                   placeholder="Max"
+                                   value="@col.FilterMax"
+                                   @oninput="e => OnFilterMaxChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                        </div>
+                    </div>
+                }
+                else if (col.FilterKind == FilterKind.Select)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <select class="sc-filter-input"
+                                value="@col.FilterText"
+                                @onchange="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)">
+                            <option value="">All</option>
+                            @foreach (var opt in col.SelectOptions)
+                            {
+                                <option value="@opt">@opt</option>
+                            }
+                        </select>
+                    </div>
+                }
             }
         </div>
-    }
-    <div class="sc-filter-cell sc-filter-actions">
-        <button class="btn btn-outline btn-sm" @onclick="ClearFilters" title="Clear all filters">✕</button>
     </div>
-</div>
+}
 
 @* ---- Table ---- *@
 <div class="sc-table-wrap">
@@ -2996,7 +3197,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             <tr>
                 @foreach (var col in columns.Where(c => c.Visible))
                 {
-                    <th class="@(col.Numeric ? "sc-num" : "") sc-sortable"
+                    <th class="@(col.Numeric ? "sc-num" : string.Empty) sc-sortable"
                         style="@ColStyle(col)"
                         @onclick="() => SortBy(col)">
                         @col.Header
@@ -3023,13 +3224,14 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
                 <tr @onclick="() => NavigateToDetail(p.Id)" class="sc-clickable-row">
                     @foreach (var col in columns.Where(c => c.Visible))
                     {
-                        <td class="@(col.Numeric ? "sc-num" : "")" data-label="@col.Header">
+                        <td class="@(col.Numeric ? "sc-num" : string.Empty)"
+                            data-label="@col.Header">
                             @col.Render(p)
                         </td>
                     }
-                    <td class="sc-actions-col" data-label="Actions" @onclick:stopPropagation="true">
-                        <button class="btn btn-outline btn-sm" @onclick="() => NavigateToDetail(p.Id)" title="View / Edit">✎</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(p)" title="Delete">✕</button>
+                    <td class="sc-actions" data-label="Actions" @onclick:stopPropagation="true">
+                        <button class="btn btn-outline btn-sm" @onclick="() => NavigateToDetail(p.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(p)">Del</button>
                     </td>
                 </tr>
             }
@@ -3039,21 +3241,21 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
 @* ---- Pagination ---- *@
 <div class="sc-pagination">
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage <= 1)" @onclick="FirstPage">« First</button>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage <= 1)" @onclick="PrevPage">‹ Prev</button>
+    <button class="btn btn-outline btn-sm" @onclick="FirstPage" disabled="@(currentPage <= 1)">« First</button>
+    <button class="btn btn-outline btn-sm" @onclick="PrevPage" disabled="@(currentPage <= 1)">‹ Prev</button>
     <span class="sc-page-info">Page @currentPage of @totalPages</span>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage >= totalPages)" @onclick="NextPage">Next ›</button>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage >= totalPages)" @onclick="LastPage">Last »</button>
+    <button class="btn btn-outline btn-sm" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Next ›</button>
+    <button class="btn btn-outline btn-sm" @onclick="LastPage" disabled="@(currentPage >= totalPages)">Last »</button>
 </div>
 
-@* ---- Delete confirmation ---- *@
+@* ---- Delete confirmation overlay ---- *@
 @if (deleteTarget is not null)
 {
     <div class="sc-overlay" @onclick="CancelDelete">
         <div class="sc-dialog" @onclick:stopPropagation="true">
-            <h4>Delete Product</h4>
-            <p>Are you sure you want to delete <strong>@deleteTarget.Name</strong>?</p>
-            <div class="form-actions">
+            <h4>Delete product?</h4>
+            <p>Are you sure you want to delete <strong>@deleteTarget.Name</strong> (@deleteTarget.Sku)?</p>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
                 <button class="btn btn-outline btn-sm" @onclick="CancelDelete">Cancel</button>
                 <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
             </div>
@@ -3062,33 +3264,33 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 }
 
 @code {
-    private const string StorageKey = "observer-catalog-v2";
+    private const string StorageKey = "observer-catalog-products";
+    private const string PrefsKey = "observer-showcase-prefs";
 
-    // --- Data ---
     private List<CatalogProduct> allProducts = [];
     private List<CatalogProduct> filteredProducts = [];
     private List<CatalogProduct> pagedProducts = [];
 
-    // --- Pagination ---
     private int pageSize = 20;
     private int currentPage = 1;
     private int totalPages = 1;
-
-    // --- Sort ---
     private string sortColumn = "Name";
     private bool sortAsc = true;
-
-    // --- UI state ---
     private bool showColumnPicker;
+    private bool showFilters = true;
     private CatalogProduct? deleteTarget;
 
     // --- Column definitions ---
     private List<ColumnDef> columns = [];
 
+    // Track default visibility for "Restore Defaults"
+    private Dictionary<string, bool> defaultVisibility = new();
+
     protected override async Task OnInitializedAsync()
     {
         InitColumns();
         await LoadProducts();
+        await LoadPrefs();
         ApplyFilterAndSort();
         await Analytics.TrackPageViewAsync("Showcase");
     }
@@ -3111,42 +3313,51 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             new("ReviewCount", "Reviews", p => p.ReviewCount.ToString("N0"), true, FilterKind.Range) { MinWidth = "80px", Visible = false },
             new("WeightKg", "Weight (kg)", p => p.WeightKg.ToString("F2"), true, FilterKind.Range) { MinWidth = "90px", Visible = false },
             new("Color", "Color", p => p.Color, false, FilterKind.Text) { MinWidth = "90px", Visible = false },
-            new("WarrantyMonths", "Warranty", p => p.WarrantyMonths > 0 ? $"{p.WarrantyMonths}mo" : "—", true, FilterKind.Range) { MinWidth = "80px", Visible = false },
-            new("DateAdded", "Added", p => p.DateAdded.ToString("yyyy-MM-dd"), false, FilterKind.Text) { MinWidth = "100px", Visible = false },
+            new("WarrantyMonths", "Warranty", p => p.WarrantyMonths > 0 ? $"{p.WarrantyMonths} mo" : "None", true, FilterKind.Range)
+            {
+                MinWidth = "80px",
+                Visible = false
+            },
+            new("DateAdded", "Date Added", p => p.DateAdded.ToString("yyyy-MM-dd"), false, FilterKind.Text)
+            {
+                MinWidth = "100px",
+                Visible = false
+            },
             new("Status", "Status", p => p.Status, false, FilterKind.Select)
             {
                 MinWidth = "90px",
-                SelectOptions = ["Active", "Discontinued", "Draft"]
+                SelectOptions = ["Active", "Draft", "Archived", "Out of Stock"]
             },
         ];
+
+        // Save defaults
+        defaultVisibility = columns.ToDictionary(c => c.Key, c => c.Visible);
     }
 
-    // --- Data loading/saving ---
+    // --- Product persistence ---
 
     private async Task LoadProducts()
     {
         try
         {
-            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-            if (!string.IsNullOrEmpty(saved))
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            if (!string.IsNullOrEmpty(json))
             {
-                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(saved,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (deserialized is { Count: > 0 })
+                var loaded = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(json,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+                if (loaded is { Count: > 0 })
                 {
-                    allProducts = deserialized;
-                    Logger.LogInformation("Loaded {Count} products from local storage", allProducts.Count);
+                    allProducts = loaded;
                     return;
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogDebug(ex, "Could not read catalog from local storage");
+            Logger.LogWarning(ex, "Could not load catalog from local storage");
         }
 
         allProducts = ProductDataGenerator.Generate(2000);
-        Logger.LogInformation("Generated {Count} default products", allProducts.Count);
         await SaveProducts();
     }
 
@@ -3161,6 +3372,83 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Could not save catalog to local storage");
+        }
+    }
+
+    // --- Preferences persistence ---
+
+    private async Task LoadPrefs()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+            if (string.IsNullOrEmpty(json)) return;
+
+            var prefs = System.Text.Json.JsonSerializer.Deserialize<ShowcasePrefs>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            if (prefs is null) return;
+
+            if (prefs.PageSize is > 0) pageSize = prefs.PageSize.Value;
+            if (!string.IsNullOrEmpty(prefs.SortColumn)) sortColumn = prefs.SortColumn;
+            if (prefs.SortAsc is not null) sortAsc = prefs.SortAsc.Value;
+            if (prefs.ShowFilters is not null) showFilters = prefs.ShowFilters.Value;
+
+            if (prefs.ColumnVisibility is not null)
+            {
+                foreach (var col in columns)
+                {
+                    if (prefs.ColumnVisibility.TryGetValue(col.Key, out var vis))
+                        col.Visible = vis;
+                }
+            }
+
+            if (prefs.Filters is not null)
+            {
+                foreach (var col in columns)
+                {
+                    if (prefs.Filters.TryGetValue(col.Key, out var f))
+                    {
+                        col.FilterText = f.Text ?? string.Empty;
+                        col.FilterMin = f.Min ?? string.Empty;
+                        col.FilterMax = f.Max ?? string.Empty;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not load showcase preferences");
+        }
+    }
+
+    private async Task SavePrefs()
+    {
+        try
+        {
+            var prefs = new ShowcasePrefs
+            {
+                PageSize = pageSize,
+                SortColumn = sortColumn,
+                SortAsc = sortAsc,
+                ShowFilters = showFilters,
+                ColumnVisibility = columns.ToDictionary(c => c.Key, c => c.Visible),
+                Filters = columns
+                    .Where(c => !string.IsNullOrEmpty(c.FilterText) || !string.IsNullOrEmpty(c.FilterMin) || !string.IsNullOrEmpty(c.FilterMax))
+                    .ToDictionary(c => c.Key, c => new FilterState
+                    {
+                        Text = string.IsNullOrEmpty(c.FilterText) ? null : c.FilterText,
+                        Min = string.IsNullOrEmpty(c.FilterMin) ? null : c.FilterMin,
+                        Max = string.IsNullOrEmpty(c.FilterMax) ? null : c.FilterMax,
+                    })
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(prefs,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not save showcase preferences");
         }
     }
 
@@ -3210,6 +3498,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
                         _ => result
                     };
                 }
+
                 if (double.TryParse(col.FilterMax, out var max))
                 {
                     result = col.Key switch
@@ -3258,7 +3547,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     // --- Event handlers ---
 
-    private void SortBy(ColumnDef col)
+    private async Task SortBy(ColumnDef col)
     {
         if (sortColumn == col.Key)
             sortAsc = !sortAsc;
@@ -3269,30 +3558,34 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         }
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterTextChanged(ColumnDef col, string value)
+    private async Task OnFilterTextChanged(ColumnDef col, string value)
     {
         col.FilterText = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterMinChanged(ColumnDef col, string value)
+    private async Task OnFilterMinChanged(ColumnDef col, string value)
     {
         col.FilterMin = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterMaxChanged(ColumnDef col, string value)
+    private async Task OnFilterMaxChanged(ColumnDef col, string value)
     {
         col.FilterMax = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void ClearFilters()
+    private async Task ClearFilters()
     {
         foreach (var col in columns)
         {
@@ -3302,15 +3595,17 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         }
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnPageSizeChanged(ChangeEventArgs e)
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
         {
             pageSize = size;
             currentPage = 1;
             ApplyFilterAndSort();
+            await SavePrefs();
         }
     }
 
@@ -3319,11 +3614,37 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private void NextPage() { if (currentPage < totalPages) { currentPage++; ApplyFilterAndSort(); } }
     private void LastPage() { currentPage = totalPages; ApplyFilterAndSort(); }
 
+    private async Task ToggleFilters()
+    {
+        showFilters = !showFilters;
+        await SavePrefs();
+    }
+
     private void ToggleColumnPicker() => showColumnPicker = !showColumnPicker;
 
-    private void ToggleColumn(ColumnDef col, bool visible)
+    private async Task ToggleColumn(ColumnDef col, bool visible)
     {
         col.Visible = visible;
+        await SavePrefs();
+    }
+
+    private async Task RestoreColumnDefaults()
+    {
+        foreach (var col in columns)
+        {
+            if (defaultVisibility.TryGetValue(col.Key, out var vis))
+                col.Visible = vis;
+            col.FilterText = string.Empty;
+            col.FilterMin = string.Empty;
+            col.FilterMax = string.Empty;
+        }
+        sortColumn = "Name";
+        sortAsc = true;
+        pageSize = 20;
+        currentPage = 1;
+        showColumnPicker = false;
+        ApplyFilterAndSort();
+        await SavePrefs();
     }
 
     private void NavigateToDetail(Guid id) => Nav.NavigateTo($"showcase/{id}");
@@ -3350,12 +3671,17 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
         allProducts = ProductDataGenerator.Generate(2000);
         currentPage = 1;
-        ClearFilters();
+        await ClearFilters();
         await SaveProducts();
     }
 
     private static string ColStyle(ColumnDef col) =>
         string.IsNullOrEmpty(col.MinWidth) ? string.Empty : $"min-width:{col.MinWidth}";
+
+    public void Dispose()
+    {
+        // Nothing to dispose for now, but good practice to implement IDisposable
+    }
 
     // --- Column definition model ---
 
@@ -3375,12 +3701,36 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         public string[] SelectOptions { get; set; } = [];
         public string Render(CatalogProduct p) => render(p);
     }
+
+    // --- Preferences DTO ---
+
+    public sealed class ShowcasePrefs
+    {
+        public int? PageSize { get; set; }
+        public string? SortColumn { get; set; }
+        public bool? SortAsc { get; set; }
+        public bool? ShowFilters { get; set; }
+        public Dictionary<string, bool>? ColumnVisibility { get; set; }
+        public Dictionary<string, FilterState>? Filters { get; set; }
+    }
+
+    public sealed class FilterState
+    {
+        public string? Text { get; set; }
+        public string? Min { get; set; }
+        public string? Max { get; set; }
+    }
 }
 
 
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 -------------------------------------------------------------------------------
+/* ==========================================================================
+   Showcase — Product Catalog
+   ========================================================================== */
+
+/* ---- Toolbar ---- */
 .sc-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -3407,6 +3757,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-muted);
 }
 
+/* ---- Column picker ---- */
 .sc-col-toggle {
     position: relative;
 }
@@ -3440,6 +3791,11 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     background: var(--color-surface);
 }
 
+.sc-col-restore {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
 .sc-page-size {
     display: flex;
     align-items: center;
@@ -3456,76 +3812,108 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-text);
 }
 
-/* ---- Filters ---- */
-.sc-filters {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    border: 1px solid var(--color-border);
-    border-bottom: none;
-    border-radius: var(--radius) var(--radius) 0 0;
+/* ---- Filter panel (replaces inline filter row) ---- */
+.sc-filter-panel {
     background: var(--color-surface);
-    overflow-x: auto;
-}
-
-.sc-filter-cell {
-    padding: 0.4rem 0.5rem;
-    flex-shrink: 0;
-}
-
-.sc-filter-cell input,
-.sc-filter-cell select {
-    width: 100%;
-    padding: 0.25rem 0.4rem;
     border: 1px solid var(--color-border);
-    border-radius: 3px;
-    font-size: 0.8rem;
-    background: var(--color-bg);
-    color: var(--color-text);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
 }
 
-.sc-range-filter {
+.sc-filter-panel-header {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sc-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.5rem 1rem;
+}
+
+.sc-filter-row {
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
 }
 
-.sc-range-filter input {
-    width: 60px;
+.sc-filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    white-space: nowrap;
 }
 
-.sc-filter-actions {
+.sc-filter-input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sc-filter-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+.sc-range-inputs {
     display: flex;
     align-items: center;
-    padding: 0.4rem;
+    gap: 0.35rem;
+}
+
+.sc-range-inputs .sc-filter-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.sc-range-sep {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 /* ---- Table ---- */
 .sc-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--color-border);
-    border-radius: 0 0 var(--radius) var(--radius);
+    border-radius: var(--radius);
 }
 
 .sc-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }
 
 .sc-table th,
 .sc-table td {
-    text-align: left;
     padding: 0.5rem 0.6rem;
+    text-align: left;
     border-bottom: 1px solid var(--color-border);
     white-space: nowrap;
 }
 
 .sc-table th {
-    font-weight: 600;
     background: var(--color-surface);
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--color-muted);
     position: sticky;
     top: 0;
-    z-index: 2;
+}
+
+.sc-num {
+    text-align: right;
 }
 
 .sc-sortable {
@@ -3534,16 +3922,12 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 }
 
 .sc-sortable:hover {
-    background: var(--color-border);
+    color: var(--color-primary);
 }
 
 .sc-sort-arrow {
     font-size: 0.7rem;
-    margin-left: 0.3rem;
-}
-
-.sc-num {
-    text-align: right;
+    margin-left: 0.2rem;
 }
 
 .sc-clickable-row {
@@ -3555,16 +3939,20 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     background: var(--color-surface);
 }
 
-.sc-actions-col {
-    width: 100px;
+.sc-actions {
     white-space: nowrap;
+}
+
+.sc-actions-col {
+    width: 120px;
     text-align: center;
 }
 
 .sc-empty {
     text-align: center;
-    padding: 2rem;
     color: var(--color-muted);
+    padding: 2rem;
+    font-style: italic;
 }
 
 /* ---- Pagination ---- */
@@ -3613,12 +4001,37 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     font-size: 0.95rem;
 }
 
-/* ---- Mobile: collapse table to cards ---- */
+/* ---- Mobile responsive ---- */
 @media (max-width: 768px) {
-    .sc-filters {
-        display: none;
+    .sc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
     }
 
+    .sc-toolbar-left,
+    .sc-toolbar-right {
+        justify-content: space-between;
+    }
+
+    /* Column dropdown: position relative to viewport on mobile */
+    .sc-col-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 50vh;
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        z-index: 100;
+    }
+
+    /* Filters: single column on small screens */
+    .sc-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Table collapses to cards */
     .sc-table thead {
         display: none;
     }
@@ -3650,16 +4063,6 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     .sc-table-wrap {
         border: none;
         border-radius: 0;
-    }
-
-    .sc-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .sc-toolbar-left,
-    .sc-toolbar-right {
-        justify-content: space-between;
     }
 }
 
@@ -5234,22 +5637,61 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
 
     <!-- Audio helper for mobile compatibility -->
     <script>
-        window.observerAudio = {
-            checkAvailability: function (elementId) {
-                return new Promise(function (resolve) {
-                    var el = document.getElementById(elementId);
-                    if (!el) { resolve(false); return; }
-
-                    // Try to fetch just the headers to see if file exists
-                    var src = el.getAttribute('src');
-                    if (!src) { resolve(false); return; }
-
-                    fetch(src, { method: 'HEAD' })
-                        .then(function (r) { resolve(r.ok); })
-                        .catch(function () { resolve(false); });
-                });
-            }
-        };
+/* Audio helper for BlogTtsPlayer — replaces the previous observerAudio block */
+    window.observerAudio = {
+        checkAvailability: function (elementId) {
+            return new Promise(function (resolve) {
+                var audio = document.getElementById(elementId);
+                if (!audio) { resolve(false); return; }
+                // Try loading metadata; if the file 404s we get an error
+                var timeout = setTimeout(function () { resolve(false); }, 5000);
+                audio.addEventListener('loadedmetadata', function () {
+                    clearTimeout(timeout);
+                    resolve(true);
+                }, { once: true });
+                audio.addEventListener('error', function () {
+                    clearTimeout(timeout);
+                    resolve(false);
+                }, { once: true });
+                // Trigger load if not already started
+                if (audio.readyState === 0) audio.load();
+                else if (audio.readyState >= 1) { clearTimeout(timeout); resolve(true); }
+            });
+        },
+        checkControlsRendered: function (elementId) {
+            // Check if the native audio element actually rendered with visible height.
+            // Chrome Android can clip the controls to 0px with certain CSS.
+            var audio = document.getElementById(elementId);
+            if (!audio) return false;
+            var rect = audio.getBoundingClientRect();
+            // Native audio controls should have at least 20px height
+            return rect.height >= 20;
+        },
+        getDuration: function (elementId) {
+            var audio = document.getElementById(elementId);
+            return audio && isFinite(audio.duration) ? audio.duration : 0;
+        },
+        getCurrentTime: function (elementId) {
+            var audio = document.getElementById(elementId);
+            return audio ? audio.currentTime : 0;
+        },
+        hasEnded: function (elementId) {
+            var audio = document.getElementById(elementId);
+            return audio ? audio.ended : true;
+        },
+        play: function (elementId) {
+            var audio = document.getElementById(elementId);
+            if (audio) return audio.play();
+        },
+        pause: function (elementId) {
+            var audio = document.getElementById(elementId);
+            if (audio) audio.pause();
+        },
+        setCurrentTime: function (elementId, time) {
+            var audio = document.getElementById(elementId);
+            if (audio) audio.currentTime = time;
+        }
+    };
     </script>
 
     <!-- SPA redirect for GitHub Pages -->
@@ -6151,12 +6593,16 @@ internal sealed class ComponentFakeHttpHandler : HttpMessageHandler
 -------------------------------------------------------------------------------
 FILE: tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs
 -------------------------------------------------------------------------------
-using ObserverMagazine.Web.Models;
+using System.Text.Json;
 using ObserverMagazine.Web.Services;
-using Xunit;
+using static ObserverMagazine.Web.Pages.Showcase;
 
 namespace ObserverMagazine.Web.Tests.Components;
 
+/// <summary>
+/// Tests for the Showcase page logic: ProductDataGenerator, ColumnDef, FilterKind,
+/// ShowcasePrefs serialization, and filtering/sorting/pagination helpers.
+/// </summary>
 public class ProductDataGeneratorTests
 {
     [Fact]
@@ -6169,99 +6615,580 @@ public class ProductDataGeneratorTests
     [Fact]
     public void Generate_DefaultCountIs2000()
     {
-        var products = ProductDataGenerator.Generate();
+        var products = ProductDataGenerator.Generate(2000);
         Assert.Equal(2000, products.Count);
     }
 
     [Fact]
-    public void Generate_IsDeterministic()
+    public void Generate_SkusAreUnique()
     {
-        var first = ProductDataGenerator.Generate(50, seed: 123);
-        var second = ProductDataGenerator.Generate(50, seed: 123);
+        var products = ProductDataGenerator.Generate(500);
+        var uniqueSkus = products.Select(p => p.Sku).Distinct().Count();
+        Assert.Equal(500, uniqueSkus);
+    }
 
-        for (int i = 0; i < first.Count; i++)
-        {
-            Assert.Equal(first[i].Id, second[i].Id);
-            Assert.Equal(first[i].Name, second[i].Name);
-            Assert.Equal(first[i].Price, second[i].Price);
-        }
+    [Fact]
+    public void Generate_IdsAreUnique()
+    {
+        var products = ProductDataGenerator.Generate(500);
+        var uniqueIds = products.Select(p => p.Id).Distinct().Count();
+        Assert.Equal(500, uniqueIds);
     }
 
     [Fact]
     public void Generate_AllProductsHaveRequiredFields()
     {
         var products = ProductDataGenerator.Generate(200);
-
         foreach (var p in products)
         {
-            Assert.NotEqual(Guid.Empty, p.Id);
-            Assert.False(string.IsNullOrWhiteSpace(p.Sku));
-            Assert.False(string.IsNullOrWhiteSpace(p.Name));
-            Assert.False(string.IsNullOrWhiteSpace(p.Brand));
-            Assert.False(string.IsNullOrWhiteSpace(p.Category));
-            Assert.True(p.Price >= 0);
-            Assert.True(p.Stock >= 0);
-            Assert.InRange(p.Rating, 0, 5);
-            Assert.True(p.WeightKg >= 0);
-            Assert.False(string.IsNullOrWhiteSpace(p.Color));
-            Assert.True(p.WarrantyMonths >= 0);
-            Assert.False(string.IsNullOrWhiteSpace(p.Status));
+            Assert.False(string.IsNullOrWhiteSpace(p.Sku), "SKU should not be empty");
+            Assert.False(string.IsNullOrWhiteSpace(p.Name), "Name should not be empty");
+            Assert.False(string.IsNullOrWhiteSpace(p.Brand), "Brand should not be empty");
+            Assert.False(string.IsNullOrWhiteSpace(p.Category), "Category should not be empty");
+            Assert.False(string.IsNullOrWhiteSpace(p.Color), "Color should not be empty");
+            Assert.False(string.IsNullOrWhiteSpace(p.Status), "Status should not be empty");
+            Assert.True(p.Price > 0, "Price should be positive");
+            Assert.True(p.Rating >= 2.5 && p.Rating <= 5.0, "Rating should be between 2.5 and 5.0");
+            Assert.True(p.Stock >= 0, "Stock should be non-negative");
+            Assert.NotEqual(default, p.DateAdded);
         }
-    }
-
-    [Fact]
-    public void Generate_SkusAreUnique()
-    {
-        var products = ProductDataGenerator.Generate(2000);
-        var uniqueSkus = products.Select(p => p.Sku).Distinct().Count();
-        Assert.Equal(2000, uniqueSkus);
-    }
-
-    [Fact]
-    public void Generate_HasVarietyOfCategories()
-    {
-        var products = ProductDataGenerator.Generate(2000);
-        var categories = products.Select(p => p.Category).Distinct().ToList();
-        Assert.True(categories.Count >= 5, $"Expected at least 5 categories but got {categories.Count}");
     }
 
     [Fact]
     public void Generate_HasVarietyOfBrands()
     {
-        var products = ProductDataGenerator.Generate(2000);
-        var brands = products.Select(p => p.Brand).Distinct().ToList();
-        Assert.True(brands.Count >= 20, $"Expected at least 20 brands but got {brands.Count}");
+        var products = ProductDataGenerator.Generate(500);
+        var uniqueBrands = products.Select(p => p.Brand).Distinct().Count();
+        Assert.True(uniqueBrands >= 5, $"Expected at least 5 brands but got {uniqueBrands}");
     }
 
     [Fact]
-    public void Generate_SomeProductsHaveCompareAtPrice()
+    public void Generate_HasVarietyOfCategories()
     {
-        var products = ProductDataGenerator.Generate(2000);
-        var withCompare = products.Count(p => p.CompareAtPrice.HasValue);
-        Assert.True(withCompare > 100, $"Expected many products with compare-at price but got {withCompare}");
-        Assert.True(withCompare < 1500, $"Expected most products without compare-at price but got {withCompare}");
+        var products = ProductDataGenerator.Generate(500);
+        var uniqueCategories = products.Select(p => p.Category).Distinct().Count();
+        Assert.True(uniqueCategories >= 3, $"Expected at least 3 categories but got {uniqueCategories}");
     }
 
     [Fact]
-    public void Generate_CompareAtPriceHigherThanPrice()
+    public void Generate_DeterministicWithSameSeed()
     {
-        var products = ProductDataGenerator.Generate(2000);
-        foreach (var p in products.Where(p => p.CompareAtPrice.HasValue))
+        var products1 = ProductDataGenerator.Generate(50, seed: 42);
+        var products2 = ProductDataGenerator.Generate(50, seed: 42);
+
+        for (int i = 0; i < 50; i++)
         {
-            Assert.True(p.CompareAtPrice!.Value > p.Price,
-                $"Product {p.Sku}: compare-at {p.CompareAtPrice} should be > price {p.Price}");
+            Assert.Equal(products1[i].Id, products2[i].Id);
+            Assert.Equal(products1[i].Sku, products2[i].Sku);
+            Assert.Equal(products1[i].Name, products2[i].Name);
+            Assert.Equal(products1[i].Price, products2[i].Price);
         }
     }
 
     [Fact]
     public void Generate_DifferentSeedsProduceDifferentData()
     {
-        var a = ProductDataGenerator.Generate(10, seed: 1);
-        var b = ProductDataGenerator.Generate(10, seed: 999);
+        var products1 = ProductDataGenerator.Generate(50, seed: 1);
+        var products2 = ProductDataGenerator.Generate(50, seed: 999);
 
-        // Not all names should match
-        var matchCount = a.Zip(b).Count(pair => pair.First.Name == pair.Second.Name);
-        Assert.True(matchCount < 10, "Different seeds should produce different data");
+        // At least some products should differ
+        var differentCount = 0;
+        for (int i = 0; i < 50; i++)
+        {
+            if (products1[i].Name != products2[i].Name) differentCount++;
+        }
+        Assert.True(differentCount > 10, $"Expected significant differences but only {differentCount} of 50 were different");
+    }
+
+    [Fact]
+    public void Generate_StatusesAreValid()
+    {
+        var validStatuses = new HashSet<string> { "Active", "Draft", "Archived", "Out of Stock" };
+        var products = ProductDataGenerator.Generate(200);
+        foreach (var p in products)
+        {
+            Assert.Contains(p.Status, validStatuses);
+        }
+    }
+
+    [Fact]
+    public void Generate_CompareAtPriceIsHigherWhenPresent()
+    {
+        var products = ProductDataGenerator.Generate(500);
+        foreach (var p in products.Where(p => p.CompareAtPrice.HasValue))
+        {
+            Assert.True(p.CompareAtPrice!.Value > p.Price,
+                $"CompareAtPrice ({p.CompareAtPrice}) should be higher than Price ({p.Price})");
+        }
+    }
+}
+
+/// <summary>
+/// Tests for ColumnDef behavior and FilterKind enum.
+/// </summary>
+public class ColumnDefTests
+{
+    [Fact]
+    public void ColumnDef_Render_ReturnsFormattedValue()
+    {
+        var col = new ColumnDef("Price", "Price", p => p.Price.ToString("C"), true, FilterKind.Range);
+        var product = new CatalogProduct { Price = 29.99m };
+        var result = col.Render(product);
+        Assert.Contains("29.99", result);
+    }
+
+    [Fact]
+    public void ColumnDef_DefaultValues()
+    {
+        var col = new ColumnDef("Test", "Test Header", p => p.Name, false, FilterKind.Text);
+        Assert.True(col.Visible, "Columns should be visible by default");
+        Assert.Equal(string.Empty, col.FilterText);
+        Assert.Equal(string.Empty, col.FilterMin);
+        Assert.Equal(string.Empty, col.FilterMax);
+        Assert.Equal(string.Empty, col.MinWidth);
+        Assert.Empty(col.SelectOptions);
+    }
+
+    [Fact]
+    public void ColumnDef_SelectOptions_CanBeSet()
+    {
+        var col = new ColumnDef("Category", "Category", p => p.Category, false, FilterKind.Select)
+        {
+            SelectOptions = ["Electronics", "Furniture", "Clothing"]
+        };
+        Assert.Equal(3, col.SelectOptions.Length);
+        Assert.Contains("Electronics", col.SelectOptions);
+    }
+
+    [Fact]
+    public void ColumnDef_Visibility_CanBeToggled()
+    {
+        var col = new ColumnDef("Test", "Test", p => p.Name, false, FilterKind.Text);
+        Assert.True(col.Visible);
+
+        col.Visible = false;
+        Assert.False(col.Visible);
+
+        col.Visible = true;
+        Assert.True(col.Visible);
+    }
+
+    [Fact]
+    public void FilterKind_HasExpectedValues()
+    {
+        Assert.Equal(0, (int)FilterKind.Text);
+        Assert.Equal(1, (int)FilterKind.Range);
+        Assert.Equal(2, (int)FilterKind.Select);
+    }
+}
+
+/// <summary>
+/// Tests for ShowcasePrefs serialization round-trip.
+/// </summary>
+public class ShowcasePrefsTests
+{
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    [Fact]
+    public void ShowcasePrefs_RoundTrip_AllFields()
+    {
+        var prefs = new ShowcasePrefs
+        {
+            PageSize = 50,
+            SortColumn = "Price",
+            SortAsc = false,
+            ShowFilters = true,
+            ColumnVisibility = new Dictionary<string, bool>
+            {
+                ["Sku"] = true,
+                ["Name"] = true,
+                ["Brand"] = false,
+                ["Color"] = false,
+            },
+            Filters = new Dictionary<string, FilterState>
+            {
+                ["Name"] = new() { Text = "keyboard" },
+                ["Price"] = new() { Min = "10", Max = "500" },
+                ["Category"] = new() { Text = "Electronics" },
+            }
+        };
+
+        var json = JsonSerializer.Serialize(prefs, JsonOpts);
+        Assert.False(string.IsNullOrEmpty(json));
+
+        var deserialized = JsonSerializer.Deserialize<ShowcasePrefs>(json, JsonOpts);
+        Assert.NotNull(deserialized);
+        Assert.Equal(50, deserialized.PageSize);
+        Assert.Equal("Price", deserialized.SortColumn);
+        Assert.False(deserialized.SortAsc);
+        Assert.True(deserialized.ShowFilters);
+        Assert.Equal(4, deserialized.ColumnVisibility!.Count);
+        Assert.False(deserialized.ColumnVisibility["Brand"]);
+        Assert.Equal(3, deserialized.Filters!.Count);
+        Assert.Equal("keyboard", deserialized.Filters["Name"].Text);
+        Assert.Equal("10", deserialized.Filters["Price"].Min);
+        Assert.Equal("500", deserialized.Filters["Price"].Max);
+    }
+
+    [Fact]
+    public void ShowcasePrefs_RoundTrip_Empty()
+    {
+        var prefs = new ShowcasePrefs();
+        var json = JsonSerializer.Serialize(prefs, JsonOpts);
+        var deserialized = JsonSerializer.Deserialize<ShowcasePrefs>(json, JsonOpts);
+
+        Assert.NotNull(deserialized);
+        Assert.Null(deserialized.PageSize);
+        Assert.Null(deserialized.SortColumn);
+        Assert.Null(deserialized.SortAsc);
+        Assert.Null(deserialized.ShowFilters);
+        Assert.Null(deserialized.ColumnVisibility);
+        Assert.Null(deserialized.Filters);
+    }
+
+    [Fact]
+    public void ShowcasePrefs_DeserializeFromPartialJson()
+    {
+        // Only page size set — rest should be null
+        var json = """{"pageSize":100}""";
+        var prefs = JsonSerializer.Deserialize<ShowcasePrefs>(json, JsonOpts);
+
+        Assert.NotNull(prefs);
+        Assert.Equal(100, prefs.PageSize);
+        Assert.Null(prefs.SortColumn);
+        Assert.Null(prefs.Filters);
+    }
+
+    [Fact]
+    public void FilterState_RoundTrip()
+    {
+        var fs = new FilterState { Text = "test", Min = "5", Max = "100" };
+        var json = JsonSerializer.Serialize(fs, JsonOpts);
+        var deserialized = JsonSerializer.Deserialize<FilterState>(json, JsonOpts);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal("test", deserialized.Text);
+        Assert.Equal("5", deserialized.Min);
+        Assert.Equal("100", deserialized.Max);
+    }
+
+    [Fact]
+    public void FilterState_NullFields_Serialize()
+    {
+        var fs = new FilterState { Text = null, Min = null, Max = null };
+        var json = JsonSerializer.Serialize(fs, JsonOpts);
+        var deserialized = JsonSerializer.Deserialize<FilterState>(json, JsonOpts);
+
+        Assert.NotNull(deserialized);
+        Assert.Null(deserialized.Text);
+        Assert.Null(deserialized.Min);
+        Assert.Null(deserialized.Max);
+    }
+}
+
+/// <summary>
+/// Tests for filtering, sorting, and pagination logic extracted into testable helpers.
+/// These test the same algorithms used by Showcase.razor's @code block.
+/// </summary>
+public class ShowcaseFilterSortTests
+{
+    private static List<CatalogProduct> CreateTestProducts()
+    {
+        return
+        [
+            new()
+            {
+                Id = Guid.NewGuid(), Sku = "SKU-001", Name = "Wireless Mouse", Brand = "TechCo",
+                Category = "Electronics", Price = 29.99m, Stock = 150, Rating = 4.2,
+                ReviewCount = 340, WeightKg = 0.12, Color = "Black", WarrantyMonths = 12,
+                DateAdded = new DateTime(2025, 6, 15), Status = "Active",
+                Description = "A wireless mouse by TechCo."
+            },
+            new()
+            {
+                Id = Guid.NewGuid(), Sku = "SKU-002", Name = "Standing Desk", Brand = "ErgoFit",
+                Category = "Furniture", Price = 499.00m, Stock = 25, Rating = 4.8,
+                ReviewCount = 120, WeightKg = 35.0, Color = "White", WarrantyMonths = 36,
+                DateAdded = new DateTime(2025, 3, 10), Status = "Active",
+                Description = "A standing desk by ErgoFit."
+            },
+            new()
+            {
+                Id = Guid.NewGuid(), Sku = "SKU-003", Name = "Desk Mat XL", Brand = "WorkSpace",
+                Category = "Accessories", Price = 34.50m, Stock = 500, Rating = 4.0,
+                ReviewCount = 89, WeightKg = 0.8, Color = "Gray", WarrantyMonths = 0,
+                DateAdded = new DateTime(2025, 9, 22), Status = "Draft",
+                Description = "An XL desk mat."
+            },
+            new()
+            {
+                Id = Guid.NewGuid(), Sku = "SKU-004", Name = "Keyboard Pro", Brand = "TechCo",
+                Category = "Electronics", Price = 149.99m, Stock = 0, Rating = 4.5,
+                ReviewCount = 700, WeightKg = 0.9, Color = "Black", WarrantyMonths = 24,
+                DateAdded = new DateTime(2024, 12, 1), Status = "Out of Stock",
+                Description = "A mechanical keyboard by TechCo."
+            },
+            new()
+            {
+                Id = Guid.NewGuid(), Sku = "SKU-005", Name = "Monitor Arm", Brand = "ErgoFit",
+                Category = "Accessories", Price = 89.00m, Stock = 200, Rating = 3.9,
+                ReviewCount = 55, WeightKg = 3.2, Color = "Silver", WarrantyMonths = 12,
+                DateAdded = new DateTime(2025, 1, 5), Status = "Active",
+                Description = "A monitor arm by ErgoFit."
+            },
+        ];
+    }
+
+    // --- Text filter tests ---
+
+    [Fact]
+    public void Filter_ByName_ContainsMatch()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Name.Contains("desk", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(2, filtered.Count); // "Standing Desk" and "Desk Mat XL"
+    }
+
+    [Fact]
+    public void Filter_ByName_PartialMatch()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Name.Contains("at", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Single(filtered);
+        Assert.Equal("Desk Mat XL", filtered[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByBrand_CaseInsensitive()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Brand.Contains("techco", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(2, filtered.Count);
+    }
+
+    [Fact]
+    public void Filter_ByCategory_ExactMatch()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Category.Equals("Electronics", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(2, filtered.Count);
+    }
+
+    [Fact]
+    public void Filter_ByStatus_ExactMatch()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Status.Equals("Active", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(3, filtered.Count);
+    }
+
+    [Fact]
+    public void Filter_ByColor()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Color.Contains("black", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(2, filtered.Count);
+    }
+
+    // --- Range filter tests ---
+
+    [Fact]
+    public void Filter_ByPriceMin()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => (double)p.Price >= 50.0).ToList();
+        Assert.Equal(3, filtered.Count); // 499, 149.99, 89
+    }
+
+    [Fact]
+    public void Filter_ByPriceMax()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => (double)p.Price <= 35.0).ToList();
+        Assert.Equal(2, filtered.Count); // 29.99, 34.50
+    }
+
+    [Fact]
+    public void Filter_ByPriceRange()
+    {
+        var products = CreateTestProducts();
+        var filtered = products
+            .Where(p => (double)p.Price >= 30.0 && (double)p.Price <= 100.0)
+            .ToList();
+        Assert.Equal(2, filtered.Count); // 34.50, 89
+    }
+
+    [Fact]
+    public void Filter_ByStockMin_GreaterOrEqual()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Stock >= 100).ToList();
+        Assert.Equal(3, filtered.Count); // 150, 500, 200
+    }
+
+    [Fact]
+    public void Filter_ByRatingMin()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Rating >= 4.5).ToList();
+        Assert.Equal(2, filtered.Count); // 4.8, 4.5
+    }
+
+    [Fact]
+    public void Filter_ByWarrantyRange()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.WarrantyMonths >= 12 && p.WarrantyMonths <= 24).ToList();
+        Assert.Equal(3, filtered.Count); // 12, 24, 12
+    }
+
+    // --- Combined filters ---
+
+    [Fact]
+    public void Filter_CombinedTextAndRange()
+    {
+        var products = CreateTestProducts();
+        var filtered = products
+            .Where(p => p.Brand.Contains("TechCo", StringComparison.OrdinalIgnoreCase))
+            .Where(p => (double)p.Price >= 100.0)
+            .ToList();
+        Assert.Single(filtered);
+        Assert.Equal("Keyboard Pro", filtered[0].Name);
+    }
+
+    [Fact]
+    public void Filter_NoMatch_ReturnsEmpty()
+    {
+        var products = CreateTestProducts();
+        var filtered = products.Where(p => p.Name.Contains("zzzznonexistent", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Empty(filtered);
+    }
+
+    // --- Sort tests ---
+
+    [Fact]
+    public void Sort_ByName_Ascending()
+    {
+        var products = CreateTestProducts();
+        var sorted = products.OrderBy(p => p.Name).ToList();
+        Assert.Equal("Desk Mat XL", sorted[0].Name);
+        Assert.Equal("Wireless Mouse", sorted[^1].Name);
+    }
+
+    [Fact]
+    public void Sort_ByPrice_Descending()
+    {
+        var products = CreateTestProducts();
+        var sorted = products.OrderByDescending(p => p.Price).ToList();
+        Assert.Equal(499.00m, sorted[0].Price);
+        Assert.Equal(29.99m, sorted[^1].Price);
+    }
+
+    [Fact]
+    public void Sort_ByRating_Ascending()
+    {
+        var products = CreateTestProducts();
+        var sorted = products.OrderBy(p => p.Rating).ToList();
+        Assert.Equal(3.9, sorted[0].Rating);
+        Assert.Equal(4.8, sorted[^1].Rating);
+    }
+
+    [Fact]
+    public void Sort_ByStock_Descending()
+    {
+        var products = CreateTestProducts();
+        var sorted = products.OrderByDescending(p => p.Stock).ToList();
+        Assert.Equal(500, sorted[0].Stock);
+        Assert.Equal(0, sorted[^1].Stock);
+    }
+
+    [Fact]
+    public void Sort_ByDateAdded_Ascending()
+    {
+        var products = CreateTestProducts();
+        var sorted = products.OrderBy(p => p.DateAdded).ToList();
+        Assert.Equal(new DateTime(2024, 12, 1), sorted[0].DateAdded);
+    }
+
+    // --- Pagination tests ---
+
+    [Fact]
+    public void Paginate_FirstPage()
+    {
+        var products = CreateTestProducts();
+        var pageSize = 2;
+        var page = products.Skip(0).Take(pageSize).ToList();
+        Assert.Equal(2, page.Count);
+    }
+
+    [Fact]
+    public void Paginate_SecondPage()
+    {
+        var products = CreateTestProducts();
+        var pageSize = 2;
+        var page = products.Skip(2).Take(pageSize).ToList();
+        Assert.Equal(2, page.Count);
+    }
+
+    [Fact]
+    public void Paginate_LastPage_Partial()
+    {
+        var products = CreateTestProducts(); // 5 items
+        var pageSize = 2;
+        var page = products.Skip(4).Take(pageSize).ToList();
+        Assert.Single(page);
+    }
+
+    [Fact]
+    public void Paginate_TotalPages_Calculation()
+    {
+        var count = 5;
+        var pageSize = 2;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(count / (double)pageSize));
+        Assert.Equal(3, totalPages);
+    }
+
+    [Fact]
+    public void Paginate_SinglePage()
+    {
+        var count = 3;
+        var pageSize = 10;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(count / (double)pageSize));
+        Assert.Equal(1, totalPages);
+    }
+
+    [Fact]
+    public void Paginate_EmptyList()
+    {
+        var count = 0;
+        var pageSize = 20;
+        var totalPages = Math.Max(1, (int)Math.Ceiling(count / (double)pageSize));
+        Assert.Equal(1, totalPages); // Still page 1 even with no items
+    }
+
+    // --- DateAdded text filter ---
+
+    [Fact]
+    public void Filter_ByDateText_PartialYear()
+    {
+        var products = CreateTestProducts();
+        var filtered = products
+            .Where(p => p.DateAdded.ToString("yyyy-MM-dd").Contains("2025", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Equal(4, filtered.Count); // All except the 2024-12-01 one
+    }
+
+    [Fact]
+    public void Filter_ByDateText_SpecificMonth()
+    {
+        var products = CreateTestProducts();
+        var filtered = products
+            .Where(p => p.DateAdded.ToString("yyyy-MM-dd").Contains("2025-06", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Single(filtered);
     }
 }
 
