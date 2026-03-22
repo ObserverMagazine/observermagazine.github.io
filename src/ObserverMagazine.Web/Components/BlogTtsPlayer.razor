@@ -7,39 +7,89 @@
     <div class="tts-player">
         <span class="tts-icon" aria-hidden="true">🔊</span>
         <span class="tts-label">Listen to this post</span>
-        <audio id="tts-audio-@Slug"
-               controls
-               preload="none"
-               playsinline
-               src="blog-data/@(Slug).mp3"
-               @onplay="OnPlay"
-               @onpause="OnPause"
-               @onended="OnEnded">
-            Your browser does not support audio playback.
-        </audio>
+
+        @if (useFallbackControls)
+        {
+            @* Fallback: custom play/pause + seek when native controls don't render *@
+            <audio id="tts-audio-@Slug"
+                   preload="metadata"
+                   playsinline
+                   src="blog-data/@(Slug).mp3"
+                   style="display:none;">
+                Your browser does not support audio playback.
+            </audio>
+            <div class="tts-fallback">
+                <button class="tts-fallback-btn" @onclick="ToggleFallbackPlay">
+                    @(fallbackPlaying ? "⏸ Pause" : "▶ Play")
+                </button>
+                <input type="range" class="tts-fallback-seek"
+                       min="0" max="@fallbackDuration" step="1"
+                       value="@fallbackCurrentTime"
+                       @oninput="OnSeek" />
+                <span class="tts-fallback-time">@FormatTime(fallbackCurrentTime)</span>
+            </div>
+        }
+        else
+        {
+            @* Default: native browser audio controls *@
+            <audio id="tts-audio-@Slug"
+                   controls
+                   preload="metadata"
+                   playsinline
+                   src="blog-data/@(Slug).mp3"
+                   @onplay="OnPlay"
+                   @onpause="OnPause"
+                   @onended="OnEnded">
+                Your browser does not support audio playback.
+            </audio>
+        }
     </div>
 }
 
 @code {
     /// <summary>Blog post slug — matches the MP3 filename in blog-data/</summary>
     [Parameter, EditorRequired]
-    public string Slug { get; set; } = "";
+    public string Slug { get; set; } = string.Empty;
 
     private bool hidden;
+    private bool useFallbackControls;
+    private bool fallbackPlaying;
+    private int fallbackCurrentTime;
+    private int fallbackDuration = 1; // avoid div-by-zero on range
+
+    private System.Threading.Timer? _pollTimer;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Use JS to detect if audio source can be loaded.
-            // The Blazor @onerror binding is unreliable on mobile browsers.
             try
             {
+                // Check if the audio source is available at all
                 var canPlay = await JS.InvokeAsync<bool>("observerAudio.checkAvailability",
                     $"tts-audio-{Slug}");
                 if (!canPlay)
                 {
                     hidden = true;
+                    StateHasChanged();
+                    return;
+                }
+
+                // Check if native controls rendered properly (height > 0).
+                // Chrome Android clips the controls to 0px height in some CSS scenarios.
+                var controlsRendered = await JS.InvokeAsync<bool>("observerAudio.checkControlsRendered",
+                    $"tts-audio-{Slug}");
+                if (!controlsRendered)
+                {
+                    Logger.LogInformation("Native audio controls not rendered for {Slug}, using fallback", Slug);
+                    useFallbackControls = true;
+                    StateHasChanged();
+
+                    // After switching to fallback, get duration
+                    await Task.Delay(100); // let DOM update
+                    var dur = await JS.InvokeAsync<double>("observerAudio.getDuration", $"tts-audio-{Slug}");
+                    if (dur > 0)
+                        fallbackDuration = (int)Math.Ceiling(dur);
                     StateHasChanged();
                 }
             }
@@ -53,7 +103,96 @@
     protected override void OnParametersSet()
     {
         hidden = false;
+        useFallbackControls = false;
+        fallbackPlaying = false;
+        fallbackCurrentTime = 0;
     }
+
+    // --- Fallback controls ---
+
+    private async Task ToggleFallbackPlay()
+    {
+        try
+        {
+            if (fallbackPlaying)
+            {
+                await JS.InvokeVoidAsync("observerAudio.pause", $"tts-audio-{Slug}");
+                fallbackPlaying = false;
+                StopPolling();
+                await OnPause();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("observerAudio.play", $"tts-audio-{Slug}");
+                fallbackPlaying = true;
+                StartPolling();
+                await OnPlay();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Fallback play/pause failed for {Slug}", Slug);
+        }
+    }
+
+    private async Task OnSeek(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var time))
+        {
+            fallbackCurrentTime = (int)time;
+            try
+            {
+                await JS.InvokeVoidAsync("observerAudio.setCurrentTime", $"tts-audio-{Slug}", time);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug(ex, "Seek failed for {Slug}", Slug);
+            }
+        }
+    }
+
+    private void StartPolling()
+    {
+        StopPolling();
+        _pollTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                var time = await JS.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
+                var ended = await JS.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
+                await InvokeAsync(() =>
+                {
+                    fallbackCurrentTime = (int)time;
+                    if (ended)
+                    {
+                        fallbackPlaying = false;
+                        StopPolling();
+                        _ = OnEnded();
+                    }
+                    StateHasChanged();
+                });
+            }
+            catch
+            {
+                // Component may have been disposed — ignore
+            }
+        }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
+    }
+
+    private void StopPolling()
+    {
+        _pollTimer?.Dispose();
+        _pollTimer = null;
+    }
+
+    private static string FormatTime(int seconds)
+    {
+        var m = seconds / 60;
+        var s = seconds % 60;
+        return $"{m}:{s:D2}";
+    }
+
+    // --- Analytics events ---
 
     private async Task OnPlay()
     {
@@ -71,5 +210,10 @@
     {
         Logger.LogInformation("TTS finished: {Slug}", Slug);
         await Analytics.TrackInteractionAsync("TTS.Finished", Slug);
+    }
+
+    public void Dispose()
+    {
+        StopPolling();
     }
 }

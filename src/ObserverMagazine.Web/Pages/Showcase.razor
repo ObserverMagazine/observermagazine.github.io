@@ -3,6 +3,7 @@
 @inject IAnalyticsService Analytics
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@implements IDisposable
 
 <PageTitle>Showcase — Observer Magazine</PageTitle>
 
@@ -13,13 +14,17 @@
     your browser's local storage.
 </p>
 
+@* ---- Toolbar ---- *@
 <div class="sc-toolbar">
     <div class="sc-toolbar-left">
         <button class="btn btn-primary btn-sm" @onclick="NavigateToNew">+ New Product</button>
-        <button class="btn btn-outline btn-sm" @onclick="ResetData">Reset to Defaults</button>
+        <button class="btn btn-outline btn-sm" @onclick="ResetData">Reset Data</button>
         <span class="sc-count">@filteredProducts.Count of @allProducts.Count items</span>
     </div>
     <div class="sc-toolbar-right">
+        <button class="btn btn-outline btn-sm" @onclick="ToggleFilters">
+            @(showFilters ? "Hide Filters" : "Show Filters")
+        </button>
         <div class="sc-col-toggle">
             <button class="btn btn-outline btn-sm" @onclick="ToggleColumnPicker">Columns ▾</button>
             @if (showColumnPicker)
@@ -33,6 +38,10 @@
                             @col.Header
                         </label>
                     }
+                    <hr />
+                    <button class="btn btn-outline btn-sm sc-col-restore" @onclick="RestoreColumnDefaults">
+                        Restore Defaults
+                    </button>
                 </div>
             }
         </div>
@@ -48,44 +57,65 @@
     </div>
 </div>
 
-@* ---- Filter row ---- *@
-<div class="sc-filters">
-    @foreach (var col in columns.Where(c => c.Visible))
-    {
-        <div class="sc-filter-cell" style="@ColStyle(col)">
-            @if (col.FilterKind == FilterKind.Text)
+@* ---- Filter panel (collapsible, works on desktop + mobile) ---- *@
+@if (showFilters)
+{
+    <div class="sc-filter-panel">
+        <div class="sc-filter-panel-header">
+            <strong>Filters</strong>
+            <button class="btn btn-outline btn-sm" @onclick="ClearFilters" title="Clear all filters">
+                Clear All Filters
+            </button>
+        </div>
+        <div class="sc-filter-grid">
+            @foreach (var col in columns.Where(c => c.Visible))
             {
-                <input type="text" placeholder="@col.Header..."
-                       value="@col.FilterText"
-                       @oninput="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)" />
-            }
-            else if (col.FilterKind == FilterKind.Range)
-            {
-                <div class="sc-range-filter">
-                    <input type="number" placeholder="Min"
-                           value="@col.FilterMin"
-                           @oninput="e => OnFilterMinChanged(col, e.Value?.ToString() ?? string.Empty)" />
-                    <input type="number" placeholder="Max"
-                           value="@col.FilterMax"
-                           @oninput="e => OnFilterMaxChanged(col, e.Value?.ToString() ?? string.Empty)" />
-                </div>
-            }
-            else if (col.FilterKind == FilterKind.Select)
-            {
-                <select value="@col.FilterText" @onchange="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)">
-                    <option value="">All</option>
-                    @foreach (var opt in col.SelectOptions)
-                    {
-                        <option value="@opt">@opt</option>
-                    }
-                </select>
+                @if (col.FilterKind == FilterKind.Text)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <input type="text" class="sc-filter-input"
+                               placeholder="Filter @col.Header..."
+                               value="@col.FilterText"
+                               @oninput="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                    </div>
+                }
+                else if (col.FilterKind == FilterKind.Range)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <div class="sc-range-inputs">
+                            <input type="number" class="sc-filter-input"
+                                   placeholder="Min"
+                                   value="@col.FilterMin"
+                                   @oninput="e => OnFilterMinChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                            <span class="sc-range-sep">–</span>
+                            <input type="number" class="sc-filter-input"
+                                   placeholder="Max"
+                                   value="@col.FilterMax"
+                                   @oninput="e => OnFilterMaxChanged(col, e.Value?.ToString() ?? string.Empty)" />
+                        </div>
+                    </div>
+                }
+                else if (col.FilterKind == FilterKind.Select)
+                {
+                    <div class="sc-filter-row">
+                        <label class="sc-filter-label">@col.Header</label>
+                        <select class="sc-filter-input"
+                                value="@col.FilterText"
+                                @onchange="e => OnFilterTextChanged(col, e.Value?.ToString() ?? string.Empty)">
+                            <option value="">All</option>
+                            @foreach (var opt in col.SelectOptions)
+                            {
+                                <option value="@opt">@opt</option>
+                            }
+                        </select>
+                    </div>
+                }
             }
         </div>
-    }
-    <div class="sc-filter-cell sc-filter-actions">
-        <button class="btn btn-outline btn-sm" @onclick="ClearFilters" title="Clear all filters">✕</button>
     </div>
-</div>
+}
 
 @* ---- Table ---- *@
 <div class="sc-table-wrap">
@@ -94,7 +124,7 @@
             <tr>
                 @foreach (var col in columns.Where(c => c.Visible))
                 {
-                    <th class="@(col.Numeric ? "sc-num" : "") sc-sortable"
+                    <th class="@(col.Numeric ? "sc-num" : string.Empty) sc-sortable"
                         style="@ColStyle(col)"
                         @onclick="() => SortBy(col)">
                         @col.Header
@@ -121,13 +151,14 @@
                 <tr @onclick="() => NavigateToDetail(p.Id)" class="sc-clickable-row">
                     @foreach (var col in columns.Where(c => c.Visible))
                     {
-                        <td class="@(col.Numeric ? "sc-num" : "")" data-label="@col.Header">
+                        <td class="@(col.Numeric ? "sc-num" : string.Empty)"
+                            data-label="@col.Header">
                             @col.Render(p)
                         </td>
                     }
-                    <td class="sc-actions-col" data-label="Actions" @onclick:stopPropagation="true">
-                        <button class="btn btn-outline btn-sm" @onclick="() => NavigateToDetail(p.Id)" title="View / Edit">✎</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(p)" title="Delete">✕</button>
+                    <td class="sc-actions" data-label="Actions" @onclick:stopPropagation="true">
+                        <button class="btn btn-outline btn-sm" @onclick="() => NavigateToDetail(p.Id)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => ConfirmDelete(p)">Del</button>
                     </td>
                 </tr>
             }
@@ -137,21 +168,21 @@
 
 @* ---- Pagination ---- *@
 <div class="sc-pagination">
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage <= 1)" @onclick="FirstPage">« First</button>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage <= 1)" @onclick="PrevPage">‹ Prev</button>
+    <button class="btn btn-outline btn-sm" @onclick="FirstPage" disabled="@(currentPage <= 1)">« First</button>
+    <button class="btn btn-outline btn-sm" @onclick="PrevPage" disabled="@(currentPage <= 1)">‹ Prev</button>
     <span class="sc-page-info">Page @currentPage of @totalPages</span>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage >= totalPages)" @onclick="NextPage">Next ›</button>
-    <button class="btn btn-outline btn-sm" disabled="@(currentPage >= totalPages)" @onclick="LastPage">Last »</button>
+    <button class="btn btn-outline btn-sm" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Next ›</button>
+    <button class="btn btn-outline btn-sm" @onclick="LastPage" disabled="@(currentPage >= totalPages)">Last »</button>
 </div>
 
-@* ---- Delete confirmation ---- *@
+@* ---- Delete confirmation overlay ---- *@
 @if (deleteTarget is not null)
 {
     <div class="sc-overlay" @onclick="CancelDelete">
         <div class="sc-dialog" @onclick:stopPropagation="true">
-            <h4>Delete Product</h4>
-            <p>Are you sure you want to delete <strong>@deleteTarget.Name</strong>?</p>
-            <div class="form-actions">
+            <h4>Delete product?</h4>
+            <p>Are you sure you want to delete <strong>@deleteTarget.Name</strong> (@deleteTarget.Sku)?</p>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
                 <button class="btn btn-outline btn-sm" @onclick="CancelDelete">Cancel</button>
                 <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
             </div>
@@ -160,33 +191,33 @@
 }
 
 @code {
-    private const string StorageKey = "observer-catalog-v2";
+    private const string StorageKey = "observer-catalog-products";
+    private const string PrefsKey = "observer-showcase-prefs";
 
-    // --- Data ---
     private List<CatalogProduct> allProducts = [];
     private List<CatalogProduct> filteredProducts = [];
     private List<CatalogProduct> pagedProducts = [];
 
-    // --- Pagination ---
     private int pageSize = 20;
     private int currentPage = 1;
     private int totalPages = 1;
-
-    // --- Sort ---
     private string sortColumn = "Name";
     private bool sortAsc = true;
-
-    // --- UI state ---
     private bool showColumnPicker;
+    private bool showFilters = true;
     private CatalogProduct? deleteTarget;
 
     // --- Column definitions ---
     private List<ColumnDef> columns = [];
 
+    // Track default visibility for "Restore Defaults"
+    private Dictionary<string, bool> defaultVisibility = new();
+
     protected override async Task OnInitializedAsync()
     {
         InitColumns();
         await LoadProducts();
+        await LoadPrefs();
         ApplyFilterAndSort();
         await Analytics.TrackPageViewAsync("Showcase");
     }
@@ -209,42 +240,51 @@
             new("ReviewCount", "Reviews", p => p.ReviewCount.ToString("N0"), true, FilterKind.Range) { MinWidth = "80px", Visible = false },
             new("WeightKg", "Weight (kg)", p => p.WeightKg.ToString("F2"), true, FilterKind.Range) { MinWidth = "90px", Visible = false },
             new("Color", "Color", p => p.Color, false, FilterKind.Text) { MinWidth = "90px", Visible = false },
-            new("WarrantyMonths", "Warranty", p => p.WarrantyMonths > 0 ? $"{p.WarrantyMonths}mo" : "—", true, FilterKind.Range) { MinWidth = "80px", Visible = false },
-            new("DateAdded", "Added", p => p.DateAdded.ToString("yyyy-MM-dd"), false, FilterKind.Text) { MinWidth = "100px", Visible = false },
+            new("WarrantyMonths", "Warranty", p => p.WarrantyMonths > 0 ? $"{p.WarrantyMonths} mo" : "None", true, FilterKind.Range)
+            {
+                MinWidth = "80px",
+                Visible = false
+            },
+            new("DateAdded", "Date Added", p => p.DateAdded.ToString("yyyy-MM-dd"), false, FilterKind.Text)
+            {
+                MinWidth = "100px",
+                Visible = false
+            },
             new("Status", "Status", p => p.Status, false, FilterKind.Select)
             {
                 MinWidth = "90px",
-                SelectOptions = ["Active", "Discontinued", "Draft"]
+                SelectOptions = ["Active", "Draft", "Archived", "Out of Stock"]
             },
         ];
+
+        // Save defaults
+        defaultVisibility = columns.ToDictionary(c => c.Key, c => c.Visible);
     }
 
-    // --- Data loading/saving ---
+    // --- Product persistence ---
 
     private async Task LoadProducts()
     {
         try
         {
-            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-            if (!string.IsNullOrEmpty(saved))
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            if (!string.IsNullOrEmpty(json))
             {
-                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(saved,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (deserialized is { Count: > 0 })
+                var loaded = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(json,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+                if (loaded is { Count: > 0 })
                 {
-                    allProducts = deserialized;
-                    Logger.LogInformation("Loaded {Count} products from local storage", allProducts.Count);
+                    allProducts = loaded;
                     return;
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogDebug(ex, "Could not read catalog from local storage");
+            Logger.LogWarning(ex, "Could not load catalog from local storage");
         }
 
         allProducts = ProductDataGenerator.Generate(2000);
-        Logger.LogInformation("Generated {Count} default products", allProducts.Count);
         await SaveProducts();
     }
 
@@ -259,6 +299,83 @@
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "Could not save catalog to local storage");
+        }
+    }
+
+    // --- Preferences persistence ---
+
+    private async Task LoadPrefs()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+            if (string.IsNullOrEmpty(json)) return;
+
+            var prefs = System.Text.Json.JsonSerializer.Deserialize<ShowcasePrefs>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            if (prefs is null) return;
+
+            if (prefs.PageSize is > 0) pageSize = prefs.PageSize.Value;
+            if (!string.IsNullOrEmpty(prefs.SortColumn)) sortColumn = prefs.SortColumn;
+            if (prefs.SortAsc is not null) sortAsc = prefs.SortAsc.Value;
+            if (prefs.ShowFilters is not null) showFilters = prefs.ShowFilters.Value;
+
+            if (prefs.ColumnVisibility is not null)
+            {
+                foreach (var col in columns)
+                {
+                    if (prefs.ColumnVisibility.TryGetValue(col.Key, out var vis))
+                        col.Visible = vis;
+                }
+            }
+
+            if (prefs.Filters is not null)
+            {
+                foreach (var col in columns)
+                {
+                    if (prefs.Filters.TryGetValue(col.Key, out var f))
+                    {
+                        col.FilterText = f.Text ?? string.Empty;
+                        col.FilterMin = f.Min ?? string.Empty;
+                        col.FilterMax = f.Max ?? string.Empty;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not load showcase preferences");
+        }
+    }
+
+    private async Task SavePrefs()
+    {
+        try
+        {
+            var prefs = new ShowcasePrefs
+            {
+                PageSize = pageSize,
+                SortColumn = sortColumn,
+                SortAsc = sortAsc,
+                ShowFilters = showFilters,
+                ColumnVisibility = columns.ToDictionary(c => c.Key, c => c.Visible),
+                Filters = columns
+                    .Where(c => !string.IsNullOrEmpty(c.FilterText) || !string.IsNullOrEmpty(c.FilterMin) || !string.IsNullOrEmpty(c.FilterMax))
+                    .ToDictionary(c => c.Key, c => new FilterState
+                    {
+                        Text = string.IsNullOrEmpty(c.FilterText) ? null : c.FilterText,
+                        Min = string.IsNullOrEmpty(c.FilterMin) ? null : c.FilterMin,
+                        Max = string.IsNullOrEmpty(c.FilterMax) ? null : c.FilterMax,
+                    })
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(prefs,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Could not save showcase preferences");
         }
     }
 
@@ -308,6 +425,7 @@
                         _ => result
                     };
                 }
+
                 if (double.TryParse(col.FilterMax, out var max))
                 {
                     result = col.Key switch
@@ -356,7 +474,7 @@
 
     // --- Event handlers ---
 
-    private void SortBy(ColumnDef col)
+    private async Task SortBy(ColumnDef col)
     {
         if (sortColumn == col.Key)
             sortAsc = !sortAsc;
@@ -367,30 +485,34 @@
         }
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterTextChanged(ColumnDef col, string value)
+    private async Task OnFilterTextChanged(ColumnDef col, string value)
     {
         col.FilterText = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterMinChanged(ColumnDef col, string value)
+    private async Task OnFilterMinChanged(ColumnDef col, string value)
     {
         col.FilterMin = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnFilterMaxChanged(ColumnDef col, string value)
+    private async Task OnFilterMaxChanged(ColumnDef col, string value)
     {
         col.FilterMax = value;
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void ClearFilters()
+    private async Task ClearFilters()
     {
         foreach (var col in columns)
         {
@@ -400,15 +522,17 @@
         }
         currentPage = 1;
         ApplyFilterAndSort();
+        await SavePrefs();
     }
 
-    private void OnPageSizeChanged(ChangeEventArgs e)
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
         {
             pageSize = size;
             currentPage = 1;
             ApplyFilterAndSort();
+            await SavePrefs();
         }
     }
 
@@ -417,11 +541,37 @@
     private void NextPage() { if (currentPage < totalPages) { currentPage++; ApplyFilterAndSort(); } }
     private void LastPage() { currentPage = totalPages; ApplyFilterAndSort(); }
 
+    private async Task ToggleFilters()
+    {
+        showFilters = !showFilters;
+        await SavePrefs();
+    }
+
     private void ToggleColumnPicker() => showColumnPicker = !showColumnPicker;
 
-    private void ToggleColumn(ColumnDef col, bool visible)
+    private async Task ToggleColumn(ColumnDef col, bool visible)
     {
         col.Visible = visible;
+        await SavePrefs();
+    }
+
+    private async Task RestoreColumnDefaults()
+    {
+        foreach (var col in columns)
+        {
+            if (defaultVisibility.TryGetValue(col.Key, out var vis))
+                col.Visible = vis;
+            col.FilterText = string.Empty;
+            col.FilterMin = string.Empty;
+            col.FilterMax = string.Empty;
+        }
+        sortColumn = "Name";
+        sortAsc = true;
+        pageSize = 20;
+        currentPage = 1;
+        showColumnPicker = false;
+        ApplyFilterAndSort();
+        await SavePrefs();
     }
 
     private void NavigateToDetail(Guid id) => Nav.NavigateTo($"showcase/{id}");
@@ -448,12 +598,17 @@
 
         allProducts = ProductDataGenerator.Generate(2000);
         currentPage = 1;
-        ClearFilters();
+        await ClearFilters();
         await SaveProducts();
     }
 
     private static string ColStyle(ColumnDef col) =>
         string.IsNullOrEmpty(col.MinWidth) ? string.Empty : $"min-width:{col.MinWidth}";
+
+    public void Dispose()
+    {
+        // Nothing to dispose for now, but good practice to implement IDisposable
+    }
 
     // --- Column definition model ---
 
@@ -472,5 +627,24 @@
         public string MinWidth { get; set; } = string.Empty;
         public string[] SelectOptions { get; set; } = [];
         public string Render(CatalogProduct p) => render(p);
+    }
+
+    // --- Preferences DTO ---
+
+    public sealed class ShowcasePrefs
+    {
+        public int? PageSize { get; set; }
+        public string? SortColumn { get; set; }
+        public bool? SortAsc { get; set; }
+        public bool? ShowFilters { get; set; }
+        public Dictionary<string, bool>? ColumnVisibility { get; set; }
+        public Dictionary<string, FilterState>? Filters { get; set; }
+    }
+
+    public sealed class FilterState
+    {
+        public string? Text { get; set; }
+        public string? Min { get; set; }
+        public string? Max { get; set; }
     }
 }

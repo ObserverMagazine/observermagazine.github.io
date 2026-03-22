@@ -1,3 +1,8 @@
+/* ==========================================================================
+   Showcase — Product Catalog
+   ========================================================================== */
+
+/* ---- Toolbar ---- */
 .sc-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -24,6 +29,7 @@
     color: var(--color-muted);
 }
 
+/* ---- Column picker ---- */
 .sc-col-toggle {
     position: relative;
 }
@@ -57,6 +63,11 @@
     background: var(--color-surface);
 }
 
+.sc-col-restore {
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
 .sc-page-size {
     display: flex;
     align-items: center;
@@ -73,76 +84,108 @@
     color: var(--color-text);
 }
 
-/* ---- Filters ---- */
-.sc-filters {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    border: 1px solid var(--color-border);
-    border-bottom: none;
-    border-radius: var(--radius) var(--radius) 0 0;
+/* ---- Filter panel (replaces inline filter row) ---- */
+.sc-filter-panel {
     background: var(--color-surface);
-    overflow-x: auto;
-}
-
-.sc-filter-cell {
-    padding: 0.4rem 0.5rem;
-    flex-shrink: 0;
-}
-
-.sc-filter-cell input,
-.sc-filter-cell select {
-    width: 100%;
-    padding: 0.25rem 0.4rem;
     border: 1px solid var(--color-border);
-    border-radius: 3px;
-    font-size: 0.8rem;
-    background: var(--color-bg);
-    color: var(--color-text);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
 }
 
-.sc-range-filter {
+.sc-filter-panel-header {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sc-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.5rem 1rem;
+}
+
+.sc-filter-row {
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
 }
 
-.sc-range-filter input {
-    width: 60px;
+.sc-filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    white-space: nowrap;
 }
 
-.sc-filter-actions {
+.sc-filter-input {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sc-filter-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+.sc-range-inputs {
     display: flex;
     align-items: center;
-    padding: 0.4rem;
+    gap: 0.35rem;
+}
+
+.sc-range-inputs .sc-filter-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.sc-range-sep {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 
 /* ---- Table ---- */
 .sc-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--color-border);
-    border-radius: 0 0 var(--radius) var(--radius);
+    border-radius: var(--radius);
 }
 
 .sc-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }
 
 .sc-table th,
 .sc-table td {
-    text-align: left;
     padding: 0.5rem 0.6rem;
+    text-align: left;
     border-bottom: 1px solid var(--color-border);
     white-space: nowrap;
 }
 
 .sc-table th {
-    font-weight: 600;
     background: var(--color-surface);
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--color-muted);
     position: sticky;
     top: 0;
-    z-index: 2;
+}
+
+.sc-num {
+    text-align: right;
 }
 
 .sc-sortable {
@@ -151,16 +194,12 @@
 }
 
 .sc-sortable:hover {
-    background: var(--color-border);
+    color: var(--color-primary);
 }
 
 .sc-sort-arrow {
     font-size: 0.7rem;
-    margin-left: 0.3rem;
-}
-
-.sc-num {
-    text-align: right;
+    margin-left: 0.2rem;
 }
 
 .sc-clickable-row {
@@ -172,16 +211,20 @@
     background: var(--color-surface);
 }
 
-.sc-actions-col {
-    width: 100px;
+.sc-actions {
     white-space: nowrap;
+}
+
+.sc-actions-col {
+    width: 120px;
     text-align: center;
 }
 
 .sc-empty {
     text-align: center;
-    padding: 2rem;
     color: var(--color-muted);
+    padding: 2rem;
+    font-style: italic;
 }
 
 /* ---- Pagination ---- */
@@ -230,12 +273,37 @@
     font-size: 0.95rem;
 }
 
-/* ---- Mobile: collapse table to cards ---- */
+/* ---- Mobile responsive ---- */
 @media (max-width: 768px) {
-    .sc-filters {
-        display: none;
+    .sc-toolbar {
+        flex-direction: column;
+        align-items: stretch;
     }
 
+    .sc-toolbar-left,
+    .sc-toolbar-right {
+        justify-content: space-between;
+    }
+
+    /* Column dropdown: position relative to viewport on mobile */
+    .sc-col-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 50vh;
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        z-index: 100;
+    }
+
+    /* Filters: single column on small screens */
+    .sc-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Table collapses to cards */
     .sc-table thead {
         display: none;
     }
@@ -267,15 +335,5 @@
     .sc-table-wrap {
         border: none;
         border-radius: 0;
-    }
-
-    .sc-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .sc-toolbar-left,
-    .sc-toolbar-right {
-        justify-content: space-between;
     }
 }
