@@ -1,5 +1,5 @@
 ---
-title: Hello, world!
+title: Good morning!
 date: 2026-03-22
 author: kushal
 summary: In which I say Good morning to you
