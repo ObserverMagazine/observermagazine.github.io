@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sun Mar 22 09:11:31 AM EDT 2026
+DATE: Sun Mar 22 09:12:24 AM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -4589,7 +4589,6 @@ public static class ProductDataGenerator
     /// Creates a deterministic GUID from a seed and index so we get the same IDs every time.
     /// </summary>
     private static Guid CreateDeterministicGuid(int seed, int index)
-private static Guid CreateDeterministicGuid(int seed, int index)
     {
         var bytes = new byte[16];
         BitConverter.GetBytes(seed).CopyTo(bytes, 0);
