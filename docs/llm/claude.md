@@ -15398,3 +15398,63 @@ Everything else in the dump looked correct — the YAML syntax on `observer-team
 
 
 
+There are still a lot of "small" UX problems. 
+Google Chrome on mobile does not surface the media. 
+I sent this link directly to the phone through the messaging app Signal
+`https://observermagazine.github.io/blog-data/good-morning.mp3`
+and played it directly on Google Chrome. 
+Then, now I can see the media controls. 
+I think this is some kind of abuse prevention method by the Google Chrome team. 
+Review this page 
+https://developer.chrome.com/blog/autoplay
+and if necessary, include a naked link so the user can click the link and play the audio 
+if necessary 
+There are a lot of other defects. 
+For example, the hamburger menu does not close itself on mobile. 
+Like I tab the three lines 
+and then I click on blog for example 
+the menu stays there. 
+was this a design choice? 
+shouldn't the menu go away once you click it? 
+because it covers the header blog as well the first blog card 
+these aren't things I should have to mention to you
+these things should be obvious
+if this was a defect, please find all other defects like this in the code base and please fix them as well. 
+in addition, please make a new author card with fake details about Abraham Lincoln as a sample
+add all the possible social media... 
+i didn't mean some social media 
+I mean ALL the social media that you know of and can link 
+ALL of them 
+ok hope you understand all of them 
+and then, 
+write a long and comprehensive article authored by observer-team 
+about the year 2025 
+include ALL the details about every single newsworthy event of the year 
+politics, economics, technology, everything 
+have it dated for today 
+and then next, write an article about 
+dotnet 10, asp dotnet 10, blazor, blazor web assembly, blazor server, blazor universal, and the various innovations 
+explain a professional dotnet developer who has never seen any code newer than dotnet 4.7 
+has a life and only interacts with "enterprise software" at work 
+does not play with software at home 
+why this modernization to dotnet 10 is a good thing 
+what we can expect 
+also include information and facts about what else is going on in the technology world 
+also, we should make a code change 
+instead of directly linking to dependencies like this
+```html
+<!-- highlight.js core (no theme — we use our own CSS-variable theme) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css"
+        id="hljs-theme" disabled />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+```
+we should use `libman` I believe that is what it is called and we can define what version to get and from which cdn 
+and we can grab the resources during build time 
+also I got a source map error 
+ Source map error: Error: request failed with status 404
+Stack in the worker:networkRequest@resource://devtools/client/shared/source-map-loader/utils/network-request.js:43:9
+Resource URL: https://observermagazine.github.io/_framework/dotnet.runtime.peu2mfb29t.js
+Source Map URL: dotnet.runtime.js.map
+https://firefox-source-docs.mozilla.org/devtools-user/debugger/source_map_errors/
+can you fix this as well please? 
+thank you 

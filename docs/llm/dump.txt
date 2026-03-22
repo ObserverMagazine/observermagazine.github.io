@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sun Mar 22 10:42:47 AM EDT 2026
+DATE: Sun Mar 22 02:30:10 PM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -753,6 +753,25 @@ Enable AOT compilation and IL stripping. Use lazy loading for assemblies not nee
 The ASP.NET cold start problem was real and painful for over a decade. It was caused by a perfect storm of just-in-time compilation, dynamic view compilation, heavy framework initialization, and IIS process management. Modern .NET has attacked each of these causes systematically: Tiered Compilation and ReadyToRun reduce JIT overhead, build-time view compilation eliminates runtime Razor compilation, the minimal hosting model reduces initialization work, and Kestrel eliminates IIS recycling. Native AOT in .NET 10 goes even further by eliminating JIT entirely, producing native binaries with startup times measured in milliseconds rather than seconds.
 
 The result is that a well-optimized .NET 10 application can cold-start faster than most Node.js or Python applications — a dramatic reversal from the .NET Framework era. The ecosystem has matured, the tooling is excellent, and the migration path from .NET 8 LTS to .NET 10 LTS is smooth. If cold starts have been holding you back from .NET, it is time to take another look.
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-03-22-good-morning.md
+-------------------------------------------------------------------------------
+---
+title: Good morning!
+date: 2026-03-22
+author: kushal
+summary: In which I say Good morning to you
+tags:
+  - introductions
+---
+
+## Good morning 
+
+It is almost eleven in the morning eastern time as I type this. 
+Hope you are doing well. 
+
 
 
 -------------------------------------------------------------------------------
@@ -8300,6 +8319,6 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 76
+Total Files Exported: 77
 Output File: docs/llm/dump.txt
 ===============================================================================
