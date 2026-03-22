@@ -14360,3 +14360,324 @@ You need to run this SQL against your D1 database to create the view count and r
 
 31
 20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I see test failures 
+kushal@fedora:~/src/ts/cloudflare/my-api$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+
+real	0m7.691s
+user	0m11.434s
+sys	0m0.948s
+Restore complete (0.5s)
+
+Build succeeded in 0.6s
+
+real	0m0.776s
+user	0m0.833s
+sys	0m0.143s
+Content directory: content/blog
+Output directory:  src/ObserverMagazine.Web/wwwroot
+Authors directory: content/authors
+Publish before:    2026-03-22 12:58:49 UTC
+Found 2 author profile(s)
+  Loaded author: observer-team (Observer Team)
+  Loaded author: kushal (kushal)
+Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (2 authors)
+Found 7 markdown files
+Processing: 2026-01-15-welcome-to-observer-magazine.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
+Processing: 2026-02-20-getting-started-with-blazor-wasm.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
+Processing: 2026-03-10-responsive-design-patterns.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
+Processing: 2026-03-20-hello-world.md
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
+Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
+  WARNING: No author profile found for 'Observer Team'
+  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
+Processing: 2099-01-01-draft-template.md
+  SKIPPED: Draft post 'Your Post Title Here'
+Processing: 2027-01-01-happy-new-year-2027.md
+  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-03-22)
+Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (5 posts, 1 drafts skipped, 1 future posts skipped)
+Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
+Content processing complete.
+Restore complete (0.5s)
+  ObserverMagazine.Integration.Tests net10.0 succeeded (0.4s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
+[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.29]   Discovered:  ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.45]   Starting:    ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.67]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
+  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.2s)
+  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.4s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
+  ObserverMagazine.Web.Tests net10.0 succeeded (0.3s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
+[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.29]   Discovered:  ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.44]   Starting:    ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.54]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData [FAIL]
+[xUnit.net 00:00:00.54]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.54]       Stack Trace:
+[xUnit.net 00:00:00.54]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.54]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(106,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData()
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.54]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic [FAIL]
+[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(26,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic()
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice [FAIL]
+[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(86,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice()
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice [FAIL]
+[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(95,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice()
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories [FAIL]
+[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(70,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories()
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.55]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000 [FAIL]
+[xUnit.net 00:00:00.55]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.55]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(19,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000()
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.55]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique [FAIL]
+[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.58]       Stack Trace:
+[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(62,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique()
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields [FAIL]
+[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.58]       Stack Trace:
+[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(40,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields()
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount [FAIL]
+[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.58]       Stack Trace:
+[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(12,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount()
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.58]     ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands [FAIL]
+[xUnit.net 00:00:00.58]       System.ArgumentException : Destination array was not long enough. Check the destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+[xUnit.net 00:00:00.58]       Stack Trace:
+[xUnit.net 00:00:00.58]            at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139,0): at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(105,0): at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed)
+[xUnit.net 00:00:00.58]         /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests.cs(78,0): at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands()
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.58]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.87]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
+  ObserverMagazine.Web.Tests test net10.0 failed with 10 error(s) (1.4s)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData (21ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the
+       destination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DifferentSeedsProduceDifferentData() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Com
+      ponents/ShowcaseTests.cs:line 106
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination index
+      , length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_IsDeterministic() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTes
+      ts.cs:line 26
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the de
+      stination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SomeProductsHaveCompareAtPrice() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Compone
+      nts/ShowcaseTests.cs:line 86
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the des
+      tination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_CompareAtPriceHigherThanPrice() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Componen
+      ts/ShowcaseTests.cs:line 95
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destinatio
+      n index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfCategories() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Show
+      caseTests.cs:line 70
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000 (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination in
+      dex, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_DefaultCountIs2000() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showcase
+      Tests.cs:line 19
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination index, 
+      length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_SkusAreUnique() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/ShowcaseTests
+      .cs:line 62
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the des
+      tination index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_AllProductsHaveRequiredFields() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Componen
+      ts/ShowcaseTests.cs:line 40
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination
+       index, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_ReturnsRequestedCount() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showc
+      aseTests.cs:line 12
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs(139): error TESTERROR: 
+      ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands (< 1ms): Error Message: System.ArgumentException : Destination array was not long enough. Check the destination in
+      dex, length, and the array's lower bounds. (Parameter 'destinationArray')
+      Stack Trace:
+         at System.Array.CopyImpl(Array sourceArray, Int32 sourceIndex, Array destinationArray, Int32 destinationIndex, Int32 length, Boolean reliable)
+         at ObserverMagazine.Web.Services.ProductDataGenerator.CreateDeterministicGuid(Int32 seed, Int32 index) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataG
+      enerator.cs:line 139
+         at ObserverMagazine.Web.Services.ProductDataGenerator.Generate(Int32 count, Int32 seed) in /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Services/ProductDataGenerator.cs:lin
+      e 105
+         at ObserverMagazine.Web.Tests.Components.ProductDataGeneratorTests.Generate_HasVarietyOfBrands() in /home/kushal/src/dotnet/observermagazine.github.io/tests/ObserverMagazine.Web.Tests/Components/Showcase
+      Tests.cs:line 78
+         at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+         at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Test summary: total: 43, failed: 10, succeeded: 33, skipped: 0, duration: 4.8s
+Build failed with 10 error(s) in 5.9s
+
+31
+20
+
