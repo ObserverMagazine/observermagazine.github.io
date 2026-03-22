@@ -15279,3 +15279,7 @@ real	0m4.080s
 user	0m2.939s
 sys	0m0.398s
 Restore complete (0.5s)
+Also please review the whole dump.txt 
+please don't assume everything is correct 
+for example, take a look at the new kushal.yml file. is the syntax correct? 
+check every single file in the dump
