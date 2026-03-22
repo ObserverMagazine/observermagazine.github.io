@@ -8666,3 +8666,70 @@ Content processor → Audio generation → Tests → Publish → Deploy (same lo
 ### Why blog posts lost their MP3 audio:
 
 The `tools/generate_audio.py`, `tools/requirements-audio.txt`, and `BlogTtsPlayer.razor` all exist in the repo, but the `deploy.yml` was never updated with the Python/audio steps. The audio pipeline was designed but the CI wiring was incomplete — the workflow just ran the .NET content processor and skipped straight to tests. With this fix, the full pipeline runs: markdown → JSON/HTML → MP3 → tests → publish → deploy.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+00
+13
+There are so many defects here now that I am testing the website 
+for example, this page 
+`https://observermagazine.github.io/blog/welcome-to-observer-magazine`
+on multiple devices 
+firstly, take a look at this 
+<a href="">Home</a>
+this is completely invisible on light mode 
+also the listen to this post thing I don't see anything on Google Chrome on iPhone or Android. 
+I thought it was good because I tried Firefox on Android and Google Chrome on Linux desktop which looked ok 
+Also when I listen to the audio, it called `c sharp` as `c hash` not sure what we can do about that. 
+Another thing, we build the author thing but I don't see a link to the author 
+I can't even click on the tags. I would think clicking on the tags would show me all the posts with that tag? 
+there is probably a lot of these things here. 
+Please fix them all and please give me full files for all files that change 
+Do not return me files with no changes as that confuses me. 
+Please think thoroughly, fix all problems correctly, and please do not hallucinate. 
+also there should be a way to toggle themes on the website itself 
+also we should have a link to the repo in the website 
+as a reminder, the repo is at https://github.com/ObserverMagazine/observermagazine.github.io 
+once again, please fix all errors, not just the ones I mentioned 
+but please do not cause regressions 
+explain all the changes thorougly for the future. 
+also it would be really nice if we could create, read, update, delete items in a master detail flow. 
+I understand it isn't possible to persist them across the network but we should be able to persist changes locally for the user, right? 
+until they clear data for our website? 
+being able to edit the table data or master detail data, go to some other website, come back after a week, and be able to see one's changes even after rebook would be really nice. 
+even nicer would be a reset button with a confirmation dialog that let them get a clean slate without having to muck with the browser settings. 
+there is so much we can do here, for example, we can have multiple themes not just dark and light such as sepia and solarized and what not... it would be so cool 
+also I feel like our css isolation is not complete. 
+there are clearly errors in our css 
+I am sure there are defects in our csharp code as well 
+and maybe even defects in our copy. I don't know 
+please fix them all thoroughly. 
