@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Sun Mar 22 03:01:30 PM EDT 2026
+DATE: Sun Mar 22 03:24:18 PM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -25,9 +25,6 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-# Opt into Node.js 24 now for actions that haven't released a native v24 version yet
-# (configure-pages, upload-pages-artifact, deploy-pages).
-# This can be removed once all actions ship Node.js 24 support natively.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -80,6 +77,11 @@ jobs:
       - name: Publish Blazor WASM
         run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
 
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
       - name: Prepare GitHub Pages artifacts
         run: |
           cp publish/wwwroot/.nojekyll publish/wwwroot/.nojekyll 2>/dev/null || touch publish/wwwroot/.nojekyll
@@ -107,8 +109,6 @@ on:
   pull_request:
     branches: [main]
 
-# Opt into Node.js 24 now for actions that haven't released a native v24 version yet.
-# This can be removed once all actions ship Node.js 24 support natively.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -135,6 +135,11 @@ jobs:
 
       - name: Publish Blazor WASM
         run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
 
       - name: Prepare preview
         run: |
@@ -207,6 +212,9 @@ src/ObserverMagazine.Web/wwwroot/blog-data/
 ## Generated RSS feed
 src/ObserverMagazine.Web/wwwroot/feed.xml
 
+## Client-side libraries (restored by LibMan at build time)
+src/ObserverMagazine.Web/wwwroot/lib/
+
 ## Python
 __pycache__/
 *.pyc
@@ -247,6 +255,7 @@ FILE: Directory.Packages.props
     <MarkdigVersion>1.1.1</MarkdigVersion>
     <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
     <BunitVersion>2.6.2</BunitVersion>
+    <LibManVersion>2.1.175</LibManVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -254,6 +263,9 @@ FILE: Directory.Packages.props
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
+
+    <!-- Client-side library management -->
+    <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="$(LibManVersion)" />
 
     <!-- Content Processing -->
     <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
@@ -335,6 +347,88 @@ All dependencies are free for any use — no payment required, ever.
 ## License
 
 AGPLv3
+
+
+-------------------------------------------------------------------------------
+FILE: content/authors/abraham-lincoln.yml
+-------------------------------------------------------------------------------
+name: Abraham Lincoln
+email: abe@lincoln.example
+bio: 16th President of the United States, self-taught lawyer, rail-splitter, and prolific writer. Known for the Emancipation Proclamation, the Gettysburg Address, and preserving the Union.
+avatar: images/authors/abraham-lincoln.png
+socials:
+  # Developer platforms
+  github: "abeLincoln"
+  gitlab: "abeLincoln"
+  bitbucket: "abeLincoln"
+  codepen: "abeLincoln"
+  devto: "abeLincoln"
+  hashnode: "abeLincoln"
+  stackoverflow: "16081865"
+  hackernews: "abeLincoln"
+
+  # Major social networks
+  x: "AbrahamLincoln"
+  facebook: "AbrahamLincoln"
+  instagram: "abeLincoln"
+  linkedin: "abrahamlincoln"
+  threads: "abeLincoln"
+  bluesky: "abeLincoln.bsky.social"
+  mastodon: "@abe@mastodon.social"
+  tiktok: "abeLincoln"
+  snapchat: "abeLincoln"
+  pinterest: "abeLincoln"
+  tumblr: "abeLincoln"
+  reddit: "abeLincoln"
+
+  # Video / streaming
+  youtube: "AbrahamLincoln"
+  twitch: "abeLincoln"
+  vimeo: "abeLincoln"
+
+  # Audio / music
+  spotify: "abeLincoln"
+  soundcloud: "abeLincoln"
+  bandcamp: "abeLincoln"
+
+  # Design / creative
+  dribbble: "abeLincoln"
+  behance: "abeLincoln"
+  flickr: "abeLincoln"
+  500px: "abeLincoln"
+  figma: "abeLincoln"
+
+  # Writing / blogging
+  medium: "abeLincoln"
+  substack: "abeLincoln"
+  wordpress: "abeLincoln"
+
+  # Messaging
+  discord: "abeLincoln"
+  telegram: "abeLincoln"
+  whatsapp: "+18095551865"
+  signal: "+18095551865"
+
+  # Monetisation
+  patreon: "abeLincoln"
+  kofi: "abeLincoln"
+  buymeacoffee: "abeLincoln"
+
+  # Books / academia
+  goodreads: "1234567"
+  orcid: "0000-0001-8651-8650"
+  researchgate: "Abraham-Lincoln"
+
+  # Professional / other
+  quora: "Abraham-Lincoln"
+  keybase: "abeLincoln"
+  producthunt: "abeLincoln"
+  angellist: "abeLincoln"
+  crunchbase: "abraham-lincoln"
+  notion: "abeLincoln"
+  linktree: "abeLincoln"
+  calendly: "abeLincoln"
+  website: "https://abrahamlincoln.example"
 
 
 -------------------------------------------------------------------------------
@@ -775,6 +869,409 @@ Hope you are doing well.
 
 
 -------------------------------------------------------------------------------
+FILE: content/blog/2026-03-22-modernizing-to-dotnet-10.md
+-------------------------------------------------------------------------------
+---
+title: "From .NET Framework 4.7 to .NET 10: A Practical Guide for Enterprise Developers"
+date: 2026-03-22
+author: observer-team
+summary: A comprehensive guide for enterprise .NET developers who have been working with .NET Framework 4.7 and want to understand what has changed, why it matters, and how to modernize — written for people who code at work and do not tinker with software at home.
+featured: true
+tags:
+  - dotnet
+  - blazor
+  - aspnet
+  - enterprise
+  - migration
+  - tutorial
+---
+
+## Introduction
+
+This article is written specifically for you: the professional .NET developer who works with enterprise software built on .NET Framework 4.7 (or thereabouts), goes home at the end of the day, and does not spend evenings experimenting with the latest frameworks. You have a life. You have responsibilities. Your relationship with software is professional, not recreational. And now someone at your company is talking about migrating to .NET 10, and you want to understand what that actually means without wading through years of release notes.
+
+Let me be direct: the .NET ecosystem has changed more between .NET Framework 4.7 and .NET 10 than it changed in the entire decade before that. But the changes are overwhelmingly positive, and this guide will walk you through every major shift in plain, practical language.
+
+## Part 1: What Even Is .NET 10?
+
+### The Great Rename
+
+The single most confusing thing that happened while you were building enterprise software is that Microsoft renamed everything.
+
+Here is the timeline: .NET Framework 1.0 through 4.8 was the original runtime you know and love. It runs on Windows only. It is in maintenance mode — Microsoft still patches security issues, but no new features are being developed for it. Period.
+
+Starting in 2016, Microsoft built a completely new, cross-platform, open-source runtime called .NET Core. It started at version 1.0 and went up to 3.1. Then, to reduce confusion (which, ironically, increased confusion), they dropped the "Core" suffix and jumped the version number to 5, calling it simply ".NET 5." This was followed by .NET 6, 7, 8, 9, and now .NET 10.
+
+So when someone says ".NET 10," they mean the direct successor to .NET Core, not a new version of .NET Framework. It runs on Windows, macOS, and Linux. It is completely open-source. And it is the future of the platform.
+
+.NET 10 is a Long-Term Support (LTS) release, meaning Microsoft will support it with patches and security updates for three years. This matters in enterprise contexts where you need stability guarantees.
+
+### What Happened to .NET Framework 4.7?
+
+Your existing .NET Framework 4.7 applications will continue to run on Windows. Microsoft has not removed .NET Framework from Windows and has committed to including it in Windows for the foreseeable future. But it will never get new features. No performance improvements. No new language features. No new APIs. It is done.
+
+This does not mean you need to panic. It means you need a plan.
+
+## Part 2: What Changed and Why You Should Care
+
+### C# Has Evolved Enormously
+
+If your last experience with C# was version 7 (which shipped with .NET Framework 4.7), you have missed C# versions 8, 9, 10, 11, 12, 13, and 14. Each added features that make code shorter, safer, and more readable.
+
+A few highlights that matter most in enterprise code:
+
+**Nullable reference types** (C# 8): The compiler now tracks whether a reference variable can be null and warns you about potential null dereference bugs at compile time. This alone prevents an enormous category of runtime NullReferenceException crashes. Enabling this feature in your project is one of the highest-value changes you can make.
+
+**Records** (C# 9): Immutable data classes can now be declared in a single line. Instead of writing a class with properties, a constructor, Equals, GetHashCode, and ToString overrides (which you probably were not writing correctly anyway), you write `public record Person(string Name, int Age);` and the compiler generates all of that for you. This is transformative for DTOs and value objects in enterprise code.
+
+**Pattern matching** (C# 8-14): Switch statements now support complex patterns. You can match on types, property values, and combinations thereof. This makes complex business rule evaluation far more readable than chains of if/else statements.
+
+**Top-level statements** (C# 9): A console application no longer needs a class with a `static void Main` method. The entry point is simply code at the top of a file. This is what you see in modern project templates and tutorials. It looks strange at first but is perfectly normal and fully supported.
+
+**Raw string literals** (C# 11): No more escaping quotes in SQL queries and JSON templates. Triple-quoted strings handle multi-line text and embedded quotes without escape characters.
+
+**Primary constructors** (C# 12): Classes can now declare constructor parameters directly in the class declaration, eliminating boilerplate field assignments.
+
+### ASP.NET Has Been Rewritten
+
+ASP.NET in .NET 10 is not an update of the ASP.NET you know. It was rewritten from scratch as ASP.NET Core. The web server is no longer IIS (though IIS can act as a reverse proxy). The default web server is Kestrel, a lightweight, high-performance, cross-platform HTTP server.
+
+The programming model has changed significantly. There is no more `Global.asax`. There is no more `Web.config` for application settings (you use `appsettings.json`). The request pipeline is built with middleware rather than HTTP modules and handlers. Dependency injection is built into the framework rather than bolted on with third-party containers.
+
+The performance difference is staggering. Benchmarks consistently show ASP.NET Core handling 5 to 10 times more requests per second than classic ASP.NET on the same hardware, while using less memory. For enterprise applications processing thousands of concurrent requests, this translates directly to lower infrastructure costs.
+
+### Blazor: C# in the Browser
+
+One of the most significant new capabilities in modern .NET is Blazor, which lets you build interactive web UIs using C# instead of JavaScript. There are multiple hosting models:
+
+**Blazor WebAssembly** compiles your .NET code to WebAssembly and runs it entirely in the browser. No server needed at runtime. The compiled output is static files (HTML, CSS, JS, WASM) that can be hosted anywhere, including free hosting like GitHub Pages. This is what Observer Magazine itself is built with.
+
+**Blazor Server** keeps your .NET code on the server and uses SignalR (WebSockets) to maintain a real-time connection with the browser. Every UI interaction sends a message to the server, which processes it and sends back DOM updates. This means faster initial load times (no WASM download) but requires a persistent server connection.
+
+**Blazor United** (also called Blazor Web App) in .NET 8 and later combines both models. Pages can start with server-side rendering for instant load times and then switch to WebAssembly for offline capability. In .NET 10, this hybrid model is mature and well-tooled.
+
+For enterprise developers, Blazor means your existing C# skills transfer directly to web development. Your business logic, validation rules, and data models can be shared between server and client. Your team does not need to hire JavaScript specialists or maintain a separate frontend codebase.
+
+### Entity Framework Core
+
+Entity Framework has also been rewritten as Entity Framework Core (EF Core). It is faster, supports more databases (SQL Server, PostgreSQL, SQLite, MySQL, and more), and has a cleaner API. However, it is not a drop-in replacement for EF6. The API surface is different enough that migration requires code changes.
+
+EF Core 10 includes features like compiled models for faster startup, improved query translation, bulk operations, and excellent support for JSON columns. For enterprise applications with complex data access patterns, EF Core represents a significant improvement in both performance and developer experience.
+
+### Native AOT Compilation
+
+Perhaps the most revolutionary technical advancement in .NET 10 is Native Ahead-of-Time (AOT) compilation. Traditional .NET applications ship as Intermediate Language (IL) and are compiled to machine code at runtime by the Just-In-Time (JIT) compiler. Native AOT compiles your entire application to a native binary at publish time. The result is an executable that starts in milliseconds instead of seconds, uses significantly less memory, and does not require the .NET runtime to be installed.
+
+For enterprise scenarios, Native AOT is particularly valuable for microservices and serverless functions where cold start time directly affects user experience and cost.
+
+## Part 3: The Modern .NET Ecosystem
+
+### Modern Project Files
+
+If you open a modern .NET project file, you might not recognize it. The old verbose .csproj format with hundreds of lines of XML has been replaced by the SDK-style project format, which typically has fewer than 20 lines. The build system is smarter about discovering source files, so you no longer need to list every .cs file in the project file.
+
+The solution file format has also been modernized. The new SLNX format uses clean XML instead of the old proprietary binary format, making it friendly to Git merges and human reading.
+
+Central Package Management (Directory.Packages.props) lets you define NuGet package versions in a single file at the root of your repository, eliminating version drift across projects in a large solution.
+
+Directory.Build.props lets you set common build properties (target framework, nullable reference types, warning levels) for all projects in a repository from one file.
+
+### Modern Tooling
+
+The `dotnet` CLI is now the primary way to create, build, test, and publish .NET applications. You can do everything from the command line: `dotnet new`, `dotnet build`, `dotnet test`, `dotnet publish`. Visual Studio remains fully supported and is still the preferred IDE for many enterprise developers, but you are no longer tied to it.
+
+JetBrains Rider has become a popular cross-platform alternative to Visual Studio. VS Code with the C# Dev Kit extension is viable for lighter-weight development.
+
+Hot Reload lets you modify code while the application is running and see changes immediately without restarting. This dramatically improves the inner development loop for UI work.
+
+### Testing in Modern .NET
+
+The testing ecosystem has matured significantly. xUnit (now at version 3) is the most popular testing framework. bUnit enables unit testing of Blazor components without a browser. The dotnet test runner integrates cleanly with CI/CD pipelines.
+
+In the enterprise context, the built-in dependency injection and interface-based design of ASP.NET Core make applications far more testable than classic ASP.NET applications. You can write integration tests that spin up an in-memory web server and send real HTTP requests to your API without deploying anything.
+
+## Part 4: The Broader Technology Landscape in 2025-2026
+
+### AI Is Everywhere
+
+You cannot discuss the current technology landscape without addressing AI. Large language models like GPT-4, Claude, and Gemini have transformed software development workflows. AI coding assistants are now standard tooling, not novelties. In your daily work, this means you will increasingly use AI to help write code, debug issues, write documentation, and review pull requests.
+
+For .NET developers specifically, AI integration is straightforward. The Microsoft.Extensions.AI libraries provide standardized interfaces for connecting to AI services from .NET code. Whether you are building an internal tool that uses AI to summarize documents, a customer-facing chatbot, or an application that uses AI for data analysis, the .NET ecosystem has mature support.
+
+### Cloud-Native Is the Default
+
+Modern enterprise software is increasingly designed to run in containers on Kubernetes or similar orchestrators. .NET 10 has excellent container support, with tiny container images (especially with Native AOT) and built-in health check endpoints that integrate with Kubernetes liveness and readiness probes.
+
+Even if your current applications run on dedicated servers or VMs, understanding containers is important because it is where the industry is heading. The good news is that containerizing a .NET application is straightforward and often requires only adding a Dockerfile.
+
+### Open Source Is the Norm
+
+.NET itself is fully open-source under the MIT license. The entire runtime, compiler, libraries, and most of the ASP.NET framework are developed in the open on GitHub. This is a dramatic shift from the proprietary, Windows-only .NET Framework era.
+
+For enterprise developers, this means you can read the source code of the framework itself when debugging issues. You can file issues and even contribute fixes. And you can be confident that the platform will not be abandoned because the community can maintain it independently if necessary.
+
+## Part 5: How to Approach Migration
+
+### Do Not Boil the Ocean
+
+The most important advice for migrating from .NET Framework 4.7 to .NET 10 is: do not try to migrate everything at once. Start with a new microservice or a smaller, less critical application. Build your team's familiarity with the new platform on a project where the stakes are lower.
+
+### Use the .NET Upgrade Assistant
+
+Microsoft provides a tool called the .NET Upgrade Assistant that automates much of the mechanical migration work. It can update project files, convert Web.config settings to appsettings.json, update NuGet package references, and flag code that uses APIs not available in modern .NET. It is not perfect, but it handles the tedious parts so your team can focus on the genuinely complex migration decisions.
+
+### Identify Breaking Changes Early
+
+Some .NET Framework APIs do not exist in modern .NET. The most common pain points are Windows-specific APIs (like System.Drawing on Linux), some WCF service features (replaced by gRPC or REST), and certain AppDomain behaviors. The .NET Portability Analyzer tool can scan your existing code and generate a report of compatibility issues.
+
+### Plan for NuGet Package Updates
+
+Many NuGet packages have different versions for .NET Framework and modern .NET. Some packages you depend on may not have been updated at all. Audit your dependencies early and identify any that need replacements.
+
+### Embrace the New Patterns Gradually
+
+You do not need to rewrite your application to use minimal APIs, top-level statements, and every new C# feature on day one. Modern .NET supports the controller-based MVC pattern you are familiar with. Start with a project structure that feels comfortable, then adopt new patterns as your team gains confidence.
+
+## Part 6: Why This Is Worth Doing
+
+If you have read this far, you might be wondering whether this migration is worth the effort and risk. Here is the honest answer: yes, unequivocally.
+
+**Performance**: Your applications will run faster and use less memory. In enterprise contexts with thousands of users, this translates to real cost savings on infrastructure.
+
+**Security**: .NET Framework 4.7 receives only critical security patches. Modern .NET receives active security development with new features like built-in rate limiting, improved cryptography, and regularly updated TLS support.
+
+**Developer productivity**: Modern C# features, better tooling, and built-in dependency injection make developers measurably more productive. Code reviews go faster because the code is more readable. Bugs are caught earlier because the compiler is smarter.
+
+**Hiring**: New .NET developers coming out of bootcamps and university programs learn modern .NET. Requiring .NET Framework experience narrows your hiring pool to increasingly senior developers.
+
+**Cross-platform**: Your applications can run on Linux servers (which are cheaper to operate than Windows Server) and in lightweight containers. You are no longer locked into Windows Server licensing.
+
+**Ecosystem momentum**: All new .NET libraries, frameworks, and tools target modern .NET. Staying on .NET Framework means an increasingly stale dependency graph.
+
+## Conclusion
+
+The jump from .NET Framework 4.7 to .NET 10 is large. There is no sugarcoating that. But every piece of the puzzle — the language improvements, the performance gains, the cross-platform support, the modern tooling, the open-source ecosystem — represents a genuine improvement in your ability to build and maintain quality enterprise software.
+
+You do not need to make this jump in a weekend. You do not need to rewrite everything. But you do need to start. Pick a small project. Install the .NET 10 SDK. Create a new application with `dotnet new webapi`. Run it. Explore. And when you are ready, use the Upgrade Assistant on something real.
+
+The .NET platform has never been in a better position than it is today. The same C# skills that have served you well for years still apply — they just apply to a faster, more capable, more modern foundation.
+
+Welcome to the future of .NET. It has been waiting for you.
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-03-22-the-year-2025-in-review.md
+-------------------------------------------------------------------------------
+---
+title: "The Year 2025 in Review: A Comprehensive Retrospective"
+date: 2026-03-22
+author: observer-team
+summary: A thorough look back at the major political, economic, technological, scientific, and cultural events that defined the year 2025.
+featured: true
+tags:
+  - retrospective
+  - politics
+  - technology
+  - economics
+  - science
+  - culture
+  - 2025
+---
+
+## Introduction
+
+The year 2025 was one of the most consequential in recent memory. From a dramatic change in American leadership and its rippling effects across every domain of public life, to breakthroughs in artificial intelligence that rewrote the rules of entire industries, to geopolitical conflicts that continued to reshape the world order, 2025 demanded attention from start to finish. This article attempts to chronicle every major newsworthy event of the year, organized by topic.
+
+## Part 1: United States Politics
+
+### The Second Trump Administration Begins
+
+On January 20, 2025, Donald J. Trump was inaugurated as the 47th President of the United States, beginning his second non-consecutive term. The inauguration itself was moved indoors to the Capitol Rotunda due to dangerously cold weather in Washington, D.C. The ceremony was attended by an unusual number of tech industry leaders, including Elon Musk, Jeff Bezos, Mark Zuckerberg, Tim Cook, and Sundar Pichai, reflecting the evolving relationship between Silicon Valley and the new administration.
+
+### Executive Orders and Policy Changes
+
+The administration moved with extraordinary speed in its opening days. On the first day alone, President Trump signed dozens of executive orders covering immigration, energy policy, diversity programs, and federal workforce restructuring.
+
+On immigration, the administration declared a national emergency at the southern border, deployed additional military personnel, and began implementing what it described as the largest deportation operation in American history. The "Remain in Mexico" policy was reinstated. Birthright citizenship was challenged through executive order, though this faced immediate legal challenges and was blocked by federal courts.
+
+Federal diversity, equity, and inclusion (DEI) programs were terminated across all government agencies. Federal employees working in DEI roles were placed on administrative leave. Executive orders directed agencies to investigate and potentially penalize private companies and universities that maintained DEI programs, though enforcement proved complex.
+
+The administration withdrew the United States from the Paris Climate Agreement for a second time. Drilling permits on federal lands were expedited. The Keystone XL pipeline permit was reinstated. Multiple environmental regulations from the previous administration were rescinded or paused.
+
+### The TikTok Ban and Reprieve
+
+One of the most closely watched policy dramas of early 2025 involved TikTok. A law passed during the Biden administration required ByteDance, TikTok's Chinese parent company, to divest its ownership of TikTok or face a ban in the United States. The deadline arrived on January 19, 2025, the day before inauguration. TikTok briefly went dark for American users. President Trump then signed an executive order granting a 75-day extension, and later additional extensions, to allow negotiations for a potential sale. Throughout 2025, various consortiums of American investors explored acquisition deals, but no final sale was completed by year's end.
+
+### The Department of Government Efficiency
+
+Elon Musk led what the administration called the Department of Government Efficiency (DOGE), a task force aimed at dramatically reducing federal spending and workforce. DOGE identified programs it considered wasteful and pushed for their elimination. The effort was controversial, with supporters praising the focus on fiscal responsibility and critics arguing that essential services were being gutted. Federal employee unions challenged many of the actions in court. By mid-2025, DOGE claimed billions in projected savings, though independent analyses disputed the methodology.
+
+### Pardons and Legal Matters
+
+President Trump pardoned or commuted sentences for many individuals convicted in connection with the January 6, 2021 Capitol breach. This was one of the most debated actions of the early administration, with supporters characterizing the defendants as political prisoners and critics arguing that pardoning participants in a violent breach of the Capitol undermined rule of law.
+
+### Congressional Activity
+
+Republicans held majorities in both the House and Senate, though the margins were thin, particularly in the House. Major legislative efforts included tax reform extending and expanding the 2017 Tax Cuts and Jobs Act provisions, immigration enforcement funding, and defense spending increases. The legislative process was frequently complicated by intra-party disagreements among House Republicans.
+
+## Part 2: Geopolitics and International Affairs
+
+### The Russia-Ukraine War
+
+The war in Ukraine, which began with Russia's full-scale invasion in February 2022, continued throughout 2025. The conflict had become largely a war of attrition along extensive front lines in eastern and southern Ukraine. Both sides conducted offensive operations with limited territorial gains.
+
+President Trump, who had promised to end the war quickly, appointed a special envoy and engaged in diplomatic efforts with both Kyiv and Moscow. The negotiations were complex and produced no ceasefire by mid-2025. The United States adjusted its military aid packages to Ukraine, and there was significant debate about the appropriate level of continued support.
+
+European allies, concerned about potential changes in American commitment, accelerated their own defense spending and military aid to Ukraine. NATO held emergency consultations, and several European nations significantly increased their defense budgets, with many meeting or exceeding the alliance's 2% of GDP target for the first time.
+
+### The Middle East
+
+The conflict in Gaza that erupted in October 2023 continued to dominate Middle East affairs in 2025. Multiple ceasefire negotiations took place. The humanitarian situation in Gaza was severe, with international organizations reporting widespread destruction and civilian suffering.
+
+The Abraham Accords framework continued to evolve. Diplomatic discussions about Saudi Arabia normalizing relations with Israel proceeded, though the Gaza conflict complicated these efforts. Iran's nuclear program remained a major concern, with inspectors reporting advances in enrichment capabilities.
+
+The Houthi attacks on Red Sea shipping, which had disrupted global trade routes since late 2023, continued into 2025. An international naval coalition attempted to protect shipping lanes, but the attacks persisted, forcing many cargo ships to take the longer route around the Cape of Good Hope.
+
+### China and the Indo-Pacific
+
+U.S.-China relations remained tense but managed. The Trump administration imposed additional tariffs on Chinese goods, expanded restrictions on technology exports to China (particularly in semiconductors and AI), and maintained a strong naval presence in the South China Sea. China responded with its own retaliatory tariffs and export controls on critical minerals.
+
+Taiwan remained a flashpoint. China conducted military exercises near Taiwan, and the United States continued arms sales to the island. Cross-strait tensions were elevated but did not escalate to direct confrontation.
+
+### Other International Events
+
+In South Korea, President Yoon Suk Yeol faced impeachment proceedings following his brief declaration of martial law in December 2024. The Constitutional Court upheld the impeachment in early 2025, making him the second South Korean president to be removed from office.
+
+Canada held elections in 2025 following the resignation of Prime Minister Justin Trudeau in January, who stepped down amid declining poll numbers and intra-party pressure. Mark Carney became the new Liberal Party leader and then Prime Minister, though he faced a challenging political environment with tariff disputes with the United States dominating the agenda.
+
+## Part 3: Economy and Finance
+
+### Inflation and Interest Rates
+
+The Federal Reserve navigated a complex economic environment in 2025. After cutting rates in the second half of 2024, the Fed paused further cuts in early 2025 as inflation proved persistent. Core inflation remained above the Fed's 2% target for most of the year, influenced by tariff-related price increases on imported goods.
+
+The economy showed resilience in employment numbers, with unemployment remaining low by historical standards. However, consumers reported feeling squeezed by high housing costs, elevated food prices, and the cumulative impact of several years of above-target inflation.
+
+### Tariffs and Trade
+
+The Trump administration's tariff policies were among the most consequential economic developments of 2025. Tariffs were imposed or increased on goods from China, Canada, Mexico, and the European Union. The stated goals were to protect American manufacturing, reduce trade deficits, and pressure trading partners on various policy issues including immigration and fentanyl trafficking.
+
+The economic effects were debated intensely. Some domestic manufacturers reported benefits from reduced foreign competition. Importers, retailers, and consumers faced higher prices. Agricultural exporters were concerned about retaliatory tariffs affecting their overseas sales. Financial markets reacted with volatility to each tariff announcement and escalation.
+
+### Technology Sector
+
+The technology sector experienced a mixed year. Companies heavily invested in artificial intelligence saw their valuations soar. Nvidia's stock continued its extraordinary run as demand for AI training and inference chips remained insatiable. Microsoft, Google, Amazon, and Meta all reported massive capital expenditure plans for AI infrastructure.
+
+However, the broader tech sector also faced challenges. Layoffs continued at many companies as they restructured around AI capabilities. The advertising market was disrupted by AI-powered tools that changed how content was created and consumed. Regulatory scrutiny of big tech companies continued, with antitrust cases against Google and other companies progressing through the courts.
+
+### Cryptocurrency
+
+Cryptocurrency markets rallied significantly in 2025. Bitcoin reached new all-time highs, buoyed by the spot Bitcoin ETFs approved in 2024, institutional adoption, and a generally favorable regulatory stance from the Trump administration. The administration appointed crypto-friendly regulators and signaled support for making the United States a hub for digital asset innovation.
+
+## Part 4: Technology
+
+### Artificial Intelligence
+
+AI was unquestionably the dominant technology story of 2025, even more so than in the preceding two years.
+
+OpenAI released new models throughout the year, including GPT-4.5 and eventually GPT-5, continuing to push the frontier of language model capabilities. The models demonstrated improved reasoning, reduced hallucination rates, and expanded multimodal capabilities.
+
+Anthropic released Claude 3.5, and later Claude 4, which were noted for their improved instruction following, coding abilities, and safety properties. The company continued to emphasize responsible AI development.
+
+Google DeepMind advanced Gemini with new versions that competed directly with the leading models from OpenAI and Anthropic. Google integrated Gemini deeply into its product suite including Search, Workspace, and Android.
+
+Meta continued its open-source AI strategy with Llama 3 and subsequent models, making powerful AI models freely available to researchers and developers worldwide.
+
+Perhaps the biggest surprise came from DeepSeek, a Chinese AI lab that released models rivaling Western counterparts while reportedly using significantly fewer computational resources and at a fraction of the cost. DeepSeek's R1 reasoning model and its V3 language model demonstrated that the American lead in AI was not as insurmountable as many had assumed. The release sent shockwaves through the AI industry and temporarily rattled the stock prices of AI infrastructure companies.
+
+AI coding assistants became standard developer tools. GitHub Copilot, Cursor, and other tools moved from novelty to essential infrastructure for software development. By mid-2025, surveys showed a majority of professional developers used AI assistance daily.
+
+AI-generated content became ubiquitous. Image generation, video generation, and voice synthesis all improved dramatically. This created both exciting creative possibilities and serious concerns about misinformation, deepfakes, and the economic impact on creative professionals.
+
+### Space Exploration
+
+SpaceX continued to push the boundaries of space technology. The Starship rocket, the largest and most powerful ever built, achieved multiple successful orbital flights and landings in 2025. The rapid iteration pace was remarkable compared to traditional aerospace development timelines.
+
+NASA's Artemis program progressed toward its goal of returning humans to the Moon. Artemis II, the crewed lunar flyby mission, was in advanced preparation.
+
+Blue Origin's New Glenn rocket successfully reached orbit in 2025, giving SpaceX its first serious commercial competition in the heavy-lift launch market.
+
+The commercial space station market grew as the International Space Station approached its planned retirement timeline. Multiple companies developed proposals for private orbital habitats.
+
+### Consumer Technology
+
+Apple released the iPhone 17 lineup in September 2025, featuring significant AI integration and camera improvements. The Apple Vision Pro, released in February 2024, received a price reduction and expanded to more countries, though mass adoption remained limited by the high price point and limited app ecosystem.
+
+The electric vehicle market continued to grow globally, though the pace of adoption varied by region. Tesla maintained its market leadership but faced increasing competition from Chinese manufacturers like BYD, which surpassed Tesla in total vehicle sales including hybrids.
+
+The foldable phone market expanded with Samsung, Google, and other manufacturers releasing refined models. The form factor moved from novelty to a viable mainstream option.
+
+### Cybersecurity
+
+Major cybersecurity incidents continued to make headlines. Critical infrastructure attacks, ransomware campaigns against healthcare systems, and state-sponsored espionage operations all occurred. The increasing sophistication of AI-powered attacks raised alarms, as did the potential for AI to be used in creating more convincing phishing campaigns and social engineering attacks.
+
+## Part 5: Science and Health
+
+### Climate and Environment
+
+2025 continued the trend of record-breaking global temperatures. Scientists reported that multiple climate indicators reached new extremes. Severe weather events including hurricanes, floods, droughts, and wildfires affected communities worldwide.
+
+The California wildfires in January 2025, particularly the devastating Palisades and Eaton fires in the Los Angeles area, were among the most destructive in the state's history, destroying thousands of structures and causing billions of dollars in damage.
+
+### Medicine and Public Health
+
+The post-pandemic era continued to evolve. COVID-19 remained endemic but was no longer a public health emergency. Updated vaccines were available but uptake varied widely. Long COVID continued to be studied, with researchers making progress in understanding its mechanisms.
+
+GLP-1 receptor agonist medications, particularly Ozempic and related drugs originally developed for diabetes, continued their remarkable expansion. New studies throughout 2025 suggested benefits beyond weight loss, including potential cardiovascular benefits, and the drugs became some of the most prescribed medications in history.
+
+Bird flu (H5N1) was a concern throughout 2025, with sporadic human cases reported, primarily among workers in close contact with infected poultry and dairy cattle. Public health agencies monitored the situation closely, concerned about the virus's pandemic potential if it gained efficient human-to-human transmission.
+
+### Physics and Astronomy
+
+Researchers continued to refine quantum computing technology, though practical quantum advantage for real-world problems remained elusive for most applications. Several companies and universities reported advances in qubit counts and error correction.
+
+The James Webb Space Telescope continued to produce extraordinary astronomical observations, revolutionizing understanding of early galaxy formation, exoplanet atmospheres, and stellar evolution.
+
+## Part 6: Culture and Society
+
+### Entertainment
+
+The entertainment industry continued to adapt to streaming economics. The strikes that had shut down Hollywood in 2023 resulted in new contracts, but the industry faced ongoing structural changes as studios grappled with the economics of streaming versus theatrical releases.
+
+Video gaming remained the largest entertainment industry by revenue, with continued growth in mobile gaming, live-service games, and the integration of AI into game development.
+
+### Sports
+
+Major sporting events in 2025 included preparation for the 2026 FIFA World Cup to be held across the United States, Canada, and Mexico. Qualification rounds and venue preparations were major stories throughout the year.
+
+In American football, the NFL maintained its position as the most-watched sport in the country.
+
+### Social and Cultural Shifts
+
+The debate over AI's impact on employment and creativity intensified. Artists, writers, musicians, and other creative professionals pushed back against AI systems trained on their work without permission or compensation. Several lawsuits progressing through courts in 2025 sought to define the legal boundaries of AI training data usage.
+
+Social media continued to fragment, with users spread across more platforms than ever. X (formerly Twitter) continued to evolve under Elon Musk's ownership. Bluesky, Threads, and Mastodon attracted users looking for alternatives. TikTok's uncertain future in the United States added to the sense of instability.
+
+## Part 7: Natural Disasters
+
+### California Wildfires
+
+As mentioned above, the January 2025 wildfires in the Los Angeles area were catastrophic. The Palisades Fire and Eaton Fire burned through densely populated areas, destroying entire neighborhoods. The fires were fueled by extreme Santa Ana winds and dry conditions. The recovery and rebuilding effort would take years.
+
+### Other Disasters
+
+Severe weather events occurred worldwide throughout the year. Flooding, hurricanes, and heat waves affected millions of people across multiple continents, reinforcing the urgent need for climate adaptation infrastructure.
+
+## Conclusion
+
+The year 2025 was defined by change, upheaval, and acceleration. American politics shifted dramatically with the new administration. AI transformed from an impressive technology to an essential infrastructure layer. Geopolitical conflicts persisted without resolution. The economy navigated tariffs, persistent inflation, and technological disruption simultaneously.
+
+As we look back from early 2026, the full consequences of many 2025 developments are still unfolding. The tariff regime's long-term economic effects, the AI revolution's impact on employment and creativity, and the geopolitical realignments set in motion by changing American foreign policy will all continue to shape the world for years to come.
+
+What is clear is that 2025 was not a year of quiet incremental change. It was a year that bent the trajectory of history in multiple directions at once.
+
+
+-------------------------------------------------------------------------------
 FILE: content/blog/2027-01-01-happy-new-year-2027.md
 -------------------------------------------------------------------------------
 ---
@@ -1051,8 +1548,8 @@ FILE: src/ObserverMagazine.Web/Components/AuthorCard.razor
                            target="_blank"
                            rel="noopener noreferrer"
                            class="author-social-link"
-                           title="@platform">
-                            @platform
+                           title="@GetDisplayName(platform)">
+                            @GetDisplayName(platform)
                         </a>
                     }
                 </div>
@@ -1064,13 +1561,139 @@ FILE: src/ObserverMagazine.Web/Components/AuthorCard.razor
 @code {
     [Parameter] public AuthorProfile? Author { get; set; }
 
+    private static string GetDisplayName(string platform) => platform.ToLowerInvariant() switch
+    {
+        "twitter" or "x" => "X / Twitter",
+        "github" => "GitHub",
+        "gitlab" => "GitLab",
+        "bitbucket" => "Bitbucket",
+        "linkedin" => "LinkedIn",
+        "bluesky" => "Bluesky",
+        "mastodon" => "Mastodon",
+        "threads" => "Threads",
+        "facebook" => "Facebook",
+        "instagram" => "Instagram",
+        "tiktok" => "TikTok",
+        "youtube" => "YouTube",
+        "twitch" => "Twitch",
+        "reddit" => "Reddit",
+        "pinterest" => "Pinterest",
+        "tumblr" => "Tumblr",
+        "snapchat" => "Snapchat",
+        "discord" => "Discord",
+        "telegram" => "Telegram",
+        "whatsapp" => "WhatsApp",
+        "signal" => "Signal",
+        "medium" => "Medium",
+        "substack" => "Substack",
+        "devto" or "dev.to" => "DEV",
+        "hashnode" => "Hashnode",
+        "stackoverflow" => "Stack Overflow",
+        "hackernews" => "Hacker News",
+        "codepen" => "CodePen",
+        "dribbble" => "Dribbble",
+        "behance" => "Behance",
+        "flickr" => "Flickr",
+        "500px" => "500px",
+        "vimeo" => "Vimeo",
+        "soundcloud" => "SoundCloud",
+        "bandcamp" => "Bandcamp",
+        "spotify" => "Spotify",
+        "goodreads" => "Goodreads",
+        "patreon" => "Patreon",
+        "kofi" or "ko-fi" => "Ko-fi",
+        "buymeacoffee" => "Buy Me a Coffee",
+        "wordpress" => "WordPress",
+        "quora" => "Quora",
+        "keybase" => "Keybase",
+        "orcid" => "ORCID",
+        "researchgate" => "ResearchGate",
+        "figma" => "Figma",
+        "notion" => "Notion",
+        "producthunt" => "Product Hunt",
+        "angellist" => "AngelList",
+        "crunchbase" => "Crunchbase",
+        "linktree" => "Linktree",
+        "calendly" => "Calendly",
+        "website" or "web" or "homepage" => "Website",
+        _ => platform
+    };
+
     private static string GetSocialUrl(string platform, string handle) => platform.ToLowerInvariant() switch
     {
+        // Developer platforms
         "github" => $"https://github.com/{handle}",
+        "gitlab" => $"https://gitlab.com/{handle}",
+        "bitbucket" => $"https://bitbucket.org/{handle}",
+        "codepen" => $"https://codepen.io/{handle}",
+        "devto" or "dev.to" => $"https://dev.to/{handle}",
+        "hashnode" => $"https://{handle}.hashnode.dev",
+        "stackoverflow" => $"https://stackoverflow.com/users/{handle}",
+        "hackernews" => $"https://news.ycombinator.com/user?id={handle}",
+
+        // Major social networks
         "twitter" or "x" => $"https://x.com/{handle}",
-        "mastodon" => handle.StartsWith("http") ? handle : $"https://mastodon.social/{handle}",
+        "facebook" => $"https://facebook.com/{handle}",
+        "instagram" => $"https://instagram.com/{handle}",
         "linkedin" => $"https://linkedin.com/in/{handle}",
-        "bluesky" => $"https://bsky.app/profile/{handle}",
+        "threads" => $"https://threads.net/@{handle}",
+        "bluesky" => handle.Contains('.') ? $"https://bsky.app/profile/{handle}" : $"https://bsky.app/profile/{handle}.bsky.social",
+        "mastodon" => handle.StartsWith("http") ? handle : $"https://mastodon.social/{handle}",
+        "tiktok" => $"https://tiktok.com/@{handle}",
+        "snapchat" => $"https://snapchat.com/add/{handle}",
+        "pinterest" => $"https://pinterest.com/{handle}",
+        "tumblr" => $"https://{handle}.tumblr.com",
+        "reddit" => $"https://reddit.com/user/{handle}",
+
+        // Video / streaming
+        "youtube" => $"https://youtube.com/@{handle}",
+        "twitch" => $"https://twitch.tv/{handle}",
+        "vimeo" => $"https://vimeo.com/{handle}",
+
+        // Audio / music
+        "spotify" => $"https://open.spotify.com/user/{handle}",
+        "soundcloud" => $"https://soundcloud.com/{handle}",
+        "bandcamp" => $"https://{handle}.bandcamp.com",
+
+        // Design / creative
+        "dribbble" => $"https://dribbble.com/{handle}",
+        "behance" => $"https://behance.net/{handle}",
+        "flickr" => $"https://flickr.com/photos/{handle}",
+        "500px" => $"https://500px.com/p/{handle}",
+        "figma" => $"https://figma.com/@{handle}",
+
+        // Writing / blogging
+        "medium" => $"https://medium.com/@{handle}",
+        "substack" => $"https://{handle}.substack.com",
+        "wordpress" => $"https://{handle}.wordpress.com",
+
+        // Messaging
+        "discord" => handle.StartsWith("http") ? handle : $"https://discord.gg/{handle}",
+        "telegram" => $"https://t.me/{handle}",
+        "whatsapp" => $"https://wa.me/{handle}",
+        "signal" => $"https://signal.me/#p/{handle}",
+
+        // Monetisation
+        "patreon" => $"https://patreon.com/{handle}",
+        "kofi" or "ko-fi" => $"https://ko-fi.com/{handle}",
+        "buymeacoffee" => $"https://buymeacoffee.com/{handle}",
+
+        // Books / academia
+        "goodreads" => $"https://goodreads.com/user/show/{handle}",
+        "orcid" => $"https://orcid.org/{handle}",
+        "researchgate" => $"https://researchgate.net/profile/{handle}",
+
+        // Professional / other
+        "quora" => $"https://quora.com/profile/{handle}",
+        "keybase" => $"https://keybase.io/{handle}",
+        "producthunt" => $"https://producthunt.com/@{handle}",
+        "angellist" => $"https://angel.co/u/{handle}",
+        "crunchbase" => $"https://crunchbase.com/person/{handle}",
+        "notion" => $"https://notion.so/{handle}",
+        "linktree" => $"https://linktr.ee/{handle}",
+        "calendly" => $"https://calendly.com/{handle}",
+        "website" or "web" or "homepage" => handle.StartsWith("http") ? handle : $"https://{handle}",
+
         _ => handle.StartsWith("http") ? handle : $"https://{handle}"
     };
 }
@@ -1132,6 +1755,7 @@ FILE: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
 -------------------------------------------------------------------------------
+@implements IDisposable
 @inject IAnalyticsService Analytics
 @inject ILogger<BlogTtsPlayer> Logger
 @inject IJSRuntime JS
@@ -1177,6 +1801,11 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
                 Your browser does not support audio playback.
             </audio>
         }
+
+        <a class="tts-direct-link" href="blog-data/@(Slug).mp3" target="_blank" rel="noopener noreferrer"
+           title="Open audio file directly in a new tab">
+            Open audio ↗
+        </a>
     </div>
 }
 
@@ -1380,10 +2009,6 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     white-space: nowrap;
 }
 
-/* Style the native audio element to blend with our theme.
- * We use accent-color (supported by all modern browsers) instead of
- * ::-webkit-media-controls-* pseudo-elements which break the internal
- * Shadow DOM layout on Chrome for Android. */
 .tts-player audio {
     flex: 1;
     min-width: 200px;
@@ -1392,7 +2017,14 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     accent-color: var(--color-primary);
 }
 
-/* Fallback play/pause button — shown only when JS detects native controls failed */
+.tts-direct-link {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Fallback play/pause button */
 .tts-fallback {
     display: flex;
     align-items: center;
@@ -1455,6 +2087,10 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
 
     .tts-fallback {
         width: 100%;
+    }
+
+    .tts-direct-link {
+        align-self: flex-start;
     }
 }
 
@@ -1939,6 +2575,36 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
 
 .md-star { color: var(--color-accent); }
 
+/* ---- Confirmation dialog (was missing!) ---- */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.confirm-dialog {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
+}
+
+.confirm-dialog h4 {
+    margin-bottom: 0.75rem;
+}
+
+.confirm-dialog p {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
 @media (max-width: 640px) {
     .md-container { grid-template-columns: 1fr; }
 
@@ -2302,11 +2968,19 @@ FILE: src/ObserverMagazine.Web/Layout/MainLayout.razor
 FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
 -------------------------------------------------------------------------------
 @inject IJSRuntime JS
+@inject NavigationManager Nav
+@implements IDisposable
 
 <nav class="nav-menu" role="navigation">
-    <button class="nav-toggle" @onclick="ToggleMenu" aria-label="Toggle navigation">
+    <button class="nav-toggle" @onclick="ToggleMenu" @onclick:stopPropagation="true" aria-label="Toggle navigation">
         ☰
     </button>
+
+    @if (isOpen)
+    {
+        <div class="nav-overlay" @onclick="CloseMenu"></div>
+    }
+
     <ul class="nav-links @(isOpen ? "open" : "")">
         <li><NavLink href="" Match="NavLinkMatch.All">Home</NavLink></li>
         <li><NavLink href="blog">Blog</NavLink></li>
@@ -2352,7 +3026,23 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
     private bool isOpen;
     private string currentTheme = "system";
 
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
     private void ToggleMenu() => isOpen = !isOpen;
+
+    private void CloseMenu() => isOpen = false;
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        if (isOpen)
+        {
+            isOpen = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -2367,6 +3057,29 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
     {
         currentTheme = e.Value?.ToString() ?? "system";
         await JS.InvokeVoidAsync("observerTheme.set", currentTheme);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor.css
+-------------------------------------------------------------------------------
+.nav-overlay {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .nav-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 98;
+        background: transparent;
     }
 }
 
@@ -2478,6 +3191,7 @@ FILE: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Web.LibraryManager.Build" />
   </ItemGroup>
 
 </Project>
@@ -3119,6 +3833,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             <button class="btn btn-outline btn-sm" @onclick="ToggleColumnPicker">Columns ▾</button>
             @if (showColumnPicker)
             {
+                <div class="sc-col-backdrop" @onclick="() => showColumnPicker = false"></div>
                 <div class="sc-col-dropdown" @onclick:stopPropagation="true">
                     @foreach (var col in columns)
                     {
@@ -3779,6 +4494,13 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     position: relative;
 }
 
+.sc-col-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: transparent;
+}
+
 .sc-col-dropdown {
     position: absolute;
     top: 100%;
@@ -3829,7 +4551,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-text);
 }
 
-/* ---- Filter panel (replaces inline filter row) ---- */
+/* ---- Filter panel ---- */
 .sc-filter-panel {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -4030,7 +4752,6 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
         justify-content: space-between;
     }
 
-    /* Column dropdown: position relative to viewport on mobile */
     .sc-col-dropdown {
         position: fixed;
         top: auto;
@@ -4043,12 +4764,10 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
         z-index: 100;
     }
 
-    /* Filters: single column on small screens */
     .sc-filter-grid {
         grid-template-columns: 1fr;
     }
 
-    /* Table collapses to cards */
     .sc-table thead {
         display: none;
     }
@@ -5096,6 +5815,25 @@ FILE: src/ObserverMagazine.Web/_Imports.razor
 
 
 -------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/libman.json
+-------------------------------------------------------------------------------
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "highlight.js@11.11.1",
+      "destination": "wwwroot/lib/highlight.js/",
+      "files": [
+        "highlight.min.js",
+        "styles/default.min.css"
+      ]
+    }
+  ]
+}
+
+
+-------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/wwwroot/404.html
 -------------------------------------------------------------------------------
 <!DOCTYPE html>
@@ -5598,10 +6336,8 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="ObserverMagazine.Web.styles.css" />
 
-    <!-- highlight.js core (no theme — we use our own CSS-variable theme) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css"
-          id="hljs-theme" disabled />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <!-- highlight.js core — restored locally via LibMan at build time -->
+    <script src="lib/highlight.js/highlight.min.js"></script>
 
     <!-- Apply saved theme BEFORE first paint to prevent flash -->
     <script>
@@ -5656,63 +6392,57 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
         };
     </script>
 
-    <!-- Audio helper for mobile compatibility -->
+    <!-- Audio helper for BlogTtsPlayer -->
     <script>
-/* Audio helper for BlogTtsPlayer — replaces the previous observerAudio block */
-    window.observerAudio = {
-        checkAvailability: function (elementId) {
-            return new Promise(function (resolve) {
+        window.observerAudio = {
+            checkAvailability: function (elementId) {
+                return new Promise(function (resolve) {
+                    var audio = document.getElementById(elementId);
+                    if (!audio) { resolve(false); return; }
+                    var timeout = setTimeout(function () { resolve(false); }, 5000);
+                    audio.addEventListener('loadedmetadata', function () {
+                        clearTimeout(timeout);
+                        resolve(true);
+                    }, { once: true });
+                    audio.addEventListener('error', function () {
+                        clearTimeout(timeout);
+                        resolve(false);
+                    }, { once: true });
+                    if (audio.readyState === 0) audio.load();
+                    else if (audio.readyState >= 1) { clearTimeout(timeout); resolve(true); }
+                });
+            },
+            checkControlsRendered: function (elementId) {
                 var audio = document.getElementById(elementId);
-                if (!audio) { resolve(false); return; }
-                // Try loading metadata; if the file 404s we get an error
-                var timeout = setTimeout(function () { resolve(false); }, 5000);
-                audio.addEventListener('loadedmetadata', function () {
-                    clearTimeout(timeout);
-                    resolve(true);
-                }, { once: true });
-                audio.addEventListener('error', function () {
-                    clearTimeout(timeout);
-                    resolve(false);
-                }, { once: true });
-                // Trigger load if not already started
-                if (audio.readyState === 0) audio.load();
-                else if (audio.readyState >= 1) { clearTimeout(timeout); resolve(true); }
-            });
-        },
-        checkControlsRendered: function (elementId) {
-            // Check if the native audio element actually rendered with visible height.
-            // Chrome Android can clip the controls to 0px with certain CSS.
-            var audio = document.getElementById(elementId);
-            if (!audio) return false;
-            var rect = audio.getBoundingClientRect();
-            // Native audio controls should have at least 20px height
-            return rect.height >= 20;
-        },
-        getDuration: function (elementId) {
-            var audio = document.getElementById(elementId);
-            return audio && isFinite(audio.duration) ? audio.duration : 0;
-        },
-        getCurrentTime: function (elementId) {
-            var audio = document.getElementById(elementId);
-            return audio ? audio.currentTime : 0;
-        },
-        hasEnded: function (elementId) {
-            var audio = document.getElementById(elementId);
-            return audio ? audio.ended : true;
-        },
-        play: function (elementId) {
-            var audio = document.getElementById(elementId);
-            if (audio) return audio.play();
-        },
-        pause: function (elementId) {
-            var audio = document.getElementById(elementId);
-            if (audio) audio.pause();
-        },
-        setCurrentTime: function (elementId, time) {
-            var audio = document.getElementById(elementId);
-            if (audio) audio.currentTime = time;
-        }
-    };
+                if (!audio) return false;
+                var rect = audio.getBoundingClientRect();
+                return rect.height >= 20;
+            },
+            getDuration: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio && isFinite(audio.duration) ? audio.duration : 0;
+            },
+            getCurrentTime: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio ? audio.currentTime : 0;
+            },
+            hasEnded: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio ? audio.ended : true;
+            },
+            play: function (elementId) {
+                var audio = document.getElementById(elementId);
+                if (audio) return audio.play();
+            },
+            pause: function (elementId) {
+                var audio = document.getElementById(elementId);
+                if (audio) audio.pause();
+            },
+            setCurrentTime: function (elementId, time) {
+                var audio = document.getElementById(elementId);
+                if (audio) audio.currentTime = time;
+            }
+        };
     </script>
 
     <!-- SPA redirect for GitHub Pages -->
@@ -8319,6 +9049,6 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 77
+Total Files Exported: 82
 Output File: docs/llm/dump.txt
 ===============================================================================
