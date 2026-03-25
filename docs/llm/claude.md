@@ -21231,3 +21231,39 @@ Please continue and finish the article
 
 56
 45
+
+Let me read the full dump.txt first to understand the project structure and where we left off.I don't see the partial article from the previous attempt in our conversation history, so I'll write the complete article from scratch. Let me research the latest PostgreSQL and Npgsql versions first to ensure accuracy.Now I have all the research I need. Let me write the complete article — this will be very long and comprehensive. I'll produce it as the full markdown file.Here's your complete blog post. Save it as:
+
+**`content/blog/2026-03-28-postgresql-npgsql-comprehensive-guide.md`**
+
+Then run the content processor:
+
+```bash
+dotnet run --project tools/ObserverMagazine.ContentProcessor -- \
+  --content-dir content/blog \
+  --output-dir src/ObserverMagazine.Web/wwwroot \
+  --authors-dir content/authors
+```
+
+The article is a single, complete markdown file covering 17 major sections:
+
+**Part 1 — Why PostgreSQL:** What it is, the license model (completely free forever), its rise past MySQL in developer usage, and the key philosophical differences from SQL Server (MVCC vs. locking, case sensitivity, snake_case conventions, schemas).
+
+**Parts 2–3 — Installation & Configuration:** Bare metal installation on Fedora, Ubuntu, and Arch. Docker and Podman setup (including rootless Podman with systemd). Docker Compose for development. Deep dive into `postgresql.conf` (connections, memory tuning, WAL, query planner, logging, AIO settings) and `pg_hba.conf` (authentication types, SCRAM vs MD5, configuration for dev vs production).
+
+**Part 4 — Terminal:** Complete `psql` reference (meta-commands, environment variables, `.pgpass` file) plus `pgcli` as a better alternative.
+
+**Part 5 — PostgreSQL 17 & 18 Features:** PG17's vacuum improvements, JSON_TABLE, MERGE enhancements, COPY ON_ERROR, incremental backups, direct SSL. PG18's Asynchronous I/O subsystem (up to 3x faster reads), native `uuidv7()`, virtual generated columns, OLD/NEW in RETURNING, temporal constraints, OAuth 2.0 auth, MD5 deprecation, pg_upgrade statistics preservation, skip scan.
+
+**Parts 6–8 — Npgsql, Dapper, EF Core:** NpgsqlDataSource pattern, connection string parameters, DI registration, Npgsql 9/10 features (UUIDv7 keys, direct SSL, OpenTelemetry). Dapper with full CRUD examples, multi-mapping, transactions, snake_case mapping, JSONB/array handling. EF Core with PostgreSQL-specific features (JSONB columns, array columns, full-text search, enum mapping, compiled queries, bulk operations).
+
+**Part 9 — Transactions:** Explicit transactions, savepoints, all four isolation levels explained in detail, the complete NOLOCK discussion (why it doesn't exist in PostgreSQL and why you don't need it), advisory locks with C# examples.
+
+**Parts 10–11 — Networking & Debugging:** SSL/TLS configuration, Npgsql connection pooling, PgBouncer, session monitoring queries, lock monitoring. EXPLAIN ANALYZE deep dive, statistics and ANALYZE, pg_stat_statements, auto_explain, comprehensive indexing guide (B-tree, partial, multi-column, GIN, BRIN, covering, concurrent creation).
+
+**Part 12 — IDEs:** pgAdmin 4, DBeaver Community, Beekeeper Studio, DbGate, pgcli, VS Code PostgreSQL extension, Azure Data Studio, Adminer — with installation instructions for each on Linux and honest pros/cons.
+
+**Parts 13–17 — Backup, SQL patterns, OpenTelemetry, security, SQL Server migration:** pg_dump/restore, PG17 incremental backups, pagination, upsert, CTEs, window functions, generate_series, full-text search, OpenTelemetry tracing with Npgsql, RBAC with row-level security, and a complete SQL Server → PostgreSQL mental model translation table.
+
+71
+47

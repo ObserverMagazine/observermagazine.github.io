@@ -1,151 +1,197 @@
 ---
-title: "The Complete Guide to PostgreSQL, Npgsql, and Free IDEs for .NET Developers on Linux"
+title: "PostgreSQL, Npgsql, and Open-Source IDEs: The Definitive Guide for .NET Developers on Linux"
 date: 2026-03-28
 author: observer-team
-summary: Everything a .NET C# ASP.NET web developer needs to know about PostgreSQL 18, Npgsql 10, Dapper, EF Core, transactions, configuration, networking, sessions, debugging, and the best free open-source database IDEs available on Linux.
+summary: A comprehensive, leave-no-stone-unturned guide to PostgreSQL 17 and 18, Npgsql with Dapper and EF Core, terminal workflows, configuration, transactions, networking, sessions, debugging, Docker/Podman setup, and every free open-source IDE available — all from the perspective of a .NET C# ASP.NET web developer working on Linux.
 tags:
   - postgresql
   - npgsql
   - dotnet
-  - efcore
   - dapper
+  - efcore
   - linux
   - database
   - tutorial
-  - tools
 ---
 
 ## Introduction
 
-PostgreSQL is the world's most advanced open-source relational database. As of March 2026, the latest major version is PostgreSQL 18 (with 18.3 being the most recent patch release), and it brings transformative improvements including asynchronous I/O, virtual generated columns, UUIDv7, B-tree skip scans, temporal constraints, and OAuth authentication. For .NET developers, Npgsql 10.0.2 provides a mature, high-performance ADO.NET data provider that integrates seamlessly with both Dapper and Entity Framework Core.
+If you are a .NET developer who has spent most of your career working with SQL Server on Windows, PostgreSQL can feel like a different world. The terminology is different, the tooling is different, the configuration is different, and even the philosophical approach to certain problems diverges significantly from what you are used to. This guide is written to bridge that gap completely.
 
-This article is written for a .NET C# ASP.NET web developer who is working on Linux. We will cover everything: installing and configuring PostgreSQL on bare metal, on a VPS, and in containers; connecting from C# using Npgsql, Dapper, and EF Core; transactions, isolation levels, and concurrency; networking and session management; debugging and profiling; and a thorough review of every free and open-source database IDE available on Linux. This is meant to be the single reference you bookmark and return to.
+We are going to cover everything. Not some things. Everything. From installing PostgreSQL on bare metal Linux, a VPS, or a Docker/Podman container, to configuring it for development and production, to writing queries in the terminal, to connecting from .NET using Npgsql with both Dapper and Entity Framework Core, to understanding transactions, isolation levels, locking, connection pooling, session management, networking, debugging, and monitoring. We will also survey every free and open-source IDE and GUI tool available on Linux for working with PostgreSQL.
 
-## Part 1: PostgreSQL Fundamentals
+This article assumes you are running Linux (Fedora, Ubuntu, Debian, Arch, or a similar distribution). It assumes you know C# and have worked with ASP.NET. It does not assume any prior PostgreSQL experience.
 
-### What Is PostgreSQL?
+Let us begin.
 
-PostgreSQL (often called Postgres) is a free, open-source object-relational database management system released under the PostgreSQL License, which is a permissive BSD-style license. It originated at the University of California, Berkeley in the 1980s as the POSTGRES project led by Michael Stonebraker, who later won the Turing Award for this work. The project was renamed PostgreSQL in 1996 to reflect its SQL support, and the first numbered release (6.0) came in January 1997.
+## Part 1: What Is PostgreSQL and Why Should You Care?
 
-PostgreSQL is notable for several things that distinguish it from other databases. It uses multiversion concurrency control (MVCC) for transaction isolation, which means readers never block writers and writers never block readers. It has extraordinary standards compliance — as of the PostgreSQL 17 release in September 2024, it conforms to at least 170 of the 177 mandatory features for SQL:2023 Core conformance, which is better than any other database. It supports advanced data types including arrays, JSONB, ranges, multiranges, geometric types, full-text search vectors, and network address types. And it has a powerful extension system that allows third parties to add entirely new data types, index methods, procedural languages, and foreign data wrappers.
+PostgreSQL is a free, open-source, object-relational database management system. It has been under active development since 1986, originating from the POSTGRES project at the University of California, Berkeley. The "SQL" was appended to the name in 1996 when SQL language support was added, and the project has been community-driven ever since.
 
-### What Is New in PostgreSQL 18?
+PostgreSQL is not owned by any corporation. There is no "PostgreSQL Inc." that controls the project. It is developed by a global community of contributors under the PostgreSQL Global Development Group. The license is the PostgreSQL License, which is a permissive open-source license similar to BSD and MIT. You can use PostgreSQL for any purpose, including commercial, without paying anyone anything, ever. There are no "community editions" versus "enterprise editions." There is one PostgreSQL, and it is free.
 
-PostgreSQL 18 was released on September 25, 2025, and it is one of the most significant releases in the project's history. Here are the headline features.
+As of early 2026, PostgreSQL has surpassed MySQL as the most widely used database among developers, with roughly 55% usage in developer surveys. Every major cloud provider offers managed PostgreSQL services: Amazon RDS and Aurora PostgreSQL, Azure Database for PostgreSQL, Google Cloud SQL for PostgreSQL, and many others. But you do not need to use any cloud service. PostgreSQL runs perfectly well on a single Linux machine, a Raspberry Pi, or a $5/month VPS.
 
-**Asynchronous I/O (AIO).** This is the marquee feature. PostgreSQL 18 introduces an entirely new I/O subsystem that allows backends to queue multiple read requests concurrently instead of waiting for each one to finish before starting the next. This dramatically improves throughput for sequential scans, bitmap heap scans, and VACUUM operations. The new `io_method` configuration parameter controls how AIO works, with three possible values: `sync` (the traditional blocking behavior from PostgreSQL 17), `worker` (the default in PostgreSQL 18, which delegates reads to background I/O worker processes), and `io_uring` (which uses Linux's high-performance io_uring interface, available on kernel 5.1 and later, and provides the best performance by establishing a shared ring buffer between PostgreSQL and the kernel). Benchmarks have shown up to 2–3x performance improvements in disk-read throughput for typical workloads when using the `worker` or `io_uring` methods. Note that AIO currently applies only to read operations; writes and WAL operations remain synchronous.
+For .NET developers specifically, PostgreSQL is compelling because the .NET ecosystem has first-class support for it through Npgsql, the open-source ADO.NET data provider. Npgsql consistently ranks among the top performers on the TechEmpower Web Framework Benchmarks. Entity Framework Core has an official PostgreSQL provider maintained by the Npgsql team. Dapper works flawlessly with Npgsql. There is no technical reason to avoid PostgreSQL in a .NET application.
 
-To check your AIO configuration:
+### PostgreSQL vs. SQL Server: Key Philosophical Differences
 
-```sql
-SHOW io_method;
-SHOW io_workers;
-SHOW effective_io_concurrency;
-SHOW maintenance_io_concurrency;
-```
+Before we dive into specifics, you need to understand a few philosophical differences between PostgreSQL and SQL Server:
 
-**B-tree Skip Scan.** PostgreSQL 18 adds skip scan capability to B-tree indexes. If you have a composite index on `(region, category, date)`, queries that filter on `category` and `date` but omit `region` can now efficiently use the index by "skipping" over distinct values of the leading column. Previously, such queries would fall back to a sequential scan or require a separate index.
+PostgreSQL uses Multi-Version Concurrency Control (MVCC) as its fundamental concurrency mechanism. Every transaction sees a snapshot of the data as it existed at the start of the transaction. Readers never block writers, and writers never block readers. This is fundamentally different from SQL Server's default behavior, where readers acquire shared locks that can block writers. SQL Server added MVCC-like behavior later through Read Committed Snapshot Isolation (RCSI) and Snapshot Isolation, but these are opt-in features. In PostgreSQL, MVCC is the default and only model.
 
-**UUIDv7.** The new `uuidv7()` function generates timestamp-ordered UUIDs that are monotonically increasing over time. This is a big deal for indexed primary keys because, unlike UUIDv4 (which is random and causes B-tree page splits), UUIDv7 values are inserted in order, which gives you the uniqueness of UUIDs with the insertion performance of auto-incrementing integers.
+PostgreSQL does not have a concept equivalent to SQL Server's `NOLOCK` hint, and you should not miss it. The entire `NOLOCK` pattern exists in SQL Server because its default isolation level (Read Committed with locking) causes readers to block writers. Since PostgreSQL uses MVCC by default, readers never block writers, so the problem `NOLOCK` solves simply does not exist. We will discuss this in much more detail in the transactions section.
 
-**Virtual Generated Columns.** PostgreSQL 18 makes virtual generated columns the default for generated columns. These compute their values at query time rather than storing them on disk, which saves storage space and eliminates the need to update them when the source columns change.
+PostgreSQL is case-sensitive for identifiers by default, but it lowercases unquoted identifiers. If you write `CREATE TABLE MyTable`, PostgreSQL stores it as `mytable`. If you want mixed-case identifiers, you must double-quote them: `CREATE TABLE "MyTable"`. The strong convention in the PostgreSQL world is to use `snake_case` for everything: table names, column names, function names. Embrace this convention.
 
-**Temporal Constraints.** You can now define PRIMARY KEY, UNIQUE, and FOREIGN KEY constraints that operate over ranges, enabling bitemporal and temporal data modeling directly in the database.
-
-**OAuth 2.0 Authentication.** PostgreSQL 18 supports OAuth 2.0 for client authentication, making it easier to integrate with single-sign-on systems and cloud identity providers.
-
-**Wire Protocol 3.2.** This is the first new version of the PostgreSQL wire protocol since PostgreSQL 7.4 in 2003. It lays the groundwork for future improvements to client-server communication.
-
-**Other improvements** include parallel GIN index builds, improved hash join performance, smarter OR/IN query optimization, a new `pg_aios` system view for monitoring AIO operations, `log_lock_failures` for logging lock acquisition failures, and new columns in `pg_stat_all_tables` for tracking vacuum and analyze durations.
-
-### Supported Versions and End of Life
-
-The PostgreSQL Global Development Group supports each major version for five years. As of March 2026, the supported versions are PostgreSQL 18 (through 2030), 17 (through 2029), 16 (through 2028), 15 (through 2027), and 14 (through 2026). Version 13 reached end-of-life in November 2025. Always run the latest minor release for whichever major version you are on.
+PostgreSQL uses schemas differently than SQL Server. In SQL Server, `dbo` is the default schema and many teams barely think about schemas. In PostgreSQL, `public` is the default schema, but the schema system is powerful and you should use it to organize your database objects.
 
 ## Part 2: Installing PostgreSQL on Linux
 
-### Installing on Bare Metal (Fedora, Ubuntu, Debian)
+### Bare Metal / VPS Installation
 
-On Fedora:
+On Fedora or RHEL-based systems:
 
 ```bash
-sudo dnf install postgresql-server postgresql-contrib
-sudo postgresql-setup --initdb
+# Install PostgreSQL 18 (latest stable as of March 2026)
+sudo dnf install postgresql18-server postgresql18
+
+# Initialize the database cluster
+sudo postgresql-18-setup --initdb
+
+# Start and enable the service
+sudo systemctl start postgresql-18
+sudo systemctl enable postgresql-18
+```
+
+On Ubuntu or Debian-based systems:
+
+```bash
+# Add the official PostgreSQL APT repository
+sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo apt-get update
+
+# Install PostgreSQL 18
+sudo apt-get install postgresql-18
+
+# The service starts automatically on Debian/Ubuntu
+sudo systemctl status postgresql
+```
+
+On Arch Linux:
+
+```bash
+sudo pacman -S postgresql
+
+# Initialize the data directory
+sudo -u postgres initdb -D /var/lib/postgres/data
+
+# Start and enable
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 ```
 
-On Ubuntu or Debian, you should add the official PostgreSQL APT repository for the latest version:
+After installation, PostgreSQL creates a system user called `postgres`. This user is the default superuser. To connect for the first time:
 
 ```bash
-sudo apt install -y postgresql-common
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-sudo apt install -y postgresql-18
-```
-
-After installation, PostgreSQL runs as the `postgres` system user. Switch to it and create your first database:
-
-```bash
+# Switch to the postgres user
 sudo -u postgres psql
-```
 
-Inside psql:
+# You are now in the psql shell as the superuser
+# Create a database and user for your application
+CREATE USER myapp WITH PASSWORD 'my-secure-password';
+CREATE DATABASE myappdb OWNER myapp;
 
-```sql
-CREATE ROLE myappuser WITH LOGIN PASSWORD 'securepassword';
-CREATE DATABASE myappdb OWNER myappuser;
-GRANT ALL PRIVILEGES ON DATABASE myappdb TO myappuser;
+# Grant connect privilege
+GRANT CONNECT ON DATABASE myappdb TO myapp;
+
+# Exit
 \q
 ```
 
-### Installing with Docker or Podman
+### Docker Installation
 
-For development, running PostgreSQL in a container is the most convenient approach. It avoids polluting your system, makes version management trivial, and mirrors production environments.
-
-With Docker:
+Docker is the quickest way to get PostgreSQL running for development:
 
 ```bash
+# Pull the official PostgreSQL 18 image
+docker pull postgres:18
+
+# Run a container
 docker run -d \
   --name pg-dev \
-  -e POSTGRES_USER=myappuser \
-  -e POSTGRES_PASSWORD=securepassword \
+  -e POSTGRES_USER=myapp \
+  -e POSTGRES_PASSWORD=my-secure-password \
   -e POSTGRES_DB=myappdb \
   -p 5432:5432 \
   -v pgdata:/var/lib/postgresql/data \
   postgres:18
+
+# Connect using psql from the host
+psql -h localhost -U myapp -d myappdb
+
+# Or connect from inside the container
+docker exec -it pg-dev psql -U myapp -d myappdb
 ```
 
-With Podman (rootless):
+The `-v pgdata:/var/lib/postgresql/data` flag creates a named Docker volume so your data persists across container restarts and removals. Without it, you lose all data when the container is removed.
+
+### Podman Installation
+
+Podman is a daemonless container engine that is often preferred on Fedora and RHEL systems. It is a drop-in replacement for Docker:
 
 ```bash
+# Pull and run (identical syntax to Docker)
 podman run -d \
   --name pg-dev \
-  -e POSTGRES_USER=myappuser \
-  -e POSTGRES_PASSWORD=securepassword \
+  -e POSTGRES_USER=myapp \
+  -e POSTGRES_PASSWORD=my-secure-password \
   -e POSTGRES_DB=myappdb \
   -p 5432:5432 \
   -v pgdata:/var/lib/postgresql/data \
   docker.io/library/postgres:18
+
+# Connect
+podman exec -it pg-dev psql -U myapp -d myappdb
 ```
 
-Using a `docker-compose.yml` (or `podman-compose`):
+If you want to run PostgreSQL as a rootless Podman container that starts on boot:
+
+```bash
+# Generate a systemd user service
+podman generate systemd --name pg-dev --files --new
+mkdir -p ~/.config/systemd/user/
+mv container-pg-dev.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable container-pg-dev.service
+systemctl --user start container-pg-dev.service
+
+# Enable lingering so it starts on boot even without login
+loginctl enable-linger $USER
+```
+
+### Docker Compose for Development
+
+For a more complete development setup, use a `docker-compose.yml`:
 
 ```yaml
 services:
-  postgres:
+  db:
     image: postgres:18
-    container_name: pg-dev
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: myappuser
-      POSTGRES_PASSWORD: securepassword
+      POSTGRES_USER: myapp
+      POSTGRES_PASSWORD: my-secure-password
       POSTGRES_DB: myappdb
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myappuser -d myappdb"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U myapp -d myappdb"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
@@ -153,563 +199,661 @@ volumes:
   pgdata:
 ```
 
-### Installing on a VPS
+Any `.sql` or `.sh` files placed in `/docker-entrypoint-initdb.d/` inside the container are executed when the database is initialized for the first time.
 
-On a VPS (DigitalOcean, Linode, Hetzner, etc.), you install the same way as bare metal, but with additional security considerations:
+## Part 3: Configuring PostgreSQL
 
-1. Install PostgreSQL using the official repository as shown above.
-2. Change the default `postgres` user password immediately.
-3. Configure `pg_hba.conf` to allow remote connections from your application server's IP only (see the configuration section below).
-4. Configure `postgresql.conf` to listen on the VPS's private network interface rather than `0.0.0.0`.
-5. Set up a firewall (ufw, firewalld, or iptables) to only allow port 5432 from trusted IPs.
-6. Enable SSL for all connections.
-7. Consider using a connection pooler like PgBouncer in front of PostgreSQL.
+PostgreSQL's configuration lives in two primary files: `postgresql.conf` and `pg_hba.conf`. Understanding both is essential.
 
-## Part 3: PostgreSQL Configuration Files
+### Finding the Configuration Files
 
-PostgreSQL has three primary configuration files. Understanding them is essential.
+```sql
+-- Inside psql, find the config file locations
+SHOW config_file;
+-- Example: /var/lib/postgresql/data/postgresql.conf
 
-### postgresql.conf
+SHOW hba_file;
+-- Example: /var/lib/postgresql/data/pg_hba.conf
 
-This is the main configuration file that controls server behavior. On a typical Linux installation, it lives at `/etc/postgresql/18/main/postgresql.conf` (Debian/Ubuntu) or `/var/lib/pgsql/data/postgresql.conf` (Fedora/RHEL). Key settings:
-
-**Connection settings:**
-
+SHOW data_directory;
+-- Example: /var/lib/postgresql/data
 ```
-listen_addresses = 'localhost'          # For local-only dev
-listen_addresses = '0.0.0.0'           # For remote access (use with pg_hba.conf)
+
+On a Docker container, these are at `/var/lib/postgresql/data/`. On a bare-metal Fedora install, they are typically at `/var/lib/pgsql/18/data/`. On Ubuntu, they are at `/etc/postgresql/18/main/`.
+
+### postgresql.conf: The Main Configuration File
+
+This file controls everything about how PostgreSQL runs. Here are the settings you need to understand:
+
+**Connection Settings:**
+
+```ini
+# Listen on all interfaces (default is localhost only)
+listen_addresses = '*'          # For development; restrict in production
+
+# Maximum concurrent connections
+max_connections = 100           # Default is 100; tune based on workload
+
+# Port (default 5432)
 port = 5432
-max_connections = 100                   # Default; increase for high-concurrency apps
 ```
 
-**Memory settings:**
+**Memory Settings:**
 
-```
-shared_buffers = '256MB'               # 25% of RAM for dedicated DB server
-effective_cache_size = '768MB'         # 50-75% of RAM
-work_mem = '4MB'                       # Per-sort/hash operation; be careful
-maintenance_work_mem = '64MB'          # For VACUUM, CREATE INDEX
+```ini
+# Shared memory for caching data pages
+# Rule of thumb: 25% of total system RAM
+shared_buffers = 2GB            # Default is 128MB — far too low
+
+# Memory for sorting, hashing, and other operations per query
+work_mem = 64MB                 # Default 4MB; increase for complex queries
+
+# Memory for maintenance operations (VACUUM, CREATE INDEX)
+maintenance_work_mem = 512MB    # Default 64MB
+
+# OS page cache hint
+effective_cache_size = 6GB      # 50-75% of total RAM; helps query planner
 ```
 
-**WAL (Write-Ahead Log) settings:**
+**Write-Ahead Log (WAL) Settings:**
 
-```
-wal_level = 'replica'                  # Required for replication
-max_wal_size = '1GB'
-min_wal_size = '80MB'
+```ini
+# WAL level (minimal, replica, or logical)
+wal_level = replica             # Needed for replication and point-in-time recovery
+
+# Checkpoint settings
 checkpoint_completion_target = 0.9
+max_wal_size = 2GB
+min_wal_size = 80MB
 ```
 
-**Asynchronous I/O settings (PostgreSQL 18):**
+**Query Planner Settings:**
 
-```
-io_method = 'worker'                   # 'sync', 'worker', or 'io_uring'
-io_workers = 3                         # Number of background I/O worker processes
-effective_io_concurrency = 16          # Raised default in PG18
-maintenance_io_concurrency = 16
+```ini
+# Cost estimates for planner decisions
+random_page_cost = 1.1          # Lower if using SSDs (default 4.0 assumes HDDs)
+effective_io_concurrency = 200  # Higher for SSDs; default 1
+
+# PostgreSQL 18: Asynchronous I/O method
+io_method = worker              # 'worker' (all platforms), 'io_uring' (Linux), 'sync' (legacy)
 ```
 
-**Logging settings:**
+**Logging:**
 
-```
+```ini
+# Log destination
 logging_collector = on
-log_directory = 'log'
+log_directory = 'pg_log'
 log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
-log_min_duration_statement = 500       # Log queries taking > 500ms
-log_statement = 'none'                 # 'none', 'ddl', 'mod', or 'all'
+
+# What to log
+log_min_duration_statement = 500    # Log queries taking > 500ms
+log_statement = 'none'              # 'none', 'ddl', 'mod', or 'all'
+log_line_prefix = '%t [%p] %u@%d '  # Timestamp, PID, user@database
+
+# Log slow queries with their execution plans
+auto_explain.log_min_duration = 1000  # Requires loading auto_explain extension
+```
+
+**Development vs. Production:**
+
+For development, you might use more aggressive logging:
+
+```ini
+log_statement = 'all'
+log_min_duration_statement = 0
 log_connections = on
 log_disconnections = on
-log_lock_failures = on                 # New in PG18
 ```
 
-**Performance monitoring:**
+For production, you want to log only what matters:
 
-```
-shared_preload_libraries = 'pg_stat_statements'
-pg_stat_statements.track = 'all'
-```
-
-### pg_hba.conf
-
-This file controls client authentication — who can connect, from where, and how. Each line has the format:
-
-```
-# TYPE  DATABASE  USER  ADDRESS        METHOD
-local   all       all                  peer
-host    all       all   127.0.0.1/32   scram-sha-256
-host    all       all   ::1/128        scram-sha-256
+```ini
+log_statement = 'ddl'
+log_min_duration_statement = 1000
+log_connections = off
+log_disconnections = off
 ```
 
-For development, you might add:
+### pg_hba.conf: Client Authentication Configuration
+
+This file controls who can connect to your database and how they authenticate. Each line specifies a connection type, database, user, address, and authentication method.
 
 ```
-host    myappdb   myappuser  192.168.1.0/24  scram-sha-256
+# TYPE  DATABASE    USER        ADDRESS         METHOD
+
+# Local connections (Unix socket)
+local   all         postgres                    peer
+local   all         all                         scram-sha-256
+
+# IPv4 local connections
+host    all         all         127.0.0.1/32    scram-sha-256
+
+# IPv4 remote connections (restrict in production)
+host    all         all         0.0.0.0/0       scram-sha-256
+
+# IPv6 local connections
+host    all         all         ::1/128         scram-sha-256
 ```
 
-For a VPS allowing your application server:
+Authentication methods you should know:
 
-```
-hostssl myappdb   myappuser  10.0.0.5/32     scram-sha-256
-```
+`peer` uses the operating system username. If you are logged in as the Linux user `postgres`, you can connect to the `postgres` database role without a password. This only works for local (Unix socket) connections.
 
-The `hostssl` type requires SSL connections. Always use `scram-sha-256` rather than the older `md5` method. Never use `trust` in production.
+`scram-sha-256` is the modern password authentication method. It is significantly more secure than the older `md5` method. PostgreSQL 18 has deprecated MD5 authentication, and it will be removed in a future release. Always use SCRAM.
 
-After editing `pg_hba.conf`, reload the configuration:
+`reject` denies the connection. Useful for explicitly blocking certain combinations.
+
+`cert` requires a TLS client certificate. Used in high-security environments.
+
+After editing `pg_hba.conf`, you must reload the configuration:
 
 ```bash
-sudo systemctl reload postgresql
+sudo systemctl reload postgresql-18
+# Or from inside psql:
+SELECT pg_reload_conf();
 ```
 
-### pg_ident.conf
+### Configuration for Docker Containers
 
-This file maps operating system user names to PostgreSQL user names when using `peer` or `ident` authentication. Most applications use password-based authentication and do not need to modify this file.
-
-### Configuration for Docker/Podman
-
-When running in a container, you can mount a custom `postgresql.conf`:
+When running PostgreSQL in Docker, you can pass configuration parameters at startup:
 
 ```bash
 docker run -d \
   --name pg-dev \
-  -e POSTGRES_USER=myappuser \
-  -e POSTGRES_PASSWORD=securepassword \
-  -e POSTGRES_DB=myappdb \
+  -e POSTGRES_PASSWORD=secret \
   -p 5432:5432 \
-  -v pgdata:/var/lib/postgresql/data \
-  -v ./custom-postgresql.conf:/etc/postgresql/postgresql.conf \
-  postgres:18 -c 'config_file=/etc/postgresql/postgresql.conf'
+  postgres:18 \
+  -c shared_buffers=512MB \
+  -c work_mem=32MB \
+  -c max_connections=200
 ```
 
-Alternatively, you can pass individual settings as command-line arguments:
+Or mount a custom configuration file:
 
 ```bash
-docker run -d postgres:18 \
-  -c 'shared_buffers=256MB' \
-  -c 'max_connections=200' \
-  -c 'log_min_duration_statement=500'
+docker run -d \
+  --name pg-dev \
+  -e POSTGRES_PASSWORD=secret \
+  -p 5432:5432 \
+  -v ./my-postgresql.conf:/etc/postgresql/postgresql.conf \
+  postgres:18 \
+  -c config_file=/etc/postgresql/postgresql.conf
 ```
 
-## Part 4: The psql Terminal Client
+## Part 4: The Terminal — psql and Beyond
 
-`psql` is the interactive terminal client for PostgreSQL and is the single most important tool you will use. Every .NET developer working with PostgreSQL should be comfortable with it.
+### psql: The Standard Client
 
-### Connecting
+`psql` is PostgreSQL's interactive terminal. It is the equivalent of `sqlcmd` for SQL Server, but far more capable. Every PostgreSQL developer should be fluent with psql.
+
+**Connecting:**
 
 ```bash
-# Connect to local database
-psql -U myappuser -d myappdb
+# Connect to a local database
+psql -U myapp -d myappdb
 
-# Connect to remote database
-psql -h 192.168.1.100 -p 5432 -U myappuser -d myappdb
+# Connect to a remote server
+psql -h 192.168.1.100 -p 5432 -U myapp -d myappdb
 
-# Using a connection URI
-psql "postgresql://myappuser:securepassword@localhost:5432/myappdb?sslmode=require"
+# Using a connection string
+psql "host=192.168.1.100 port=5432 dbname=myappdb user=myapp password=secret sslmode=require"
+
+# Using a URI
+psql postgresql://myapp:secret@192.168.1.100:5432/myappdb?sslmode=require
 ```
 
-### Essential Meta-Commands
+**Essential Meta-Commands:**
 
 ```
-\l              -- List all databases
-\dt             -- List tables in current schema
-\dt+            -- List tables with sizes
-\d tablename    -- Describe a table (columns, types, constraints)
-\di             -- List indexes
-\df             -- List functions
-\du             -- List roles/users
-\dn             -- List schemas
-\dx             -- List installed extensions
-\conninfo       -- Show current connection info
-\timing on      -- Show query execution time
-\x              -- Toggle expanded display (useful for wide rows)
-\i filename.sql -- Execute SQL from a file
-\e              -- Open the last query in your $EDITOR
-\q              -- Quit
+\l          List all databases
+\c dbname   Connect to a different database
+\dt         List tables in current schema
+\dt+        List tables with sizes
+\d table    Describe a table (columns, types, constraints)
+\d+ table   Describe with additional detail (storage, description)
+\di         List indexes
+\df         List functions
+\dv         List views
+\dn         List schemas
+\du         List roles/users
+\dp         List table privileges
+\x          Toggle expanded display (vertical output)
+\timing     Toggle query timing display
+\e          Open query in $EDITOR
+\i file.sql Execute SQL from a file
+\o file.txt Send output to a file
+\q          Quit
 ```
 
-### Useful Queries for Diagnostics
+**Running SQL from the Command Line:**
 
-Check active connections and running queries:
+```bash
+# Execute a single command
+psql -U myapp -d myappdb -c "SELECT count(*) FROM users;"
+
+# Execute a SQL file
+psql -U myapp -d myappdb -f migrations/001-create-tables.sql
+
+# Execute and get CSV output
+psql -U myapp -d myappdb -c "COPY (SELECT * FROM users) TO STDOUT WITH CSV HEADER;"
+
+# Pipe SQL from stdin
+echo "SELECT now();" | psql -U myapp -d myappdb
+```
+
+**Environment Variables:**
+
+You can avoid typing credentials repeatedly by setting environment variables:
+
+```bash
+export PGHOST=localhost
+export PGPORT=5432
+export PGUSER=myapp
+export PGPASSWORD=my-secure-password
+export PGDATABASE=myappdb
+
+# Now just type:
+psql
+```
+
+For a more secure approach, use a `.pgpass` file:
+
+```bash
+# Create ~/.pgpass with format: hostname:port:database:username:password
+echo "localhost:5432:myappdb:myapp:my-secure-password" > ~/.pgpass
+chmod 600 ~/.pgpass
+```
+
+### pgcli: A Better Terminal Experience
+
+`pgcli` is a drop-in replacement for psql with intelligent autocompletion and syntax highlighting:
+
+```bash
+# Install via pip
+pip install pgcli
+
+# Or on Fedora
+sudo dnf install pgcli
+
+# Or on Ubuntu
+sudo apt install pgcli
+
+# Use exactly like psql
+pgcli -U myapp -d myappdb
+```
+
+pgcli provides real-time autocomplete for table names, column names, SQL keywords, and even suggests JOINs based on foreign key relationships. If you spend any time in the terminal, install pgcli immediately.
+
+## Part 5: PostgreSQL 17 and 18 — What Is New
+
+### PostgreSQL 17 (Released September 26, 2024)
+
+PostgreSQL 17 delivered major performance improvements. The vacuum subsystem received a complete memory management overhaul, reducing memory consumption by up to 20x. This means autovacuum runs more efficiently, keeping your tables healthy with less resource contention. Bulk loading and exporting via the `COPY` command saw up to 2x performance improvements for large rows.
+
+The `JSON_TABLE` function arrived, letting you convert JSON data directly into a relational table representation within SQL:
 
 ```sql
-SELECT pid, usename, datname, client_addr, state, query, query_start
-FROM pg_stat_activity
-WHERE state != 'idle'
-ORDER BY query_start;
+SELECT *
+FROM JSON_TABLE(
+    '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]'::jsonb,
+    '$[*]'
+    COLUMNS (
+        name TEXT PATH '$.name',
+        age INT PATH '$.age'
+    )
+) AS jt;
 ```
 
-Check table sizes:
+The `MERGE` statement gained a `RETURNING` clause, and views became updatable via `MERGE`. The `COPY` command added an `ON_ERROR` option that allows imports to continue even when individual rows fail. Logical replication received failover slot synchronization, enabling high-availability setups to maintain replication through primary failovers. Incremental backups landed natively via `pg_basebackup --incremental`, with `pg_combinebackup` for restoration. Direct SSL connections became possible with the `sslnegotiation=direct` client option, saving a roundtrip during connection establishment.
+
+### PostgreSQL 18 (Released September 25, 2025)
+
+PostgreSQL 18 is a landmark release. The headline feature is the Asynchronous I/O (AIO) subsystem, which fundamentally changes how PostgreSQL handles read operations. Instead of issuing synchronous I/O calls and waiting for each to complete, PostgreSQL 18 can issue multiple I/O requests concurrently. Benchmarks demonstrate up to 3x performance improvements for sequential scans, bitmap heap scans, and vacuum operations.
 
 ```sql
-SELECT schemaname, tablename,
-       pg_size_pretty(pg_total_relation_size(schemaname || '.' || tablename)) AS total_size
-FROM pg_tables
-WHERE schemaname = 'public'
-ORDER BY pg_total_relation_size(schemaname || '.' || tablename) DESC;
+-- Configure the AIO method
+SET io_method = 'worker';     -- Worker-based (all platforms)
+SET io_method = 'io_uring';   -- io_uring (Linux only, fastest)
+SET io_method = 'sync';       -- Traditional synchronous I/O
 ```
 
-Check index usage:
+Native UUIDv7 support arrived via the `uuidv7()` function. UUIDv7 combines global uniqueness with timestamp-based ordering, making it ideal for primary keys because the sequential nature provides excellent B-tree index performance:
 
 ```sql
-SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
-FROM pg_stat_user_indexes
-ORDER BY idx_scan DESC;
+-- Generate a timestamp-ordered UUID
+SELECT uuidv7();
+-- Result: 01980de8-ad3d-715c-b739-faf2bb1a7aad
+
+-- Extract the embedded timestamp
+SELECT uuid_extract_timestamp(uuidv7());
+
+-- Use as a primary key
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    customer_id INT NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-Find unused indexes (candidates for removal):
+Virtual generated columns became the default. Unlike stored generated columns (which write computed values to disk), virtual columns compute their values on-the-fly during reads:
 
 ```sql
-SELECT schemaname, tablename, indexname, idx_scan
-FROM pg_stat_user_indexes
-WHERE idx_scan = 0
-  AND indexrelname NOT LIKE '%pkey%'
-ORDER BY pg_relation_size(indexrelid) DESC;
+CREATE TABLE invoices (
+    id SERIAL PRIMARY KEY,
+    subtotal DECIMAL(10,2),
+    tax_rate DECIMAL(5,4) DEFAULT 0.0875,
+    -- Virtual by default: computed at read time, no disk storage
+    total DECIMAL(10,2) GENERATED ALWAYS AS (subtotal * (1 + tax_rate))
+);
 ```
 
-Find slow queries (requires pg_stat_statements):
+The `RETURNING` clause was enhanced with `OLD` and `NEW` references for `INSERT`, `UPDATE`, `DELETE`, and `MERGE`:
 
 ```sql
-SELECT query, calls, mean_exec_time, total_exec_time, rows
-FROM pg_stat_statements
-ORDER BY mean_exec_time DESC
-LIMIT 20;
+-- See both old and new values in a single UPDATE
+UPDATE products
+SET price = price * 1.10
+WHERE category = 'electronics'
+RETURNING name, old.price AS was, new.price AS now;
 ```
 
-Check lock contention:
+Temporal constraints allow defining non-overlapping constraints on range types, ideal for scheduling and reservation systems:
 
 ```sql
-SELECT blocked_locks.pid AS blocked_pid,
-       blocking_locks.pid AS blocking_pid,
-       blocked_activity.usename AS blocked_user,
-       blocking_activity.usename AS blocking_user,
-       blocked_activity.query AS blocked_query,
-       blocking_activity.query AS blocking_query
-FROM pg_catalog.pg_locks blocked_locks
-JOIN pg_catalog.pg_stat_activity blocked_activity ON blocked_activity.pid = blocked_locks.pid
-JOIN pg_catalog.pg_locks blocking_locks ON blocking_locks.locktype = blocked_locks.locktype
-  AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
-  AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
-  AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
-  AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
-  AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
-  AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
-  AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
-  AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
-  AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
-  AND blocking_locks.pid != blocked_locks.pid
-JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
-WHERE NOT blocked_locks.granted;
+CREATE TABLE room_bookings (
+    room_id INT,
+    booked_during TSTZRANGE,
+    guest TEXT,
+    PRIMARY KEY (room_id, booked_during WITHOUT OVERLAPS)
+);
 ```
 
-Monitor AIO operations (PostgreSQL 18):
+OAuth 2.0 authentication support was added, enabling integration with modern identity providers. MD5 password authentication was deprecated in favor of SCRAM-SHA-256. The `pg_upgrade` utility now preserves planner statistics during major version upgrades, eliminating the performance dip that previously occurred while `ANALYZE` rebuilt statistics. Skip scan lookups on multicolumn B-tree indexes allow queries that omit leading index columns to still benefit from the index.
 
-```sql
-SELECT * FROM pg_aios;
-```
+`EXPLAIN ANALYZE` now automatically includes buffer usage statistics (previously required `BUFFERS` option), and verbose output includes WAL writes, CPU time, and average read times.
 
-### EXPLAIN and EXPLAIN ANALYZE
+## Part 6: Npgsql — The .NET Data Provider
 
-Always use `EXPLAIN ANALYZE` to understand query plans:
-
-```sql
-EXPLAIN ANALYZE
-SELECT o.id, o.total, c.name
-FROM orders o
-JOIN customers c ON c.id = o.customer_id
-WHERE o.created_at > '2026-01-01'
-ORDER BY o.total DESC
-LIMIT 100;
-```
-
-The output will show the execution plan including actual execution time, row estimates vs actual rows, which indexes were used, and where sequential scans occurred. Pay attention to large discrepancies between estimated and actual rows, which indicate stale statistics (run `ANALYZE tablename`).
-
-## Part 5: Npgsql — The .NET PostgreSQL Driver
-
-### What Is Npgsql?
-
-Npgsql is the open-source ADO.NET data provider for PostgreSQL, implemented entirely in C#. As of March 2026, the latest version is Npgsql 10.0.2. It is released under the PostgreSQL License (permissive, BSD-like) and is completely free for any use, commercial or otherwise.
-
-Npgsql provides high-performance access to PostgreSQL, regularly appearing near the top of the TechEmpower Web Framework Benchmarks. It supports the full range of PostgreSQL data types including arrays, enums, ranges, multiranges, composites, JSONB, PostGIS geometry, and NodaTime temporal types. Starting with version 8.0, Npgsql is fully compatible with NativeAOT and trimming.
+Npgsql is the open-source ADO.NET data provider for PostgreSQL. It is licensed under the PostgreSQL License (permissive, like MIT). The latest major version is Npgsql 10.x, which targets .NET 10.
 
 ### Installation
-
-Add Npgsql to your project:
 
 ```bash
 dotnet add package Npgsql
 ```
 
-Or in your `Directory.Packages.props` if using central package management:
+Or in your `Directory.Packages.props` for central package management:
 
 ```xml
 <PackageVersion Include="Npgsql" Version="10.0.2" />
 ```
 
-### The NpgsqlDataSource Pattern (Recommended)
+### Basic Usage with NpgsqlDataSource
 
-Starting with Npgsql 7.0, the recommended way to use Npgsql is through `NpgsqlDataSource`, which manages connection pooling and configuration in one place:
+Modern Npgsql (version 7+) uses `NpgsqlDataSource` as the preferred entry point. It manages connection pooling, configuration, and type mapping:
 
 ```csharp
 using Npgsql;
 
-var connString = "Host=localhost;Port=5432;Username=myappuser;Password=securepassword;Database=myappdb";
+var connString = "Host=localhost;Port=5432;Database=myappdb;Username=myapp;Password=secret";
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connString);
-// Configure the data source (type mappings, logging, etc.)
 await using var dataSource = dataSourceBuilder.Build();
 
 // Get a connection from the pool
 await using var conn = await dataSource.OpenConnectionAsync();
 
-// Insert data
-await using (var cmd = new NpgsqlCommand("INSERT INTO products (name, price) VALUES (@name, @price)", conn))
-{
-    cmd.Parameters.AddWithValue("name", "Widget");
-    cmd.Parameters.AddWithValue("price", 29.99m);
-    await cmd.ExecuteNonQueryAsync();
-}
+// Execute a query
+await using var cmd = new NpgsqlCommand("SELECT id, name, email FROM users WHERE active = @active", conn);
+cmd.Parameters.AddWithValue("active", true);
 
-// Query data
-await using (var cmd = new NpgsqlCommand("SELECT id, name, price FROM products WHERE price > @min", conn))
+await using var reader = await cmd.ExecuteReaderAsync();
+while (await reader.ReadAsync())
 {
-    cmd.Parameters.AddWithValue("min", 10.00m);
-    await using var reader = await cmd.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
+    var id = reader.GetInt32(0);
+    var name = reader.GetString(1);
+    var email = reader.GetString(2);
+    Console.WriteLine($"{id}: {name} ({email})");
+}
+```
+
+### Connection String Parameters You Should Know
+
+```
+Host=localhost           Server hostname or IP
+Port=5432                Server port
+Database=myappdb         Database name
+Username=myapp           Database user
+Password=secret          Password
+SSL Mode=Prefer          None, Prefer, Require, VerifyCA, VerifyFull
+Pooling=true             Enable connection pooling (default: true)
+Minimum Pool Size=0      Minimum idle connections
+Maximum Pool Size=100    Maximum concurrent connections
+Connection Idle Lifetime=300   Seconds before idle connection is closed
+Timeout=15               Connection timeout in seconds
+Command Timeout=30       Default command timeout in seconds
+Include Error Detail=true  Include server error details (dev only)
+```
+
+For production, always use SSL:
+
+```
+Host=db.example.com;Database=prod;Username=app;Password=secret;SSL Mode=VerifyFull;Trust Server Certificate=false
+```
+
+### Npgsql with Dependency Injection in ASP.NET
+
+```csharp
+// In Program.cs
+builder.Services.AddNpgsqlDataSource(
+    builder.Configuration.GetConnectionString("DefaultConnection")!,
+    dataSourceBuilder =>
     {
-        Console.WriteLine($"{reader.GetInt32(0)}: {reader.GetString(1)} - ${reader.GetDecimal(2)}");
+        dataSourceBuilder.UseNodaTime();       // Optional: NodaTime date/time types
+        dataSourceBuilder.MapEnum<OrderStatus>("order_status"); // Map PostgreSQL enums
+    }
+);
+```
+
+This registers `NpgsqlDataSource` as a singleton in the DI container. Inject it anywhere:
+
+```csharp
+public class UserRepository(NpgsqlDataSource dataSource)
+{
+    public async Task<User?> GetByIdAsync(int id)
+    {
+        await using var conn = await dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("SELECT id, name, email FROM users WHERE id = @id", conn);
+        cmd.Parameters.AddWithValue("id", id);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            return new User(reader.GetInt32(0), reader.GetString(1), reader.GetString(2));
+        }
+        return null;
     }
 }
 ```
 
-In ASP.NET Core, register the data source in the DI container:
+### Key Npgsql 9.0 and 10.0 Features
 
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddNpgsqlDataSource(
-    builder.Configuration.GetConnectionString("Postgres")!);
-```
+Npgsql 9.0 dropped .NET Standard 2.0 support (and thus .NET Framework). If you need .NET Framework, stay on Npgsql 8.x.
 
-Then inject `NpgsqlDataSource` or `NpgsqlConnection` anywhere you need it.
+Npgsql 9.0 introduced UUIDv7 generation for EF Core key values by default. When EF Core generates `Guid` keys client-side, Npgsql 9.0+ uses sequential UUIDv7 instead of random UUIDv4, improving index performance significantly.
 
-### Connection String Parameters
+Direct SSL support was added for PostgreSQL 17+, saving a roundtrip when establishing secure connections. Enable it with `SslNegotiation=direct` in your connection string.
 
-The most important connection string parameters:
+OpenTelemetry tracing was improved with a `ConfigureTracing` API that lets you filter which commands are traced, add custom tags to spans, and control span naming.
 
-```
-Host=localhost;
-Port=5432;
-Username=myappuser;
-Password=securepassword;
-Database=myappdb;
-Pooling=true;                    # Default: true
-Minimum Pool Size=0;             # Default: 0
-Maximum Pool Size=100;           # Default: 100
-Connection Idle Lifetime=300;    # Seconds before idle connection is closed
-Connection Pruning Interval=10;  # Seconds between pruning checks
-Timeout=30;                      # Connection timeout in seconds
-Command Timeout=30;              # Default command timeout in seconds
-SSL Mode=Prefer;                 # Disable, Allow, Prefer, Require, VerifyCA, VerifyFull
-Trust Server Certificate=false;  # Set true for self-signed certs in dev
-Include Error Detail=true;       # Include server error details (dev only!)
-Log Parameters=true;             # Log parameter values (dev only!)
-```
+Npgsql 10.0 (latest as of March 2026) targets .NET 10 and is considering deprecating synchronous APIs (`NpgsqlConnection.Open`, `NpgsqlCommand.ExecuteNonQuery`, etc.) in a future release. The recommendation is to use async APIs everywhere: `OpenAsync`, `ExecuteNonQueryAsync`, `ExecuteReaderAsync`.
 
-**Connection pooling best practice:** Always let Npgsql manage the connection pool. Do not set `Pooling=false` unless you are using an external pooler like PgBouncer. The default pool size of 100 is appropriate for most web applications. If you need more than 100 concurrent database connections per application instance, you likely have a design problem.
+## Part 7: Npgsql with Dapper
 
-### OpenTelemetry Integration
+Dapper is a lightweight micro-ORM that extends `IDbConnection` with extension methods for mapping query results to objects. It works beautifully with Npgsql.
 
-Npgsql has built-in OpenTelemetry support via the `Npgsql.OpenTelemetry` package:
-
-```bash
-dotnet add package Npgsql.OpenTelemetry
-```
-
-```csharp
-var dataSourceBuilder = new NpgsqlDataSourceBuilder(connString);
-// The data source will emit OpenTelemetry traces and metrics
-await using var dataSource = dataSourceBuilder.Build();
-
-// In your OpenTelemetry setup:
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing => tracing
-        .AddNpgsql()    // Adds Npgsql instrumentation
-        .AddAspNetCoreInstrumentation()
-        .AddOtlpExporter());
-```
-
-### Bulk Operations with COPY
-
-For inserting large amounts of data, PostgreSQL's COPY protocol is vastly faster than individual INSERT statements. Npgsql exposes this directly:
-
-```csharp
-await using var conn = await dataSource.OpenConnectionAsync();
-
-await using var writer = conn.BeginBinaryImport(
-    "COPY products (name, price, category) FROM STDIN (FORMAT BINARY)");
-
-foreach (var product in products)
-{
-    await writer.StartRowAsync();
-    await writer.WriteAsync(product.Name, NpgsqlDbType.Text);
-    await writer.WriteAsync(product.Price, NpgsqlDbType.Numeric);
-    await writer.WriteAsync(product.Category, NpgsqlDbType.Text);
-}
-
-await writer.CompleteAsync();
-```
-
-This can insert hundreds of thousands of rows per second, compared to hundreds per second with individual INSERT statements.
-
-## Part 6: Using Dapper with PostgreSQL
-
-### What Is Dapper?
-
-Dapper is a micro-ORM that extends `IDbConnection` with methods like `Query<T>`, `Execute`, `QueryFirst<T>`, and others. It maps SQL results directly to C# objects with minimal overhead. In performance benchmarks, Dapper typically runs within a few percent of raw ADO.NET while providing much nicer syntax.
-
-### Setup
+### Installation
 
 ```bash
 dotnet add package Dapper
-dotnet add package Npgsql
 ```
 
-### Basic CRUD Operations
+### Basic Queries
 
 ```csharp
 using Dapper;
 using Npgsql;
 
-// Create a connection factory
-public class DbConnectionFactory(string connectionString)
-{
-    public NpgsqlConnection CreateConnection() => new(connectionString);
-}
-
-// Register in DI
-builder.Services.AddSingleton(new DbConnectionFactory(
-    builder.Configuration.GetConnectionString("Postgres")!));
-
-// Repository using Dapper
-public class ProductRepository(DbConnectionFactory db)
+public class ProductRepository(NpgsqlDataSource dataSource)
 {
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        await using var conn = db.CreateConnection();
-        return await conn.QueryAsync<Product>(
-            "SELECT id, name, price, category, created_at FROM products ORDER BY name");
+        await using var conn = await dataSource.OpenConnectionAsync();
+        return await conn.QueryAsync<Product>("SELECT id, name, price, stock FROM products ORDER BY name");
     }
 
     public async Task<Product?> GetByIdAsync(int id)
     {
-        await using var conn = db.CreateConnection();
-        return await conn.QueryFirstOrDefaultAsync<Product>(
-            "SELECT id, name, price, category, created_at FROM products WHERE id = @Id",
-            new { Id = id });
+        await using var conn = await dataSource.OpenConnectionAsync();
+        return await conn.QuerySingleOrDefaultAsync<Product>(
+            "SELECT id, name, price, stock FROM products WHERE id = @Id",
+            new { Id = id }
+        );
     }
 
     public async Task<int> CreateAsync(Product product)
     {
-        await using var conn = db.CreateConnection();
+        await using var conn = await dataSource.OpenConnectionAsync();
         return await conn.ExecuteScalarAsync<int>(
             """
-            INSERT INTO products (name, price, category)
-            VALUES (@Name, @Price, @Category)
+            INSERT INTO products (name, price, stock)
+            VALUES (@Name, @Price, @Stock)
             RETURNING id
             """,
-            product);
+            product
+        );
     }
 
     public async Task<bool> UpdateAsync(Product product)
     {
-        await using var conn = db.CreateConnection();
+        await using var conn = await dataSource.OpenConnectionAsync();
         var affected = await conn.ExecuteAsync(
             """
             UPDATE products
-            SET name = @Name, price = @Price, category = @Category
+            SET name = @Name, price = @Price, stock = @Stock
             WHERE id = @Id
             """,
-            product);
+            product
+        );
         return affected > 0;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        await using var conn = db.CreateConnection();
-        var affected = await conn.ExecuteAsync(
-            "DELETE FROM products WHERE id = @Id",
-            new { Id = id });
+        await using var conn = await dataSource.OpenConnectionAsync();
+        var affected = await conn.ExecuteAsync("DELETE FROM products WHERE id = @Id", new { Id = id });
         return affected > 0;
     }
 }
 ```
 
-### Important Dapper Best Practices with PostgreSQL
-
-**Always use parameterized queries.** Never interpolate values into SQL strings. Dapper's anonymous object syntax makes parameterization easy and natural.
-
-**Mind case sensitivity.** PostgreSQL folds unquoted identifiers to lowercase. If your C# property is `CreatedAt` but your column is `created_at`, you have two options: use the `AS` clause to alias (`SELECT created_at AS CreatedAt`), or use Dapper's `DefaultTypeMap.MatchNamesWithUnderscores = true` setting:
+### Multi-Mapping (Joins)
 
 ```csharp
+public async Task<IEnumerable<Order>> GetOrdersWithCustomerAsync()
+{
+    await using var conn = await dataSource.OpenConnectionAsync();
+    var sql = """
+        SELECT o.id, o.order_date, o.total,
+               c.id, c.name, c.email
+        FROM orders o
+        INNER JOIN customers c ON o.customer_id = c.id
+        ORDER BY o.order_date DESC
+        """;
+
+    return await conn.QueryAsync<Order, Customer, Order>(
+        sql,
+        (order, customer) =>
+        {
+            order.Customer = customer;
+            return order;
+        },
+        splitOn: "id"  // Column where the second object starts
+    );
+}
+```
+
+### Transactions with Dapper
+
+```csharp
+public async Task TransferFundsAsync(int fromId, int toId, decimal amount)
+{
+    await using var conn = await dataSource.OpenConnectionAsync();
+    await using var tx = await conn.BeginTransactionAsync();
+
+    try
+    {
+        await conn.ExecuteAsync(
+            "UPDATE accounts SET balance = balance - @Amount WHERE id = @Id",
+            new { Amount = amount, Id = fromId },
+            transaction: tx
+        );
+
+        await conn.ExecuteAsync(
+            "UPDATE accounts SET balance = balance + @Amount WHERE id = @Id",
+            new { Amount = amount, Id = toId },
+            transaction: tx
+        );
+
+        await tx.CommitAsync();
+    }
+    catch
+    {
+        await tx.RollbackAsync();
+        throw;
+    }
+}
+```
+
+### Dapper Tips for PostgreSQL
+
+PostgreSQL uses `snake_case` column names, but C# uses `PascalCase` properties. Configure Dapper to handle this automatically:
+
+```csharp
+// In Program.cs or startup
 Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 ```
 
-This global setting makes Dapper automatically match `CreatedAt` to `created_at`. Set it once at startup.
+Now `order_date` in PostgreSQL maps to `OrderDate` in C#.
 
-**Use PostgreSQL arrays.** Dapper with Npgsql supports sending arrays directly:
+For PostgreSQL arrays, Npgsql handles them natively:
 
 ```csharp
+var tags = new[] { "electronics", "sale" };
 var products = await conn.QueryAsync<Product>(
-    "SELECT * FROM products WHERE id = ANY(@Ids)",
-    new { Ids = new[] { 1, 2, 3 } });
+    "SELECT * FROM products WHERE tags && @Tags",
+    new { Tags = tags }
+);
 ```
 
-Note: use `ANY(@param)` rather than `IN @param`. The `IN` syntax with Dapper expands to individual parameters (which has a limit), while `ANY` sends a single PostgreSQL array parameter and has no such limit.
-
-**Use JSONB.** Dapper can work with PostgreSQL's JSONB type:
+For JSONB columns:
 
 ```csharp
-var result = await conn.QueryAsync<dynamic>(
-    "SELECT id, metadata->>'name' AS name FROM products WHERE metadata @> @Filter::jsonb",
-    new { Filter = "{\"category\": \"electronics\"}" });
+var metadata = JsonSerializer.Serialize(new { source = "web", campaign = "spring" });
+await conn.ExecuteAsync(
+    "INSERT INTO events (type, metadata) VALUES (@Type, @Metadata::jsonb)",
+    new { Type = "page_view", Metadata = metadata }
+);
 ```
 
-**Dispose connections promptly.** Always use `await using` to ensure connections are returned to the pool. Do not hold connections across HTTP request boundaries.
+## Part 8: Npgsql with Entity Framework Core
 
-### Dapper with Transactions
-
-```csharp
-await using var conn = db.CreateConnection();
-await conn.OpenAsync();
-await using var tx = await conn.BeginTransactionAsync();
-
-try
-{
-    var orderId = await conn.ExecuteScalarAsync<int>(
-        "INSERT INTO orders (customer_id, total) VALUES (@CustomerId, @Total) RETURNING id",
-        new { CustomerId = 42, Total = 99.99m },
-        transaction: tx);
-
-    await conn.ExecuteAsync(
-        "INSERT INTO order_items (order_id, product_id, quantity) VALUES (@OrderId, @ProductId, @Qty)",
-        new { OrderId = orderId, ProductId = 7, Qty = 2 },
-        transaction: tx);
-
-    await tx.CommitAsync();
-}
-catch
-{
-    await tx.RollbackAsync();
-    throw;
-}
-```
-
-## Part 7: Using Entity Framework Core with PostgreSQL
-
-### Setup
+### Installation
 
 ```bash
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 ```
-
-As of March 2026, the latest version is `Npgsql.EntityFrameworkCore.PostgreSQL 10.0.1`.
 
 ### DbContext Configuration
 
@@ -718,175 +862,214 @@ public class AppDbContext : DbContext
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
-    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Use snake_case naming convention for all tables and columns
+        modelBuilder.HasDefaultSchema("public");
+
         modelBuilder.Entity<Product>(entity =>
         {
             entity.ToTable("products");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(200);
-            entity.Property(e => e.Price).HasColumnName("price").HasColumnType("numeric(10,2)");
-            entity.Property(e => e.Category).HasColumnName("category").HasMaxLength(100);
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at")
-                .HasDefaultValueSql("NOW()");
-            entity.Property(e => e.Metadata).HasColumnName("metadata")
-                .HasColumnType("jsonb");
-
-            entity.HasIndex(e => e.Category);
-            entity.HasIndex(e => e.CreatedAt);
+            entity.Property(e => e.Price).HasColumnName("price").HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Stock).HasColumnName("stock");
+            entity.Property(e => e.Tags).HasColumnName("tags").HasColumnType("text[]");
+            entity.Property(e => e.Metadata).HasColumnName("metadata").HasColumnType("jsonb");
+            entity.HasIndex(e => e.Name);
         });
     }
 }
 ```
 
-Register in DI:
+### Registration in ASP.NET
 
 ```csharp
+// Program.cs
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.UseNodaTime();
+            npgsqlOptions.MapEnum<OrderStatus>("order_status");
+            npgsqlOptions.SetPostgresVersion(18, 0);  // Enable PG18-specific SQL generation
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null
+            );
+        }
+    )
+);
 ```
 
-### Snake Case Naming Convention
-
-PostgreSQL conventionally uses snake_case for identifiers. Rather than manually mapping every column, use the Npgsql naming convention:
+### Migrations
 
 ```bash
-dotnet add package EFCore.NamingConventions
-```
+# Add a migration
+dotnet ef migrations add InitialCreate
 
-```csharp
-options.UseNpgsql(connectionString)
-       .UseSnakeCaseNamingConvention();
-```
+# Apply migrations
+dotnet ef database update
 
-Now your `Product.CreatedAt` property automatically maps to the `created_at` column, and your `OrderItem` entity maps to the `order_item` table.
-
-### EF Core Migrations
-
-Generate a migration:
-
-```bash
-dotnet ef migrations add InitialCreate --project src/MyApp --startup-project src/MyApp
-```
-
-Apply to your development database:
-
-```bash
-dotnet ef database update --project src/MyApp --startup-project src/MyApp
-```
-
-**Production best practice:** Never run `dotnet ef database update` against a production database. Instead, generate SQL scripts and review them before execution:
-
-```bash
-dotnet ef migrations script --idempotent --output migration.sql
-```
-
-Then apply the reviewed script:
-
-```bash
-psql -U myappuser -d myappdb -f migration.sql
+# Generate a SQL script (for production deployments)
+dotnet ef migrations script -o migrations.sql
 ```
 
 ### PostgreSQL-Specific EF Core Features
 
-**JSONB columns:**
+**JSONB Columns:**
 
 ```csharp
-entity.Property(e => e.Metadata)
-    .HasColumnType("jsonb");
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public Dictionary<string, string> Metadata { get; set; } = new();
+}
 
-// Query into JSONB
-var results = await context.Products
-    .Where(p => EF.Functions.JsonContains(p.Metadata, new { category = "electronics" }))
+// In OnModelCreating
+entity.Property(e => e.Metadata).HasColumnType("jsonb");
+
+// Query JSONB
+var products = await context.Products
+    .Where(p => EF.Functions.JsonContains(p.Metadata, new { color = "red" }))
     .ToListAsync();
 ```
 
-**Array columns:**
+**Array Columns:**
 
 ```csharp
-entity.Property(e => e.Tags)
-    .HasColumnType("text[]");
+public class Product
+{
+    public int Id { get; set; }
+    public string[] Tags { get; set; } = [];
+}
 
-// Query array columns
-var results = await context.Products
-    .Where(p => p.Tags.Contains("sale"))
+// Query arrays
+var electronics = await context.Products
+    .Where(p => p.Tags.Contains("electronics"))
     .ToListAsync();
 ```
 
-**Full-text search:**
+**Full-Text Search:**
 
 ```csharp
 var results = await context.Products
     .Where(p => EF.Functions.ToTsVector("english", p.Name + " " + p.Description)
-        .Matches(EF.Functions.ToTsQuery("english", "wireless & headphones")))
+        .Matches(EF.Functions.ToTsQuery("english", "wireless & keyboard")))
     .ToListAsync();
 ```
 
-**Index foreign keys manually.** Unlike SQL Server, PostgreSQL does not automatically create indexes on foreign key columns. Always add them:
+**PostgreSQL Enums:**
 
 ```csharp
-entity.HasIndex(e => e.CustomerId);
+public enum OrderStatus { Pending, Processing, Shipped, Delivered, Cancelled }
+
+// In OnModelCreating
+modelBuilder.HasPostgresEnum<OrderStatus>();
+modelBuilder.Entity<Order>().Property(e => e.Status).HasColumnType("order_status");
+
+// In UseNpgsql configuration
+npgsqlOptions.MapEnum<OrderStatus>("order_status");
 ```
 
-### Mixing EF Core and Dapper
+### EF Core Performance Tips for PostgreSQL
 
-A common and effective pattern is to use EF Core for writes (migrations, change tracking, validation) and Dapper for reads (complex reports, dashboards, performance-critical queries). You can get the underlying `NpgsqlConnection` from your DbContext:
+Use compiled queries for hot paths:
 
 ```csharp
-public class ReportService(AppDbContext context)
-{
-    public async Task<IEnumerable<SalesSummary>> GetSalesSummaryAsync()
-    {
-        var conn = context.Database.GetDbConnection();
-        return await conn.QueryAsync<SalesSummary>(
-            """
-            SELECT category,
-                   COUNT(*) AS order_count,
-                   SUM(total) AS revenue,
-                   AVG(total) AS avg_order_value
-            FROM orders o
-            JOIN products p ON p.id = o.product_id
-            WHERE o.created_at >= @Since
-            GROUP BY category
-            ORDER BY revenue DESC
-            """,
-            new { Since = DateTime.UtcNow.AddMonths(-3) });
-    }
-}
+private static readonly Func<AppDbContext, int, Task<Product?>> GetProductById =
+    EF.CompileAsyncQuery((AppDbContext ctx, int id) =>
+        ctx.Products.FirstOrDefault(p => p.Id == id));
 ```
 
-## Part 8: Transactions and Concurrency
+Use `AsNoTracking()` for read-only queries:
 
-### PostgreSQL MVCC
+```csharp
+var products = await context.Products.AsNoTracking().ToListAsync();
+```
 
-PostgreSQL uses Multiversion Concurrency Control. Every transaction sees a consistent snapshot of the database as of the transaction start (or statement start, depending on isolation level). Readers never block writers and writers never block readers. This is fundamentally different from SQL Server's default locking behavior.
+Use `ExecuteUpdateAsync` and `ExecuteDeleteAsync` for bulk operations (avoids loading entities):
 
-### There Is No NOLOCK in PostgreSQL
+```csharp
+await context.Products
+    .Where(p => p.Stock == 0)
+    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Status, "Discontinued"));
 
-If you are coming from SQL Server, you may be accustomed to using `WITH (NOLOCK)` or `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED` to avoid blocking on reads. **PostgreSQL does not have this concept and does not need it.** Because of MVCC, a SELECT in PostgreSQL never blocks on a concurrent INSERT, UPDATE, or DELETE, and vice versa. If you set `READ UNCOMMITTED` in PostgreSQL, it silently upgrades to `READ COMMITTED`.
+await context.Products
+    .Where(p => p.DeletedAt < DateTime.UtcNow.AddYears(-1))
+    .ExecuteDeleteAsync();
+```
 
-**Should you use NOLOCK equivalents in development?** No. PostgreSQL's `READ COMMITTED` default is already non-blocking for reads. There is nothing to gain and nothing to simulate.
+## Part 9: Transactions and Isolation Levels
 
-**Should you use NOLOCK equivalents in production?** The question is moot. PostgreSQL does not support dirty reads, and its architecture does not need them. Your queries will not block on writes.
+### Transaction Basics
+
+PostgreSQL supports full ACID transactions. Every statement in PostgreSQL runs inside a transaction. If you do not explicitly begin one, each statement is wrapped in an implicit transaction.
+
+```sql
+-- Explicit transaction
+BEGIN;
+    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+    UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+COMMIT;
+
+-- Rollback on error
+BEGIN;
+    UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+    -- Oops, something went wrong
+ROLLBACK;
+```
+
+### Savepoints
+
+Savepoints allow partial rollback within a transaction:
+
+```sql
+BEGIN;
+    INSERT INTO orders (customer_id, total) VALUES (1, 99.99);
+    SAVEPOINT before_items;
+
+    INSERT INTO order_items (order_id, product_id, qty) VALUES (1, 100, 1);
+    -- This fails due to a constraint violation
+    ROLLBACK TO SAVEPOINT before_items;
+
+    -- Try a different product
+    INSERT INTO order_items (order_id, product_id, qty) VALUES (1, 200, 1);
+COMMIT;
+```
 
 ### Isolation Levels
 
-PostgreSQL supports four isolation levels, though two of them are effectively identical:
+PostgreSQL supports four isolation levels. Here is what each one actually does:
 
-**READ UNCOMMITTED:** Treated as READ COMMITTED. Dirty reads are never possible.
+**Read Committed (Default):** Each statement within a transaction sees a snapshot of the database as of the moment that statement began execution. If another transaction commits between two statements in your transaction, the second statement sees the committed changes. This is the default and is appropriate for most workloads.
 
-**READ COMMITTED (default):** Each statement within a transaction sees its own snapshot. If another transaction commits between your two statements, the second statement will see the committed changes.
+**Repeatable Read:** The transaction sees a snapshot of the database as of the moment the transaction began (not each statement). If another transaction commits changes to rows your transaction has read, and you try to update those same rows, PostgreSQL raises a serialization error and you must retry the transaction. This prevents non-repeatable reads and phantom reads.
 
-**REPEATABLE READ:** The transaction sees a consistent snapshot as of the start of the transaction. Any changes committed by other transactions after the start are invisible. If a conflicting update occurs, PostgreSQL will abort your transaction with a serialization error, and you must retry.
+**Serializable:** The strictest level. PostgreSQL guarantees that the result of concurrent serializable transactions is equivalent to some serial (one-at-a-time) ordering. If PostgreSQL detects that no such ordering is possible, it raises a serialization error. This is the safest but most restrictive level.
 
-**SERIALIZABLE:** The strictest level. PostgreSQL guarantees that the result is the same as if transactions had executed one at a time. Uses Serializable Snapshot Isolation (SSI). Serialization failures are possible and must be handled with retry logic.
+**Read Uncommitted:** In PostgreSQL, this is identical to Read Committed. PostgreSQL does not support dirty reads, ever. Setting `READ UNCOMMITTED` is accepted for SQL standard compliance but behaves as Read Committed.
 
-### Transactions in Npgsql
+```sql
+-- Set isolation level for a transaction
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+    SELECT * FROM accounts WHERE id = 1;
+    -- ... more operations ...
+COMMIT;
+
+-- Set default isolation level for a session
+SET default_transaction_isolation = 'repeatable read';
+```
+
+In C# with Npgsql:
 
 ```csharp
 await using var conn = await dataSource.OpenConnectionAsync();
@@ -894,119 +1077,106 @@ await using var tx = await conn.BeginTransactionAsync(IsolationLevel.RepeatableR
 
 try
 {
-    // All commands within this transaction see the same snapshot
-    await using var cmd1 = new NpgsqlCommand("UPDATE accounts SET balance = balance - 100 WHERE id = 1", conn, tx);
-    await cmd1.ExecuteNonQueryAsync();
-
-    await using var cmd2 = new NpgsqlCommand("UPDATE accounts SET balance = balance + 100 WHERE id = 2", conn, tx);
-    await cmd2.ExecuteNonQueryAsync();
-
+    // ... operations ...
     await tx.CommitAsync();
 }
-catch (NpgsqlException ex) when (ex.SqlState == "40001") // Serialization failure
+catch (PostgresException ex) when (ex.SqlState == "40001") // serialization_failure
 {
     await tx.RollbackAsync();
-    // Retry the transaction
-}
-catch
-{
-    await tx.RollbackAsync();
-    throw;
+    // Retry the entire transaction
 }
 ```
 
-### Transactions in EF Core
+### The NOLOCK Question
 
-```csharp
-await using var tx = await context.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead);
+This deserves its own section because it is the single most common question from SQL Server developers.
 
-try
-{
-    context.Orders.Add(new Order { CustomerId = 42, Total = 99.99m });
-    await context.SaveChangesAsync();
+In SQL Server, `NOLOCK` (or `READ UNCOMMITTED` isolation level) tells the engine to read data without acquiring shared locks. This prevents readers from blocking writers and vice versa. It is commonly used in SQL Server because the default Read Committed isolation level uses locking, which can cause severe blocking under concurrent load.
 
-    context.Inventory.Where(i => i.ProductId == 7)
-        .ExecuteUpdate(s => s.SetProperty(i => i.Quantity, i => i.Quantity - 1));
-    await context.SaveChangesAsync();
+**You do not need NOLOCK in PostgreSQL. It does not exist, and you should not miss it.**
 
-    await tx.CommitAsync();
-}
-catch (DbUpdateException ex) when (ex.InnerException is NpgsqlException { SqlState: "40001" })
-{
-    await tx.RollbackAsync();
-    // Retry
-}
-```
+PostgreSQL uses MVCC for all isolation levels. Readers never block writers. Writers never block readers. The problem that `NOLOCK` solves in SQL Server simply does not exist in PostgreSQL. When you execute a `SELECT` in PostgreSQL, you read from a consistent snapshot without acquiring any locks that would block concurrent `INSERT`, `UPDATE`, or `DELETE` operations.
+
+The only time you can experience blocking in PostgreSQL is when two transactions try to modify the same row concurrently. In that case, the second transaction waits for the first to commit or rollback. This is correct behavior — you would not want two concurrent updates to silently overwrite each other.
+
+**Should you use `READ UNCOMMITTED` in development?** It makes no difference in PostgreSQL. It behaves identically to `READ COMMITTED`.
+
+**Should you use `READ UNCOMMITTED` in production?** It makes no difference in PostgreSQL. But do not bother setting it. Just use the default `READ COMMITTED`.
+
+**Bottom line: forget about `NOLOCK`. PostgreSQL solved this problem at the architecture level.**
 
 ### Advisory Locks
 
-PostgreSQL provides advisory locks — application-level locks that are managed by the database but not tied to any particular table or row. These are useful for coordinating distributed work:
+PostgreSQL provides advisory locks for application-level locking that does not correspond to any particular table or row:
 
-```csharp
-// Acquire an advisory lock (blocks until available)
-await conn.ExecuteAsync("SELECT pg_advisory_lock(@LockId)", new { LockId = 12345L });
+```sql
+-- Session-level advisory lock (held until session ends or explicitly released)
+SELECT pg_advisory_lock(12345);
+-- ... do exclusive work ...
+SELECT pg_advisory_unlock(12345);
 
-try
-{
-    // Do exclusive work
-}
-finally
-{
-    await conn.ExecuteAsync("SELECT pg_advisory_unlock(@LockId)", new { LockId = 12345L });
-}
+-- Transaction-level advisory lock (released at end of transaction)
+BEGIN;
+SELECT pg_advisory_xact_lock(12345);
+-- ... do exclusive work ...
+COMMIT;  -- Lock is automatically released
 
-// Non-blocking alternative
-var acquired = await conn.ExecuteScalarAsync<bool>(
-    "SELECT pg_try_advisory_lock(@LockId)", new { LockId = 12345L });
-if (acquired)
-{
-    try { /* work */ }
-    finally { await conn.ExecuteAsync("SELECT pg_advisory_unlock(@LockId)", new { LockId = 12345L }); }
-}
+-- Try to acquire without blocking
+SELECT pg_try_advisory_lock(12345);  -- Returns true/false
 ```
 
-### Optimistic Concurrency
-
-For web applications, optimistic concurrency is usually preferable to pessimistic locking. Add a `version` column (or use `xmin`):
+In C# with Npgsql:
 
 ```csharp
-// Using a version column
-var affected = await conn.ExecuteAsync(
-    """
-    UPDATE products
-    SET name = @Name, price = @Price, version = version + 1
-    WHERE id = @Id AND version = @ExpectedVersion
-    """,
-    new { Name = "Updated", Price = 39.99m, Id = 1, ExpectedVersion = 3 });
+await using var conn = await dataSource.OpenConnectionAsync();
+await using var tx = await conn.BeginTransactionAsync();
 
-if (affected == 0)
-    throw new DbUpdateConcurrencyException("The record was modified by another user.");
+await using (var cmd = new NpgsqlCommand("SELECT pg_advisory_xact_lock(@key)", conn))
+{
+    cmd.Parameters.AddWithValue("key", 12345L);
+    cmd.Transaction = tx;
+    await cmd.ExecuteNonQueryAsync();
+}
+
+// ... perform exclusive work ...
+
+await tx.CommitAsync(); // Advisory lock released
 ```
 
-EF Core supports this natively:
+## Part 10: Networking, Sessions, and Connection Pooling
 
-```csharp
-entity.Property(e => e.Version).IsRowVersion();
-// Or use PostgreSQL's xmin system column:
-entity.UseXminAsConcurrencyToken();
+### SSL/TLS Configuration
+
+For production, always encrypt connections. In `postgresql.conf`:
+
+```ini
+ssl = on
+ssl_cert_file = '/path/to/server.crt'
+ssl_key_file = '/path/to/server.key'
+ssl_ca_file = '/path/to/ca.crt'
+
+# PostgreSQL 18: Control TLS 1.3 cipher suites
+ssl_tls13_ciphers = 'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'
 ```
 
-## Part 9: Networking and Session Management
+In your .NET connection string:
+
+```
+Host=db.example.com;Database=prod;Username=app;Password=secret;SSL Mode=VerifyFull;Root Certificate=/path/to/ca.crt
+```
 
 ### Connection Pooling
 
 Npgsql has built-in connection pooling enabled by default. Each unique connection string gets its own pool. Key parameters:
 
-- `Maximum Pool Size=100` — The maximum number of connections in the pool.
-- `Minimum Pool Size=0` — Connections below this threshold are maintained even when idle.
-- `Connection Idle Lifetime=300` — Seconds before an idle connection above the minimum is closed.
-- `Connection Pruning Interval=10` — How often the pool checks for idle connections to close.
+```
+Minimum Pool Size=0       # Pre-create this many connections
+Maximum Pool Size=100     # Hard limit on concurrent connections
+Connection Idle Lifetime=300  # Close idle connections after 5 minutes
+Connection Pruning Interval=10  # Check for idle connections every 10 seconds
+```
 
-**Best practice:** Create one `NpgsqlDataSource` per connection string and register it as a singleton. Do not create data sources per-request.
-
-### PgBouncer
-
-For high-concurrency applications (thousands of concurrent connections), consider putting PgBouncer in front of PostgreSQL. PgBouncer is a lightweight connection pooler that multiplexes many client connections onto a smaller number of PostgreSQL server connections.
+For high-concurrency applications, consider PgBouncer as an external connection pooler:
 
 ```ini
 # pgbouncer.ini
@@ -1014,325 +1184,217 @@ For high-concurrency applications (thousands of concurrent connections), conside
 myappdb = host=127.0.0.1 port=5432 dbname=myappdb
 
 [pgbouncer]
-listen_addr = 0.0.0.0
 listen_port = 6432
+listen_addr = 0.0.0.0
 auth_type = scram-sha-256
 auth_file = /etc/pgbouncer/userlist.txt
-pool_mode = transaction
-max_client_conn = 10000
-default_pool_size = 25
+pool_mode = transaction    # transaction pooling is best for web apps
+default_pool_size = 20
+max_client_conn = 1000
 ```
 
-When using PgBouncer in transaction mode, add these to your Npgsql connection string:
+With transaction-mode pooling, PgBouncer assigns a server connection to a client for the duration of a transaction, then returns it to the pool. This allows hundreds of application connections to share a much smaller number of PostgreSQL connections.
 
-```
-No Reset On Close=true;
-```
+### Monitoring Active Sessions
 
-This disables Npgsql's connection reset logic (`DISCARD ALL`), which does not work correctly in PgBouncer's transaction mode.
+```sql
+-- View all active connections
+SELECT pid, usename, datname, client_addr, state, query, query_start
+FROM pg_stat_activity
+WHERE state != 'idle'
+ORDER BY query_start;
 
-### SSL/TLS Configuration
+-- Kill a specific session
+SELECT pg_terminate_backend(12345);
 
-Always use SSL in production:
+-- Cancel the current query in a session (gentler than terminate)
+SELECT pg_cancel_backend(12345);
 
-```
-Host=myserver;SSL Mode=VerifyFull;Trust Server Certificate=false;Root Certificate=/path/to/ca.crt
-```
-
-To generate self-signed certificates for development:
-
-```bash
-# Generate CA
-openssl req -new -x509 -days 365 -nodes -out ca.crt -keyout ca.key -subj "/CN=PostgreSQL-CA"
-
-# Generate server certificate
-openssl req -new -nodes -out server.csr -keyout server.key -subj "/CN=localhost"
-openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365
-
-# Copy to PostgreSQL data directory
-cp server.crt server.key /var/lib/postgresql/data/
-chmod 600 /var/lib/postgresql/data/server.key
-chown postgres:postgres /var/lib/postgresql/data/server.*
+-- View connection counts by state
+SELECT state, count(*)
+FROM pg_stat_activity
+GROUP BY state;
 ```
 
-In `postgresql.conf`:
+### Lock Monitoring
 
-```
-ssl = on
-ssl_cert_file = 'server.crt'
-ssl_key_file = 'server.key'
-ssl_ca_file = 'ca.crt'
-```
+```sql
+-- View current locks
+SELECT l.pid, l.locktype, l.mode, l.granted,
+       a.usename, a.query, a.state
+FROM pg_locks l
+JOIN pg_stat_activity a ON l.pid = a.pid
+WHERE NOT l.granted
+ORDER BY l.pid;
 
-### Session Variables and Settings
-
-PostgreSQL supports per-session settings that you can use for row-level security, audit logging, or passing context:
-
-```csharp
-// Set a session variable
-await conn.ExecuteAsync("SET app.current_user_id = @UserId", new { UserId = "user-42" });
-
-// Use it in a policy or trigger
-// CREATE POLICY user_isolation ON orders
-//   USING (user_id = current_setting('app.current_user_id')::int);
-```
-
-## Part 10: Debugging and Profiling
-
-### Logging All Queries
-
-For development, enable comprehensive query logging in `postgresql.conf`:
-
-```
-log_statement = 'all'
-log_min_duration_statement = 0   # Log all queries with their durations
+-- Find blocking queries
+SELECT blocked.pid AS blocked_pid,
+       blocked.query AS blocked_query,
+       blocking.pid AS blocking_pid,
+       blocking.query AS blocking_query
+FROM pg_stat_activity blocked
+JOIN pg_locks bl ON blocked.pid = bl.pid AND NOT bl.granted
+JOIN pg_locks gl ON bl.locktype = gl.locktype
+    AND bl.relation = gl.relation
+    AND bl.page = gl.page
+    AND bl.tuple = gl.tuple
+    AND gl.granted
+JOIN pg_stat_activity blocking ON gl.pid = blocking.pid
+WHERE blocked.pid != blocking.pid;
 ```
 
-For production, log only slow queries:
+## Part 11: Debugging and Performance Tuning
 
+### EXPLAIN and EXPLAIN ANALYZE
+
+This is the single most important debugging tool in PostgreSQL. `EXPLAIN` shows the query plan. `EXPLAIN ANALYZE` actually executes the query and shows real timing.
+
+```sql
+-- Show the query plan (does not execute)
+EXPLAIN SELECT * FROM products WHERE price > 100;
+
+-- Execute and show actual timing
+EXPLAIN ANALYZE SELECT * FROM products WHERE price > 100;
+
+-- PostgreSQL 18: BUFFERS is included automatically in EXPLAIN ANALYZE
+-- In older versions, add it explicitly:
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM products WHERE price > 100;
+
+-- Format as JSON (useful for visualization tools)
+EXPLAIN (ANALYZE, FORMAT JSON) SELECT * FROM products WHERE price > 100;
 ```
-log_min_duration_statement = 500   # Only queries taking > 500ms
+
+Key things to look for in query plans:
+
+**Seq Scan:** A full table scan. Fine for small tables, concerning for large ones. If you see a Seq Scan on a large table with a `WHERE` clause, you probably need an index.
+
+**Index Scan:** Uses a B-tree (or other) index. This is what you want for selective queries.
+
+**Index Only Scan:** Even better — the query is answered entirely from the index without accessing the table heap.
+
+**Bitmap Index Scan + Bitmap Heap Scan:** Used when the query matches many rows. The bitmap index scan builds a bitmap of matching pages, then the bitmap heap scan fetches those pages. Efficient for medium-selectivity queries.
+
+**Nested Loop / Hash Join / Merge Join:** Join strategies. Nested Loop is best for small result sets, Hash Join for larger ones, Merge Join when both inputs are sorted.
+
+**Rows:** Compare "estimated" vs "actual" rows. Large discrepancies mean your statistics are stale (run `ANALYZE`).
+
+### Statistics and ANALYZE
+
+PostgreSQL's query planner relies on statistics about your data to choose efficient plans. These statistics are updated by the autovacuum daemon, but you can trigger an update manually:
+
+```sql
+-- Update statistics for a specific table
+ANALYZE products;
+
+-- Update statistics for the entire database
+ANALYZE;
+
+-- Check when statistics were last updated
+SELECT schemaname, relname, last_analyze, last_autoanalyze
+FROM pg_stat_user_tables;
 ```
 
 ### pg_stat_statements
 
-This is the single most useful extension for production performance analysis. Enable it:
+This extension tracks execution statistics for all SQL statements:
 
 ```sql
+-- Enable the extension
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-```
 
-In `postgresql.conf`:
-
-```
-shared_preload_libraries = 'pg_stat_statements'
-pg_stat_statements.track = 'all'
-```
-
-Then query it to find your slowest queries:
-
-```sql
-SELECT query,
-       calls,
-       round(mean_exec_time::numeric, 2) AS avg_ms,
-       round(total_exec_time::numeric, 2) AS total_ms,
-       rows,
-       round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 2) AS pct
+-- View top queries by total time
+SELECT query, calls, total_exec_time, mean_exec_time, rows
 FROM pg_stat_statements
 ORDER BY total_exec_time DESC
 LIMIT 20;
+
+-- Reset statistics
+SELECT pg_stat_statements_reset();
 ```
 
-### EXPLAIN with Buffers
+Add to `postgresql.conf`:
 
-For detailed I/O analysis:
+```ini
+shared_preload_libraries = 'pg_stat_statements'
+pg_stat_statements.track = all
+```
+
+### auto_explain
+
+Automatically logs execution plans for slow queries:
+
+```ini
+# postgresql.conf
+shared_preload_libraries = 'pg_stat_statements,auto_explain'
+auto_explain.log_min_duration = 1000    # Log plans for queries > 1 second
+auto_explain.log_analyze = on           # Include actual timing
+auto_explain.log_buffers = on           # Include buffer usage
+auto_explain.log_format = json          # JSON format for tooling
+```
+
+### Indexing Best Practices
 
 ```sql
-EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
-SELECT * FROM orders WHERE customer_id = 42;
+-- Standard B-tree index (most common)
+CREATE INDEX idx_products_name ON products (name);
+
+-- Partial index (only indexes rows matching a condition)
+CREATE INDEX idx_active_products ON products (name) WHERE active = true;
+
+-- Multi-column index (order matters for leftmost prefix matching)
+CREATE INDEX idx_orders_customer_date ON orders (customer_id, order_date DESC);
+
+-- GIN index for full-text search
+CREATE INDEX idx_products_fts ON products
+    USING GIN (to_tsvector('english', name || ' ' || description));
+
+-- GIN index for JSONB containment queries
+CREATE INDEX idx_products_metadata ON products USING GIN (metadata);
+
+-- GIN index for array containment
+CREATE INDEX idx_products_tags ON products USING GIN (tags);
+
+-- BRIN index for naturally ordered data (timestamps, sequences)
+-- Much smaller than B-tree, good for append-only tables
+CREATE INDEX idx_events_created ON events USING BRIN (created_at);
+
+-- Covering index (includes extra columns to enable index-only scans)
+CREATE INDEX idx_products_name_covering ON products (name) INCLUDE (price, stock);
+
+-- Concurrent index creation (does not lock the table)
+CREATE INDEX CONCURRENTLY idx_products_sku ON products (sku);
 ```
 
-The `BUFFERS` option shows how many pages were read from shared buffers (cache hits) versus disk. A low hit rate suggests you need more `shared_buffers` or better indexes.
-
-### Npgsql Logging
-
-Configure Npgsql logging in your ASP.NET Core application:
-
-```csharp
-builder.Services.AddNpgsqlDataSource(
-    connectionString,
-    dataSourceBuilder =>
-    {
-        dataSourceBuilder.EnableParameterLogging();  // Dev only!
-    });
-
-// In appsettings.Development.json:
-{
-  "Logging": {
-    "LogLevel": {
-      "Npgsql": "Debug",
-      "Npgsql.Command": "Debug"
-    }
-  }
-}
-```
-
-This will log every SQL command with parameters and execution times.
-
-### EF Core Query Logging
-
-```csharp
-options.UseNpgsql(connectionString)
-       .EnableSensitiveDataLogging()    // Logs parameter values (dev only!)
-       .EnableDetailedErrors()          // More detailed error messages
-       .LogTo(Console.WriteLine, LogLevel.Information);
-```
-
-## Part 11: Essential SQL for .NET Developers
-
-### UPSERT (INSERT ... ON CONFLICT)
-
-PostgreSQL's UPSERT is one of its most useful features:
-
-```sql
-INSERT INTO products (sku, name, price)
-VALUES ('SKU-001', 'Widget', 29.99)
-ON CONFLICT (sku) DO UPDATE
-SET name = EXCLUDED.name,
-    price = EXCLUDED.price,
-    updated_at = NOW();
-```
-
-With Dapper:
-
-```csharp
-await conn.ExecuteAsync(
-    """
-    INSERT INTO products (sku, name, price)
-    VALUES (@Sku, @Name, @Price)
-    ON CONFLICT (sku) DO UPDATE
-    SET name = EXCLUDED.name, price = EXCLUDED.price, updated_at = NOW()
-    """,
-    new { Sku = "SKU-001", Name = "Widget", Price = 29.99m });
-```
-
-### RETURNING Clause
-
-PostgreSQL can return data from INSERT, UPDATE, and DELETE statements. PostgreSQL 18 adds OLD and NEW support for RETURNING:
-
-```sql
--- Get the generated ID after insert
-INSERT INTO products (name, price) VALUES ('Widget', 29.99) RETURNING id;
-
--- Get the old and new values after update (PostgreSQL 18)
-UPDATE products SET price = 39.99 WHERE id = 1
-RETURNING OLD.price AS old_price, NEW.price AS new_price;
-
--- Get deleted rows
-DELETE FROM products WHERE discontinued = true RETURNING *;
-```
-
-### Common Table Expressions (CTEs)
-
-CTEs make complex queries readable and composable:
-
-```sql
-WITH monthly_sales AS (
-    SELECT date_trunc('month', created_at) AS month,
-           category,
-           SUM(total) AS revenue
-    FROM orders
-    WHERE created_at >= '2026-01-01'
-    GROUP BY 1, 2
-),
-ranked AS (
-    SELECT *,
-           RANK() OVER (PARTITION BY month ORDER BY revenue DESC) AS rank
-    FROM monthly_sales
-)
-SELECT * FROM ranked WHERE rank <= 3;
-```
-
-### Window Functions
-
-PostgreSQL has excellent window function support:
-
-```sql
-SELECT id, customer_id, total,
-       SUM(total) OVER (PARTITION BY customer_id ORDER BY created_at) AS running_total,
-       LAG(total) OVER (PARTITION BY customer_id ORDER BY created_at) AS prev_order_total,
-       ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY total DESC) AS rank_by_total
-FROM orders;
-```
-
-### Full-Text Search
-
-PostgreSQL has built-in full-text search that works well for many applications without needing Elasticsearch or Solr:
-
-```sql
--- Create a tsvector column and index
-ALTER TABLE products ADD COLUMN search_vector tsvector
-    GENERATED ALWAYS AS (
-        setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
-        setweight(to_tsvector('english', coalesce(description, '')), 'B')
-    ) STORED;
-
-CREATE INDEX idx_products_search ON products USING GIN (search_vector);
-
--- Search
-SELECT id, name, ts_rank(search_vector, query) AS rank
-FROM products, to_tsquery('english', 'wireless & headphones') AS query
-WHERE search_vector @@ query
-ORDER BY rank DESC;
-```
-
-### JSONB Operations
-
-```sql
--- Store JSON
-INSERT INTO events (data) VALUES ('{"type": "click", "page": "/home", "user_id": 42}');
-
--- Query JSON fields
-SELECT data->>'type' AS event_type, data->>'page' AS page
-FROM events
-WHERE data->>'user_id' = '42';
-
--- Containment query (uses GIN index)
-SELECT * FROM events WHERE data @> '{"type": "click"}';
-
--- Update a JSON field
-UPDATE events
-SET data = jsonb_set(data, '{processed}', 'true')
-WHERE id = 1;
-
--- Create a GIN index for JSONB
-CREATE INDEX idx_events_data ON events USING GIN (data);
-```
-
-## Part 12: Free and Open-Source PostgreSQL IDEs on Linux
-
-Every tool listed here is genuinely free (no payment required for any use) and runs on Linux.
+## Part 12: Free and Open-Source IDEs and GUI Tools on Linux
 
 ### pgAdmin 4
 
-pgAdmin is the official PostgreSQL GUI, maintained by the PostgreSQL Global Development Group and backed by EnterpriseDB. It is released under the PostgreSQL License. pgAdmin 4 is a complete rewrite built with Python and JavaScript that can run as a web application in your browser or as a desktop application.
+pgAdmin is the official PostgreSQL administration tool, maintained by the PostgreSQL Global Development Group. It is the equivalent of SQL Server Management Studio, though it operates as a web application.
 
-**Strengths:** Comprehensive PostgreSQL administration tools including server monitoring, query tool with explain plan visualization, backup and restore wizards, user and role management, tablespace management, and full schema browsing. It understands PostgreSQL-specific features better than any other tool because it is purpose-built for PostgreSQL.
-
-**Weaknesses:** The interface can feel cluttered and slow compared to more modern tools. The web-based architecture introduces noticeable latency. It only supports PostgreSQL, so if you also work with MySQL, SQLite, or SQL Server, you need a separate tool.
-
-**Install on Linux:**
-
+**Installation on Fedora:**
 ```bash
-# Fedora
-sudo dnf install pgadmin4
+sudo rpm -i https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-fedora-repo-2-1.noarch.rpm
+sudo dnf install pgadmin4-desktop  # Desktop mode
+# Or
+sudo dnf install pgadmin4-web      # Web server mode
+```
 
-# Ubuntu/Debian (from official repo)
+**Installation on Ubuntu:**
+```bash
 curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg
 echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" | sudo tee /etc/apt/sources.list.d/pgadmin4.list
-sudo apt update
-sudo apt install pgadmin4-desktop
+sudo apt update && sudo apt install pgadmin4-desktop
 ```
 
-Or run it in Docker:
+**Strengths:** Comprehensive server administration, backup/restore wizards, role management, server monitoring dashboard, visual explain plan viewer, query history. It is free, official, and supports every PostgreSQL feature.
 
-```bash
-docker run -d -p 5050:80 \
-  -e PGADMIN_DEFAULT_EMAIL=admin@example.com \
-  -e PGADMIN_DEFAULT_PASSWORD=admin \
-  dpage/pgadmin4
-```
+**Weaknesses:** The interface is web-based (runs a local web server), which makes it noticeably slower than native applications. The UI is dense and complex. Query autocompletion is basic compared to other tools. Startup time is slow. It only supports PostgreSQL.
 
 ### DBeaver Community Edition
 
-DBeaver Community is a free, open-source universal database tool released under the Apache 2.0 License. It supports dozens of databases including PostgreSQL, MySQL, SQLite, SQL Server, Oracle, and many more through JDBC drivers. It is built on the Eclipse platform using Java.
+DBeaver is the most popular general-purpose open-source database GUI. The Community Edition is free and open-source under the Apache License 2.0. It supports over 100 database types through JDBC drivers.
 
-**Strengths:** Excellent multi-database support. Full-featured SQL editor with autocomplete, syntax highlighting, and query execution plans. Data browser with inline editing. ER diagrams and schema visualization. Active development with frequent releases. Plugin architecture for extensibility.
-
-**Weaknesses:** Being Java-based, it can feel sluggish compared to native applications, especially on lower-powered machines. The interface is feature-dense and can be overwhelming for new users. Startup time is noticeable.
-
-**Install on Linux:**
-
+**Installation:**
 ```bash
 # Flatpak (universal)
 flatpak install flathub io.dbeaver.DBeaverCommunity
@@ -1340,22 +1402,18 @@ flatpak install flathub io.dbeaver.DBeaverCommunity
 # Snap
 sudo snap install dbeaver-ce
 
-# Fedora
-sudo dnf install dbeaver-ce
-
-# Or download the .deb/.rpm from dbeaver.io
+# Or download the .deb/.rpm from https://dbeaver.io/download/
 ```
 
-### Beekeeper Studio (Community Edition)
+**Strengths:** Supports virtually every database you will ever encounter. SQL editor with intelligent autocompletion. ER diagram generation. Data export to CSV, JSON, XML, SQL, Excel, HTML. Visual query builder. Active community with frequent releases. It works with PostgreSQL, SQL Server, MySQL, SQLite, Oracle, MongoDB, and dozens more from a single application.
 
-Beekeeper Studio is a modern, cross-platform SQL editor released under the GPLv3 License. It supports PostgreSQL, MySQL, SQLite, SQL Server, CockroachDB, and others. It is built with Electron but is notably faster and more responsive than many Electron applications.
+**Weaknesses:** Java-based, so it can feel sluggish compared to native applications. The interface is feature-rich but busy. Initial schema loading can be slow on very large databases.
 
-**Strengths:** Clean, intuitive interface that feels modern and native. Fast startup. SQL editor with autocomplete, query formatting, and tabbed results. Privacy-focused with no telemetry or tracking. All core features are free.
+### Beekeeper Studio
 
-**Weaknesses:** The free Community Edition lacks some features available in the paid Ultimate edition, such as full import/export, backup and restore, and support for additional databases like Oracle. Being Electron-based, it uses more memory than a truly native application.
+Beekeeper Studio is a modern, cross-platform SQL editor focused on usability. The Community Edition is free and open-source under GPL v3.
 
-**Install on Linux:**
-
+**Installation:**
 ```bash
 # Flatpak
 flatpak install flathub io.beekeeperstudio.Studio
@@ -1363,78 +1421,295 @@ flatpak install flathub io.beekeeperstudio.Studio
 # Snap
 sudo snap install beekeeper-studio
 
-# AppImage available from beekeeperstudio.io
+# Or download from https://www.beekeeperstudio.io/
 ```
+
+**Strengths:** Clean, fast, modern interface. Excellent autocomplete. Tabbed query results. Native-feeling performance. Supports PostgreSQL, MySQL, SQLite, SQL Server, CockroachDB, and more. The simplest tool to pick up and use immediately.
+
+**Weaknesses:** Fewer advanced administration features compared to pgAdmin or DBeaver. The free Community Edition has some limitations compared to the paid Ultimate edition (though all PostgreSQL core features are free).
 
 ### DbGate
 
-DbGate is a free, open-source database manager released under the MIT License that works as both a desktop application and a web application. It supports PostgreSQL, MySQL, SQL Server, SQLite, MongoDB, CockroachDB, and others.
+DbGate is a free, open-source database client that runs both as a desktop application and as a web application. It supports SQL and NoSQL databases.
 
-**Strengths:** Lightweight and fast. Works in the browser (self-hosted) as well as on the desktop. Supports both SQL and NoSQL databases. Clean interface. Good cross-platform support. Active development.
-
-**Weaknesses:** Less mature than DBeaver or pgAdmin. Fewer advanced features for PostgreSQL-specific administration.
-
-**Install on Linux:**
-
+**Installation:**
 ```bash
 # Snap
 sudo snap install dbgate
 
-# Or download AppImage from dbgate.org
+# Or download from https://dbgate.org/
+```
+
+**Strengths:** Works in the browser (no installation needed for the web version). Supports PostgreSQL, MySQL, SQL Server, MongoDB, SQLite, CockroachDB, and more. Data archiving and comparison features. Active development.
+
+**Weaknesses:** Smaller community than DBeaver or pgAdmin. Some rough edges in the UI.
+
+### pgcli (Terminal)
+
+Already mentioned above, but worth emphasizing: pgcli is the best terminal-based PostgreSQL client. It provides intelligent autocompletion, syntax highlighting, and multi-line editing.
+
+```bash
+pip install pgcli
+# or
+sudo dnf install pgcli
+```
+
+### Visual Studio Code with PostgreSQL Extension
+
+Microsoft released an official PostgreSQL extension for VS Code. It provides an object explorer, query editor with IntelliSense, schema visualization, and query history. Since many .NET developers already live in VS Code, this is a natural choice.
+
+**Installation:**
+Search for "PostgreSQL" in the VS Code extensions marketplace and install the one by Microsoft.
+
+### Azure Data Studio
+
+Azure Data Studio (formerly SQL Operations Studio) is Microsoft's cross-platform database tool. While it originated as a SQL Server tool, it supports PostgreSQL through an extension. It is free and open-source.
+
+```bash
+# Download from https://learn.microsoft.com/en-us/azure-data-studio/download
+# Or install via Snap/Flatpak
 ```
 
 ### Adminer
 
-Adminer is a single-PHP-file database management tool that supports PostgreSQL, MySQL, SQLite, MS SQL, and Oracle. It is released under the Apache 2.0 or GPLv2 License. You deploy it by dropping a single PHP file onto any web server.
-
-**Strengths:** Incredibly simple deployment. Tiny footprint. Supports multiple databases. Clean, functional interface. Community plugins for theming and additional database support.
-
-**Weaknesses:** Requires a PHP-capable web server. The interface is functional but not modern. Fewer features than desktop applications.
-
-**Install on Linux:**
+Adminer is a single PHP file that provides a complete database management interface. If you have PHP installed, you can deploy it in seconds. It supports PostgreSQL, MySQL, SQLite, SQL Server, and Oracle.
 
 ```bash
-# Just download the PHP file
+# Download the single file
 wget https://www.adminer.org/latest.php -O adminer.php
-# Serve with PHP's built-in server
 php -S localhost:8080 adminer.php
-```
-
-### pgconsole
-
-pgconsole is a newer open-source PostgreSQL-specific editor built as a single Go binary. It requires no separate database for configuration — everything lives in a `pgconsole.toml` file, making it GitOps-friendly. It features a SQL editor with real-time autocomplete powered by a full PostgreSQL parser, fine-grained access control, audit logging, and a built-in AI assistant that supports OpenAI, Anthropic Claude, and Google Gemini.
-
-**Strengths:** Single binary deployment. PostgreSQL-specific with deep parser integration. Team-oriented with access controls. Modern web UI. No dependencies.
-
-**Weaknesses:** PostgreSQL only. Relatively new project with a smaller community.
-
-### Azure Data Studio
-
-Azure Data Studio is a free, open-source (source-available under MIT license) data management tool from Microsoft. While its name suggests Azure-only, it works with any PostgreSQL server through the PostgreSQL extension. It is built on VS Code's core.
-
-**Strengths:** Familiar VS Code interface. Notebook support for mixing SQL and documentation. Extension ecosystem. Good integrated terminal.
-
-**Weaknesses:** The PostgreSQL extension is less polished than the SQL Server support. Can be resource-heavy.
-
-### VS Code with PostgreSQL Extension
-
-Microsoft has released a dedicated PostgreSQL extension for VS Code that provides IntelliSense, schema visualization, a database explorer, and query history. Combined with VS Code's existing ecosystem, this turns your code editor into a capable database tool without switching applications.
-
-**Install:**
-
-```bash
-code --install-extension ms-ossdata.vscode-postgresql
+# Open http://localhost:8080 in your browser
 ```
 
 ### Comparison Summary
 
-For a .NET developer on Linux, here is how to think about the choices. If you work exclusively with PostgreSQL and need comprehensive admin tools, use **pgAdmin 4**. If you work with multiple databases and want a powerful all-in-one tool, use **DBeaver Community**. If you value a clean, modern interface and primarily write queries, use **Beekeeper Studio**. If you want a lightweight web-based option, use **DbGate** or **Adminer**. If you live in VS Code, install the **PostgreSQL extension** and stay in your editor.
+For pure PostgreSQL administration, use **pgAdmin**. It has every feature and is maintained by the PostgreSQL team. For a general-purpose GUI that handles multiple databases beautifully, use **DBeaver Community**. For a fast, clean, modern developer experience, use **Beekeeper Studio**. For terminal work, use **pgcli**. For integration with your editor, use the **VS Code PostgreSQL extension**.
 
-Many experienced developers use `psql` for quick queries and admin tasks, a GUI tool like DBeaver or Beekeeper for data exploration and complex query development, and VS Code with the PostgreSQL extension for queries that live alongside their application code. There is no reason to limit yourself to one tool.
+All of these tools are completely free and open-source. None require payment for any feature relevant to PostgreSQL development work on Linux.
 
-## Part 13: Best Practices Summary
+## Part 13: Backup and Restore
 
-### Schema Design
+### pg_dump and pg_restore
 
-- Use snake_case for all identifiers (tables, columns, indexes). PostgreSQL folds unquoted identifiers to lowercase, so this avoids quoting headaches.
-- Use `bigint` or `uuid` (preferably `uuidv7()` on PostgreSQL 18) for primary keys. Avoid `serial` in new projects; use `GENERATED ALWAYS AS IDENTITY` inst
+```bash
+# Dump a single database to a custom-format file (recommended)
+pg_dump -h localhost -U myapp -d myappdb -Fc -f backup.dump
+
+# Dump to plain SQL
+pg_dump -h localhost -U myapp -d myappdb -f backup.sql
+
+# Dump only the schema (no data)
+pg_dump -h localhost -U myapp -d myappdb --schema-only -f schema.sql
+
+# Dump only the data (no schema)
+pg_dump -h localhost -U myapp -d myappdb --data-only -f data.sql
+
+# Restore from custom format
+pg_restore -h localhost -U myapp -d myappdb -c backup.dump
+
+# Restore from plain SQL
+psql -h localhost -U myapp -d myappdb -f backup.sql
+
+# Dump all databases
+pg_dumpall -h localhost -U postgres -f all-databases.sql
+```
+
+### PostgreSQL 17: Incremental Backups
+
+```bash
+# Enable WAL summarization
+ALTER SYSTEM SET summarize_wal = on;
+SELECT pg_reload_conf();
+
+# Take a full base backup
+pg_basebackup -D /backups/full -Ft -z -P
+
+# Take an incremental backup (only changes since last backup)
+pg_basebackup -D /backups/incr1 --incremental /backups/full/backup_manifest -Ft -z -P
+
+# Combine full + incremental for restore
+pg_combinebackup /backups/full /backups/incr1 -o /backups/combined
+```
+
+### Automated Backups with Cron
+
+```bash
+# Daily backup at 2 AM, keep 7 days
+# Add to crontab: crontab -e
+0 2 * * * pg_dump -h localhost -U myapp -d myappdb -Fc -f /backups/myappdb-$(date +\%Y\%m\%d).dump && find /backups -name "myappdb-*.dump" -mtime +7 -delete
+```
+
+## Part 14: Common SQL Patterns for .NET Developers
+
+### Pagination
+
+```sql
+-- Offset-based (simple but slow for large offsets)
+SELECT * FROM products ORDER BY id LIMIT 20 OFFSET 40;
+
+-- Cursor-based (efficient for large datasets)
+SELECT * FROM products WHERE id > @LastId ORDER BY id LIMIT 20;
+```
+
+### Upsert (INSERT ON CONFLICT)
+
+```sql
+INSERT INTO products (sku, name, price, stock)
+VALUES ('WIDGET-001', 'Widget', 9.99, 100)
+ON CONFLICT (sku)
+DO UPDATE SET
+    name = EXCLUDED.name,
+    price = EXCLUDED.price,
+    stock = EXCLUDED.stock;
+```
+
+### Common Table Expressions (CTEs)
+
+```sql
+-- Recursive CTE for hierarchical data (e.g., categories)
+WITH RECURSIVE category_tree AS (
+    -- Base case: root categories
+    SELECT id, name, parent_id, 0 AS depth
+    FROM categories
+    WHERE parent_id IS NULL
+
+    UNION ALL
+
+    -- Recursive case: children
+    SELECT c.id, c.name, c.parent_id, ct.depth + 1
+    FROM categories c
+    INNER JOIN category_tree ct ON c.parent_id = ct.id
+)
+SELECT * FROM category_tree ORDER BY depth, name;
+```
+
+### Window Functions
+
+```sql
+-- Rank products by price within each category
+SELECT name, category, price,
+       RANK() OVER (PARTITION BY category ORDER BY price DESC) AS price_rank,
+       AVG(price) OVER (PARTITION BY category) AS avg_category_price
+FROM products;
+
+-- Running total
+SELECT order_date, total,
+       SUM(total) OVER (ORDER BY order_date) AS running_total
+FROM orders;
+```
+
+### GENERATE_SERIES
+
+```sql
+-- Generate a date series (useful for reports with no gaps)
+SELECT d::date AS day,
+       COALESCE(SUM(o.total), 0) AS daily_total
+FROM generate_series('2026-01-01'::date, '2026-01-31'::date, '1 day') AS d
+LEFT JOIN orders o ON o.order_date::date = d::date
+GROUP BY d::date
+ORDER BY d::date;
+```
+
+### Full-Text Search
+
+```sql
+-- Add a tsvector column (or use a generated column)
+ALTER TABLE products ADD COLUMN search_vector tsvector
+    GENERATED ALWAYS AS (to_tsvector('english', name || ' ' || coalesce(description, ''))) STORED;
+
+-- Create a GIN index
+CREATE INDEX idx_products_search ON products USING GIN (search_vector);
+
+-- Search
+SELECT name, ts_rank(search_vector, query) AS rank
+FROM products, to_tsquery('english', 'wireless & keyboard') AS query
+WHERE search_vector @@ query
+ORDER BY rank DESC;
+```
+
+## Part 15: OpenTelemetry and Observability
+
+Npgsql has built-in OpenTelemetry support:
+
+```bash
+dotnet add package Npgsql.OpenTelemetry
+```
+
+```csharp
+// Program.cs
+builder.Services.AddNpgsqlDataSource(
+    connectionString,
+    dataSourceBuilder =>
+    {
+        dataSourceBuilder.ConfigureTracing(tracing =>
+        {
+            tracing.ConfigureCommandFilter(cmd =>
+                !cmd.CommandText.StartsWith("SELECT 1")); // Filter out health checks
+        });
+    }
+);
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing =>
+    {
+        tracing.AddNpgsql();
+        tracing.AddAspNetCoreInstrumentation();
+        tracing.AddOtlpExporter();
+    });
+```
+
+This emits OpenTelemetry spans for every database command, including the SQL text (sanitized by default), duration, and error information. You can view these in Jaeger, Zipkin, Grafana Tempo, or any OpenTelemetry-compatible backend.
+
+For metrics, Npgsql emits connection pool statistics (active connections, idle connections, pending requests) as OpenTelemetry metrics automatically when you configure the tracing above.
+
+## Part 16: Security Best Practices
+
+Always use SCRAM-SHA-256 authentication, never MD5 (deprecated in PostgreSQL 18). Always use SSL in production. Never use the `postgres` superuser for application connections; create dedicated users with minimal privileges.
+
+```sql
+-- Create a read-only user
+CREATE ROLE readonly_user WITH LOGIN PASSWORD 'secure-password';
+GRANT CONNECT ON DATABASE myappdb TO readonly_user;
+GRANT USAGE ON SCHEMA public TO readonly_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly_user;
+
+-- Create an application user with read/write but no DDL
+CREATE ROLE app_user WITH LOGIN PASSWORD 'secure-password';
+GRANT CONNECT ON DATABASE myappdb TO app_user;
+GRANT USAGE ON SCHEMA public TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO app_user;
+```
+
+Use row-level security for multi-tenant applications:
+
+```sql
+ALTER TABLE tenant_data ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation ON tenant_data
+    USING (tenant_id = current_setting('app.current_tenant')::int);
+
+-- In your application, set the tenant context per request:
+-- SET app.current_tenant = '42';
+```
+
+## Part 17: Migrating from SQL Server Mental Models
+
+Here is a quick reference for translating SQL Server concepts to PostgreSQL:
+
+SQL Server's `IDENTITY` becomes PostgreSQL's `SERIAL` or `GENERATED ALWAYS AS IDENTITY`. SQL Server's `NVARCHAR(MAX)` becomes PostgreSQL's `TEXT` (there is no performance difference between `VARCHAR(n)` and `TEXT` in PostgreSQL; `TEXT` is preferred). SQL Server's `DATETIME2` becomes PostgreSQL's `TIMESTAMPTZ` (always use the timezone-aware variant). SQL Server's `BIT` becomes PostgreSQL's `BOOLEAN`. SQL Server's `UNIQUEIDENTIFIER` becomes PostgreSQL's `UUID`. SQL Server's `NVARCHAR(n)` becomes PostgreSQL's `VARCHAR(n)` or `TEXT` (PostgreSQL stores all text as UTF-8 by default; there is no separate `N` prefix). SQL Server's `TOP n` becomes PostgreSQL's `LIMIT n`. SQL Server's `ISNULL()` becomes PostgreSQL's `COALESCE()`. SQL Server's `GETDATE()` becomes PostgreSQL's `now()` or `CURRENT_TIMESTAMP`. SQL Server's square-bracket quoting `[column]` becomes PostgreSQL's double-quote quoting `"column"`, but you should use `snake_case` and avoid quoting entirely. SQL Server's `@@IDENTITY` / `SCOPE_IDENTITY()` becomes PostgreSQL's `RETURNING id` clause. SQL Server's stored procedures written in T-SQL become PostgreSQL functions or procedures written in PL/pgSQL, though many .NET developers prefer to keep logic in the application layer.
+
+## Conclusion
+
+PostgreSQL is a world-class database that is completely free, fully featured, and exceptionally well-supported in the .NET ecosystem through Npgsql. Whether you are building a small side project or an enterprise application, PostgreSQL provides everything you need: MVCC concurrency that eliminates the locking headaches of SQL Server, a rich type system with native JSON, arrays, and full-text search support, excellent performance through the new AIO subsystem in PostgreSQL 18, and first-class .NET integration through Npgsql with both Dapper and Entity Framework Core.
+
+The tooling on Linux is mature and diverse. pgAdmin gives you full administration capabilities, DBeaver gives you a universal GUI, Beekeeper Studio gives you a beautiful modern interface, pgcli gives you a superb terminal experience, and VS Code gives you database access without leaving your editor. All of it is free. All of it is open source.
+
+The configuration is straightforward once you understand the two key files: `postgresql.conf` for server behavior and `pg_hba.conf` for authentication. Docker and Podman make it trivially easy to spin up PostgreSQL for development. And with the connection pooling built into Npgsql (or external via PgBouncer), your ASP.NET applications can handle massive concurrent loads efficiently.
+
+If you are coming from SQL Server, the transition is smoother than you might expect. The SQL is standard. The concepts are familiar. The main adjustments are embracing MVCC (and forgetting about `NOLOCK`), adopting `snake_case` naming conventions, and learning the PostgreSQL-specific extensions like JSONB, arrays, and full-text search that do not have direct SQL Server equivalents.
+
+Welcome to PostgreSQL. Your database just became free forever.
