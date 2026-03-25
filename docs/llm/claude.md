@@ -21055,3 +21055,68 @@ dotnet run --project tools/ObserverMagazine.ContentProcessor -- \
 
 43
 43
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+43
+43
+Please write a long, comprehensive article about sql server and the latest version of sql server management studio 
+targeting a dotnet c sharp asp dotnet web developer. 
+Make sure to follow the template 
+it is NOT a featured article 
+include things like what is possible in sql server 2016, 2017, 2019, 2022, 2025 
+especially focus on sql server 2022 and 2025 
+give detailed and comprehensive tips and tricks about using sql server management studio and sql profiler in ssms
+as well as how we can interact with sql server using the terminal
+explain all the best practices 
+for example, should we use no lock while writing queries against development environment? production? 
+also go into detail about transactions, t-sql 
+go into details about networking, sessions, session management, debugging 
+and everything else our target audience needs to know 
+make it very long and comprehensive 
+do not leave any stone unturned 
+but everything a programmer should know about sql server basically 
+please do not tire 
+be patient and write the whole thing 
+publish date is march 27 
+and author is observer-team 
