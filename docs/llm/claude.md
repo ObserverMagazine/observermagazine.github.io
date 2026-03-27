@@ -23320,3 +23320,176 @@ The article makes an opinionated, well-argued case for Dependency Inversion as t
 
 Just commit and push — GitHub Actions will handle the rest.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+00
+00
+
+Please read the FULL dump.txt in its entirety. Do not skim it. Do not search for keywords in it. Read the whole thing.
+
+If any file needs changing, always return the FULL file so it is easy to copy paste.
+Please do not hallucinate.
+Take some more time up front to save time and effort for the humans.
+When in doubt, use your best judgment.
+Use best engineering practices within the limits of this project.
+
+Write a long, comprehensive blog article for Observer Magazine on the following topic:
+
+**Topic**: 
+Assume the person reading this blog post owns a 2007 Toyota Camry base model. 
+It was made in Kentucky, USA. 
+It does not have the Toyota Service Bulletin for oil burning problem fixed, and now the TSB has expired. 
+Read the manual and all the details and give this reader everything they need to know about their car. 
+From driving it every day, to regular checkup of oil level and tire pressure, to regular maintenance, to what to watch out for as the car ages. 
+Also give the lay of the land as to what car is available out there in the market today versus what might be coming in the next year, two years, five years, or decade. 
+Do not assume the reader is a gear head or understands everything about cars. 
+In fact don't assume fluency in car talk at all. 
+The reader knows the basics like you are supposed to NEVER top off when adding fuel at the gas pump
+and you are never supposed to put diesel or any other fuel other than gasoline in the gas tank. 
+The reader does not even know to clean / replace engine air filters or cabin air filters. 
+The reader is not a big driving enthusiast and simply drives the car to get from point A to point B. 
+Keep the reader engaged through out the article with not just what and how but also the why. 
+There is a fine line which we don't want to cross by calling the reader infantile but we should go right up to that line. 
+
+**Publish date**: [YYYY-MM-DD]
+**Author**: observer-team
+
+## Writing requirements
+
+Follow these rules exactly. They are non-negotiable:
+
+### Front matter format
+The file MUST start with YAML front matter in this exact schema:
+```yaml
+---
+title: "[A descriptive, compelling title — can include a subtitle after a colon]"
+date: [YYYY-MM-DD]
+author: observer-team
+summary: [One to two sentences for the blog index and RSS feed. Be specific about what the article covers.]
+tags:
+  - [tag1]
+  - [tag2]
+  - [tag3-etc]
+---
+```
+
+CRITICAL front matter rules:
+- `author` MUST be `observer-team` (hyphenated ID), NEVER `Observer Team` (display name). Mismatches cause build warnings and broken author resolution.
+- If the article is NOT featured, OMIT the `featured` line entirely. Do NOT write `featured: false`. The parser defaults to `false`.
+- If the article IS featured, include `featured: true`.
+- Do NOT include `draft: true` unless I explicitly ask for a draft.
+- Tags should be lowercase, hyphenated (e.g., `aspnet`, `best-practices`, `deep-dive`).
+
+### File naming
+The output file should be saved as: `content/blog/[YYYY-MM-DD]-[slug].md`
+where `[slug]` is a short, hyphenated, lowercase description of the article (e.g., `typescript-comprehensive-guide`, `sql-server-complete-guide`).
+
+### Writing style and structure
+
+1. **Be exhaustive.** This is a long-form technical article. Do not summarize. Do not truncate. Do not say "and so on" or "etc." Cover every relevant detail. If you are writing about a technology with 30 configuration options, cover all 30. If there are 8 major versions, cover all 8. The target length is 5,000–15,000+ words depending on topic scope.
+
+2. **Be patient.** Do not tire. Do not rush the ending. The conclusion should be as thoughtful as the introduction. If the article needs 12 major sections, write all 12 with equal depth and care.
+
+3. **Target audience.** The primary reader is a .NET / C# / ASP.NET web developer. You can assume basic C# syntax literacy and web development knowledge. Do NOT assume familiarity with the specific topic being covered — explain everything from first principles, then build up to advanced material.
+
+4. **Code examples are mandatory.** Include real, working code examples throughout. Not just C# — include whatever is relevant: SQL, YAML, JSON, bash commands, configuration files, AXAML, TypeScript, etc. Code examples should be complete enough to copy-paste and run (or at least understand in context), not pseudocode snippets.
+
+5. **Use anecdotes and analogies.** Start sections with relatable scenarios. Compare unfamiliar concepts to things the reader already knows. Use concrete examples ("imagine you are building a blog engine" or "picture a Thursday afternoon deploy") rather than abstract descriptions.
+
+6. **Structure with numbered parts.** Organize the article into clearly titled parts (Part 1, Part 2, etc.) using `##` headers. Use `###` for subsections within parts. This helps readers navigate and bookmark.
+
+7. **Cite your sources.** When stating version numbers, release dates, performance claims, or statistics, verify them with web search first. If something has changed since your knowledge cutoff, search for the current state. Do not guess at version numbers or release dates.
+
+8. **Include practical recommendations.** Don't just describe — advise. Tell the reader what to do, what to avoid, and why. Include "do this, not that" comparisons where appropriate.
+
+9. **End with resources.** Close with a short list of official documentation links, GitHub repos, or other authoritative references the reader can follow up on.
+
+### What to verify via web search before writing
+- Current stable version numbers of all technologies mentioned
+- Release dates for major versions
+- Any breaking changes or deprecations in recent releases
+- Performance benchmarks or statistics you plan to cite
+- Correct URLs for documentation and resources
+
+### Delivery format
+Return the complete article as a single markdown artifact. The artifact should contain the FULL file content — from the opening `---` of the front matter to the last line of the article. No truncation. No "continued in next message." The entire article in one artifact.
+
+After saving the file, I will 
+simply commit this new markdown file and push it 
+for github actions to do its thing. 
