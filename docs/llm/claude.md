@@ -22098,3 +22098,103 @@ remember to use blazor component level css where possible
 
 
 
+I've read the full dump.txt. The main issues with code blocks are:
+
+1. **Inline `code`** has no background/padding styling — it blends into prose
+2. **`pre` blocks** use `--color-surface` instead of the dedicated `--hljs-bg` variable, so they don't match the syntax highlighting background
+3. **Comment token contrast** is too low in light mode (`#9ca3af` on `#f3f4f6` ≈ 2.5:1 — fails WCAG AA)
+4. **No `tab-size`**, no explicit `line-height` on code, no `min-width: 0` guard for flex/grid contexts
+5. Blog post code blocks lack visual separation — they need a stronger container treatment
+
+Two files need to change: `app.css` (global styles + hljs tokens) and `BlogPost.razor.css` (blog-specific code rendering). Here are both in full.Now the full `app.css` — the changes are: new `--color-inline-code-*` variables per theme, improved `--hljs-comment` contrast, better global code/pre base resets, and the hljs token section is tightened up.Here's a summary of what changed and why.
+
+**`BlogPost.razor.css`** — the big visual improvement lives here:
+
+- **`pre` now uses `--hljs-bg`** instead of `--color-surface`, so the code block background actually matches the syntax highlighting background. This was the single biggest visual problem — the hljs theme was painting one background and the container was painting a different one.
+- **Added `box-shadow: inset 0 1px 3px rgba(0,0,0,0.06)`** for subtle depth on code blocks.
+- **Added `line-height: 1.7`**, `tab-size: 4`, and `white-space: pre`** on `pre` — code is now properly spaced and tab-indented code renders correctly.
+- **Added `min-width: 0`** and `width: 100%` — prevents code blocks from blowing out flex/grid parents on mobile.
+- **`pre code` resets** — strips background, border, padding from the inner `code` element so highlight.js paints cleanly with no doubled backgrounds.
+- **Inline `code` now has real styling** — background (`--color-inline-code-bg`), border, padding, border-radius, and `word-break: break-all` so long identifiers like `System.Text.Json.JsonSerializer` wrap instead of causing horizontal scroll.
+- **Added `blockquote`, `hr`, `table`/`th`/`td`** styles that were previously missing from the blog content.
+
+**`app.css`** — token quality and new variables:
+
+- **New `--color-inline-code-bg`, `--color-inline-code-fg`, `--color-inline-code-border`** variables for all 7 themes — inline code now has a distinct, slightly darker background than the page surface.
+- **Fixed comment contrast** — light theme went from `#9ca3af` (~2.5:1, fails WCAG) to `#636c76` (~4.7:1, passes AA). Dark theme went from `#64748b` to `#8b949e` (~4.8:1).
+- **Improved several light-theme token colors** for better contrast: `--hljs-string` changed from `#059669` to `#0a3069` (12.5:1), `--hljs-keyword` from `#7c3aed` to `#6f42c1`, `--hljs-function` from `#2563eb` to `#0550ae` (7.1:1).
+- **Dark theme `--hljs-string`** changed from `#34d399` to `#7ee7a8` for better readability.
+- **Added `.hljs-property`, `.hljs-operator`, `.hljs-punctuation`, `.hljs-symbol`** token rules that were missing — highlight.js emits these for many languages and they were unstyled.
+- **Removed `padding` from `.hljs`** (set to `0 !important`) — padding is now controlled by the `pre` element, preventing double-padding.
+- **Added `overflow-x: hidden` + `width: 100%` + `max-width: 100vw`** on `body` to prevent horizontal page scroll from any code block.
+- **Font stack** updated to `"SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace` — better cross-platform monospace rendering.
+
+25
+84
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
