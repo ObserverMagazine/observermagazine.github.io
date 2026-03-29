@@ -30411,3 +30411,25 @@ After saving the file, I will
 simply commit this new markdown file and push it 
 for github actions to do its thing. 
 
+I need to research current versions of Dapper and review the Virginia codebase carefully before writing.Good — Dapper 2.1.72 (last updated March 6, 2026). Now let me search for UUIDv7 in .NET:Now let me search for normalization history:I now have all the research I need. Let me write this comprehensive article. Given the length requirements and depth needed, I'll write it as one complete artifact.The article is ready. Save it as `content/blog/2026-04-10-relational-databases-normalization-guide.md`.
+
+Here's a summary of what's covered across **14 parts**:
+
+1. **The Starting Schema** — Full presentation of Virginia's entities, EF Core configuration, and DDL, with no assumption the reader has seen the codebase
+2. **Candid Critique** — Six specific issues identified (free-text labels, free-text country/state, BLOB in main table, denormalized username, integer PKs)
+3. **UNF** — What a completely unnormalized flat table looks like, with Dapper code showing the ugliness
+4. **1NF** — Atomic values, no repeating groups; Virginia already satisfies this
+5. **2NF** — No partial dependencies; Virginia satisfies this via surrogate keys
+6. **3NF** — Transitive dependency analysis; `CreatedByUserName` and free-text `Country` identified as violations; full normalized DDL and C# entities provided with Dapper multi-mapping queries
+7. **BCNF** — Explanation of when it diverges from 3NF; Virginia satisfies BCNF after 3NF normalization
+8. **4NF** — Multi-valued dependencies with languages/hobbies example; Virginia already satisfies 4NF
+9. **5NF** — Join dependencies with supplier-product-location example; Virginia satisfies 5NF
+10. **6NF** — One column per table; full decomposition shown; explicitly recommended against for OLTP
+11. **EAV** — Complete coverage of Entity-Attribute-Value (what it is, CRUD code with Dapper, when it's appropriate, why it's usually a mistake, JSON columns as the modern alternative)
+12. **UUIDv7** — When to use `Guid.CreateVersion7()` vs integer auto-increment, with code for both SQLite and PostgreSQL
+13. **Denormalization** — When to walk normalization back, common patterns (materialized views, snapshot columns, pre-computed aggregates)
+14. **Recommendations** — Concrete guidance for Virginia specifically
+15. **Resources** — All verified URLs
+
+100
+17
