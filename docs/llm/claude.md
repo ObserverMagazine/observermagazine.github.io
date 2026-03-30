@@ -30823,3 +30823,96 @@ All version numbers, release dates, and support timelines were verified via web 
 
 84
 28
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+84
+28
+
+please verify the github actions 
+looks like every single run takes a long time now. 
+I suspect we are processing the entire contents of all the blog posts every single run of github actions 
+I am not sure but I suspect this because of how long the github actions runs for 
+Please read the latest github actions in the dump, line by line and word by word 
+we should be somehow caching the old mp3 files and not regenerating them if they already exist 
+we don't need to include the mp3 in the git repository though 
+we only want to make the builds faster. 
+If there is no new blog post 
+and no blog post has been edited, 
+the build process should be very quick 
+please review this very carefully and comprehensively 
+and please return full files for all files that changed. 
+
+(Opus 4.6 with extended thinking)
