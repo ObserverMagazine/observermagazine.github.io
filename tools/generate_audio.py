@@ -16,16 +16,54 @@ The script:
     2. Strips YAML front matter and markdown formatting → plain text
     3. Generates speech audio with KittenTTS (nano model, CPU-only, ~25MB)
     4. Converts WAV → MP3 at 64kbps mono via ffmpeg (keeps files small)
-    5. Skips regeneration if the MP3 is already newer than the .md source
+    5. Skips regeneration if the content hash matches the manifest
 """
 
 import argparse
+import hashlib
+import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
+
+# ---------------------------------------------------------------------------
+# Content-hash manifest for incremental builds
+# ---------------------------------------------------------------------------
+
+MANIFEST_FILENAME = "audio-manifest.json"
+
+
+def compute_content_hash(filepath: str) -> str:
+    """Compute SHA256 hash of file content for change detection."""
+    h = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def load_manifest(output_dir: str) -> dict:
+    """Load the audio manifest from the output directory."""
+    manifest_path = os.path.join(output_dir, MANIFEST_FILENAME)
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  WARNING: Could not load manifest: {e}")
+    return {}
+
+
+def save_manifest(output_dir: str, manifest: dict) -> None:
+    """Save the audio manifest to the output directory."""
+    manifest_path = os.path.join(output_dir, MANIFEST_FILENAME)
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True)
+    print(f"Wrote audio manifest: {manifest_path} ({len(manifest)} entries)")
+
 
 # ---------------------------------------------------------------------------
 # Text extraction
@@ -100,7 +138,7 @@ def preprocess_programming_terms(text: str) -> str:
         (r"\bC#", "C sharp"),
         (r"\bF#", "F sharp"),
         (r"\bC\+\+", "C plus plus"),
-        (r"\bASP\.NET", "A S P dot net"),
+        (r"\bASP\.NET", "asp dot net"),
 
         # File extensions and config
         (r"\.csproj\b", " C sharp project file"),
@@ -341,6 +379,10 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
+    # Load existing manifest for incremental builds
+    manifest = load_manifest(args.output_dir)
+    new_manifest = {}
+
     md_files = sorted(f for f in os.listdir(args.content_dir) if f.endswith(".md"))
     print(f"Found {len(md_files)} markdown file(s) in {args.content_dir}")
 
@@ -353,16 +395,22 @@ def main():
         slug = derive_slug(md_file)
         mp3_path = os.path.join(args.output_dir, f"{slug}.mp3")
 
-        # Skip if MP3 is up to date
-        if not args.force and os.path.exists(mp3_path):
-            md_mtime = os.path.getmtime(md_path)
-            mp3_mtime = os.path.getmtime(mp3_path)
-            if mp3_mtime >= md_mtime:
-                print(f"  Skipping (up to date): {slug}.mp3")
-                skipped += 1
-                continue
+        # Compute content hash for change detection
+        content_hash = compute_content_hash(md_path)
+        old_hash = manifest.get(slug, {}).get("hash")
 
-        print(f"\nProcessing: {md_file} → {slug}.mp3")
+        # Skip if content unchanged AND MP3 already exists
+        if not args.force and os.path.exists(mp3_path) and content_hash == old_hash:
+            print(f"  Skipping (unchanged): {slug}.mp3")
+            new_manifest[slug] = {"hash": content_hash}
+            skipped += 1
+            continue
+
+        if content_hash != old_hash:
+            reason = "new" if old_hash is None else "modified"
+            print(f"\nProcessing ({reason}): {md_file} → {slug}.mp3")
+        else:
+            print(f"\nProcessing (mp3 missing): {md_file} → {slug}.mp3")
 
         raw = open(md_path, encoding="utf-8").read()
         body = strip_front_matter(raw)
@@ -372,6 +420,7 @@ def main():
 
         if len(text.strip()) < 10:
             print(f"  Skipping (too short): {len(text)} chars")
+            new_manifest[slug] = {"hash": content_hash}
             skipped += 1
             continue
 
@@ -381,10 +430,14 @@ def main():
         if generate_audio(text, mp3_path, voice=args.voice, model_name=args.model):
             elapsed = time.time() - start
             print(f"  Done in {elapsed:.1f}s")
+            new_manifest[slug] = {"hash": content_hash}
             generated += 1
         else:
             print(f"  FAILED: {slug}")
             failed += 1
+
+    # Save updated manifest
+    save_manifest(args.output_dir, new_manifest)
 
     print(f"\nAudio generation complete: {generated} generated, {skipped} skipped, {failed} failed")
 

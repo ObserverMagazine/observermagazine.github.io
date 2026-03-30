@@ -30920,3 +30920,81 @@ and please return full files for all files that changed.
 (tried attaching the dump, it is now too big to fit)
 
 (trying again with deploy.yml, pr-check.yml, and program.cs only)
+
+I've read the full dump thoroughly. Here's my analysis and the solution.
+
+## The Problem
+
+The `generate_audio.py` script already has a skip mechanism — it compares file modification times (`mtime`). But in CI, every run starts from a **fresh git checkout** with no existing MP3 files. So every single post's audio gets regenerated from scratch every build. That's the bottleneck: model loading + TTS synthesis + ffmpeg conversion × every post, every run.
+
+The HuggingFace model is cached (`actions/cache`), but the actual MP3 output files are not.
+
+## The Solution (Two-Part)
+
+**Part 1 — `generate_audio.py`:** Replace the unreliable `mtime` comparison with a **content-hash manifest**. The script computes SHA256 of each `.md` file's content, stores it in `audio-manifest.json`, and skips regeneration when the hash matches and the MP3 exists. This works correctly with restored cache files regardless of filesystem timestamps.
+
+**Part 2 — `deploy.yml`:** Add an `actions/cache` step for the generated audio files (MP3s + manifest). On exact cache hit (no `.md` files changed), ALL Python-related steps are skipped entirely — no Python setup, no pip install, no espeak/ffmpeg install, no TTS generation. On partial miss (some posts changed), the cache is restored with most MP3s, and only changed posts are regenerated.
+
+Here are both full files:
+
+---
+
+### CHANGED FILE: `tools/generate_audio.py`### CHANGED FILE: `.github/workflows/deploy.yml`The `pr-check.yml` doesn't need changes — it already has the correct action versions and doesn't run audio generation (which is correct for keeping PR checks fast).
+
+---
+
+## Summary of All Changes
+
+### `tools/generate_audio.py` — Content-hash manifest replaces mtime comparison
+
+The old skip logic compared file modification times: `if mp3_mtime >= md_mtime: skip`. This breaks in CI because git checkout sets all file timestamps to "now", and there are no existing MP3 files to compare against. Every run regenerated everything.
+
+The new approach:
+
+1. On startup, loads `audio-manifest.json` from the output directory. This JSON maps each slug to its content hash (SHA256 of the `.md` file).
+2. For each blog post, computes the current content hash and compares it to the manifest.
+3. Skips regeneration if the hash matches AND the MP3 file exists on disk.
+4. After processing, saves the updated manifest.
+
+The manifest file is cached alongside the MP3s, so the hash comparison works correctly across CI runs regardless of filesystem timestamps.
+
+Functions added: `compute_content_hash()`, `load_manifest()`, `save_manifest()`. The `main()` function now maintains a `new_manifest` dict and uses hash comparison instead of mtime. It also prints more informative skip/process reasons ("unchanged", "new", "modified", "mp3 missing").
+
+### `.github/workflows/deploy.yml` — Audio caching with conditional Python setup
+
+Three layers of caching optimization:
+
+**Layer 1 — Audio cache** (`actions/cache@v4`): Caches `.audio-cache/` containing MP3 files + `audio-manifest.json`. The cache key is `audio-v1-${{ hashFiles('content/blog/**/*.md') }}` so any change to any markdown file busts the exact match. The restore key `audio-v1-` ensures partial matches restore the most recent cache.
+
+**Layer 2 — Conditional step execution**: ALL Python-related steps have `if: steps.audio-cache.outputs.cache-hit != 'true'`. On exact cache hit (no blog posts changed), these are all skipped:
+- Python 3.12 setup
+- espeak-ng + ffmpeg install
+- HuggingFace model cache
+- pip install
+- `generate_audio.py` execution
+- Audio cache update
+
+This means a no-change build skips the entire audio pipeline — easily saving 3-5+ minutes.
+
+**Layer 3 — pip cache** (`actions/cache@v4`): On partial miss (some posts changed), pip packages are cached so `pip install` is near-instant.
+
+**Build flow comparison:**
+
+| Scenario | Before | After |
+|---|---|---|
+| No blog changes | Full Python setup + regenerate ALL MP3s | Restore cached MP3s, skip all Python steps |
+| One post edited | Full Python setup + regenerate ALL MP3s | Restore cached MP3s, set up Python, regenerate only the changed post |
+| New post added | Full Python setup + regenerate ALL MP3s | Restore cached MP3s, set up Python, generate only the new post |
+| First ever run | Full Python setup + generate all | Same (no cache to restore) |
+
+100
+31
+
+
+
+
+
+
+
+
+
