@@ -1,10 +1,3 @@
-/* ===========================================================================
-   FILE 9: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-   
-   Changes:
-   - Added min-width: 0 to flex children
-   =========================================================================== */
-
 .tts-player {
     display: flex;
     align-items: center;
@@ -15,13 +8,13 @@
     border-radius: var(--radius);
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
 .tts-player audio {
-    height: 32px;
+    height: 2rem;
     flex: 1;
-    min-width: 120px;
+    min-width: 7.5rem;
     accent-color: var(--color-primary);
 }
 
@@ -30,7 +23,7 @@
     align-items: center;
     gap: 0.5rem;
     flex: 1;
-    min-width: 120px;
+    min-width: 7.5rem;
 }
 
 .tts-fallback-btn {
@@ -38,8 +31,8 @@
     color: var(--color-primary-fg);
     border: none;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 1.75rem;
+    height: 1.75rem;
     font-size: 0.8rem;
     cursor: pointer;
     flex-shrink: 0;
@@ -48,7 +41,7 @@
 .tts-fallback-seek {
     flex: 1;
     accent-color: var(--color-primary);
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
 .tts-speed {
@@ -81,27 +74,15 @@
     outline-offset: -1px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 30em) {
     .tts-player {
         flex-direction: column;
         align-items: stretch;
         gap: 0.5rem;
         padding: 0.5rem 0.75rem;
     }
-
-    .tts-player audio {
-        width: 100%;
-    }
-
-    .tts-fallback {
-        width: 100%;
-    }
-
-    .tts-speed {
-        align-self: flex-start;
-    }
-
-    .tts-direct-link {
-        align-self: flex-start;
-    }
+    .tts-player audio { width: 100%; }
+    .tts-fallback { width: 100%; }
+    .tts-speed { align-self: flex-start; }
+    .tts-direct-link { align-self: flex-start; }
 }

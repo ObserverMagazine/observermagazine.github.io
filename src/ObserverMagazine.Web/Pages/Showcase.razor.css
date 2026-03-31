@@ -1,16 +1,4 @@
-/* ===========================================================================
-   FILE 3: src/ObserverMagazine.Web/Pages/Showcase.razor.css
-   
-   Changes:
-   - Removed white-space: nowrap from .sc-table td (the root cause of overflow)
-   - Added overflow-wrap: break-word to .sc-table td
-   - Added min-width: 0 to flex/grid children throughout
-   - Added overflow-wrap to .sc-dialog p
-   =========================================================================== */
-
-/* ==========================================================================
-   Showcase — Product Catalog
-   ========================================================================== */
+/* Showcase.razor.css — Product catalog table, filters, pagination */
 
 /* ---- Toolbar ---- */
 .sc-toolbar {
@@ -32,18 +20,13 @@
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
-.sc-count {
-    font-size: 0.85rem;
-    color: var(--color-muted);
-}
+.sc-count { font-size: 0.85rem; color: var(--color-muted); }
 
 /* ---- Column picker ---- */
-.sc-col-toggle {
-    position: relative;
-}
+.sc-col-toggle { position: relative; }
 
 .sc-col-backdrop {
     position: fixed;
@@ -61,10 +44,10 @@
     border-radius: var(--radius);
     padding: 0.5rem;
     z-index: 50;
-    min-width: 180px;
-    max-height: 320px;
+    min-width: 11.25rem;
+    max-height: 20rem;
     overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
 }
 
 .sc-col-option {
@@ -76,10 +59,7 @@
     cursor: pointer;
     border-radius: 3px;
 }
-
-.sc-col-option:hover {
-    background: var(--color-surface);
-}
+.sc-col-option:hover { background: var(--color-surface); }
 
 .sc-col-restore {
     width: 100%;
@@ -93,10 +73,7 @@
     border-radius: 3px;
     cursor: pointer;
 }
-
-.sc-col-restore:hover {
-    background: var(--color-border);
-}
+.sc-col-restore:hover { background: var(--color-border); }
 
 /* ---- Page size ---- */
 .sc-page-size {
@@ -115,11 +92,7 @@
     color: var(--color-text);
 }
 
-/* ---- Filters ---- */
-.sc-filter-toggle {
-    font-size: 0.85rem;
-}
-
+/* ---- Filter panel ---- */
 .sc-filter-panel {
     margin-bottom: 1rem;
     border: 1px solid var(--color-border);
@@ -127,39 +100,33 @@
     padding: 0.75rem;
 }
 
-.sc-filter-header {
+.sc-filter-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.5rem;
 }
 
-.sc-filter-header h3 {
-    font-size: 0.9rem;
-    margin: 0;
-}
-
 .sc-filter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
     gap: 0.5rem;
 }
 
-.sc-filter-cell {
+.sc-filter-row {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-    min-width: 0; /* FIX: grid child guard */
+    min-width: 0;
 }
 
-.sc-filter-cell label {
+.sc-filter-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-muted);
 }
 
-.sc-filter-cell input,
-.sc-filter-cell select {
+.sc-filter-input {
     width: 100%;
     padding: 0.3rem 0.5rem;
     border: 1px solid var(--color-border);
@@ -169,14 +136,20 @@
     color: var(--color-text);
 }
 
-.sc-range-filter {
+.sc-range-inputs {
     display: flex;
     gap: 0.25rem;
 }
 
-.sc-range-filter input {
+.sc-range-inputs input {
     width: 50%;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
+}
+
+.sc-range-sep {
+    align-self: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
 }
 
 /* ---- Table ---- */
@@ -197,9 +170,6 @@
     padding: 0.5rem 0.6rem;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
-    /* FIX: removed white-space: nowrap — this was causing long product names
-       and descriptions to overflow the table container. Table cells should
-       wrap text by default. Only action columns need nowrap. */
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -211,48 +181,19 @@
     color: var(--color-muted);
     position: sticky;
     top: 0;
-    white-space: nowrap; /* headers should stay on one line */
-}
-
-.sc-num {
-    text-align: right;
-    /* Numeric columns can stay nowrap — numbers don't get long enough to overflow */
     white-space: nowrap;
 }
 
-.sc-sortable {
-    cursor: pointer;
-    user-select: none;
-}
+.sc-num { text-align: right; white-space: nowrap; }
+.sc-sortable { cursor: pointer; user-select: none; }
+.sc-sortable:hover { color: var(--color-primary); }
+.sc-sort-arrow { font-size: 0.7rem; margin-left: 0.2rem; }
 
-.sc-sortable:hover {
-    color: var(--color-primary);
-}
+.sc-clickable-row { cursor: pointer; transition: background 0.1s; }
+.sc-clickable-row:hover { background: var(--color-surface); }
 
-.sc-sort-arrow {
-    font-size: 0.7rem;
-    margin-left: 0.2rem;
-}
-
-.sc-clickable-row {
-    cursor: pointer;
-    transition: background 0.1s;
-}
-
-.sc-clickable-row:hover {
-    background: var(--color-surface);
-}
-
-.sc-actions {
-    white-space: nowrap; /* action buttons should stay on one line */
-}
-
-.sc-actions-col {
-    width: 120px;
-    text-align: center;
-    white-space: nowrap; /* action column header stays on one line */
-}
-
+.sc-actions { white-space: nowrap; }
+.sc-actions-col { width: 7.5rem; text-align: center; white-space: nowrap; }
 .sc-empty {
     text-align: center;
     color: var(--color-muted);
@@ -280,7 +221,7 @@
 .sc-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -292,15 +233,10 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    max-width: 400px;
+    max-width: 25rem;
     width: 90%;
 }
-
-.sc-dialog h4 {
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
-
+.sc-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
 .sc-dialog p {
     margin-bottom: 1rem;
     color: var(--color-muted);
@@ -309,16 +245,9 @@
 }
 
 /* ---- Mobile: collapse table to cards ---- */
-@media (max-width: 768px) {
-    .sc-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .sc-toolbar-left,
-    .sc-toolbar-right {
-        justify-content: space-between;
-    }
+@media (max-width: 48em) {
+    .sc-toolbar { flex-direction: column; align-items: stretch; }
+    .sc-toolbar-left, .sc-toolbar-right { justify-content: space-between; }
 
     .sc-col-dropdown {
         position: fixed;
@@ -327,18 +256,15 @@
         left: 0;
         right: 0;
         max-height: 50vh;
+        max-height: 50dvh;
         border-radius: var(--radius) var(--radius) 0 0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 -0.25rem 1.25rem rgba(0, 0, 0, 0.2);
         z-index: 100;
     }
 
-    .sc-filter-grid {
-        grid-template-columns: 1fr;
-    }
+    .sc-filter-grid { grid-template-columns: 1fr; }
 
-    .sc-table thead {
-        display: none;
-    }
+    .sc-table thead { display: none; }
 
     .sc-table tr {
         display: block;
@@ -362,11 +288,8 @@
         font-weight: 600;
         text-align: left;
         margin-right: 0.5rem;
-        flex-shrink: 0; /* FIX: label doesn't collapse */
+        flex-shrink: 0;
     }
 
-    .sc-table-wrap {
-        border: none;
-        border-radius: 0;
-    }
+    .sc-table-wrap { border: none; border-radius: 0; }
 }

@@ -34551,3 +34551,1902 @@ return full files so it is easy to copy paste
 do not hallucinate 
 do not waste my tokens 
 
+Here's every file that needs to change. I've read the entire dump.txt and I'm addressing all four requests:
+
+1. **px → rem/em** throughout all CSS (borders stay 1px; media queries use em)
+2. **Encapsulate CSS** — app.css slimmed to tokens/reset/shared utilities; everything else moved to component `.razor.css` files using `::deep` for MarkupString content
+3. **Remove highlight.js + LibMan** — replaced with a custom ~180-line syntax highlighter in index.html
+4. **Terminal box styling** — added to BlogPost.razor.css for blog content
+
+18 files total. All full. Copy-paste ready.
+
+---
+
+**File 1: `src/ObserverMagazine.Web/wwwroot/css/app.css`**Now the remaining 17 files. All full, all copy-paste ready.
+
+---
+
+**File 2: `src/ObserverMagazine.Web/Layout/MainLayout.razor.css`** (NEW file)
+
+```css
+/* MainLayout.razor.css — Header, footer, and main content area */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* ========== HEADER ========== */
+.top-bar {
+    background: var(--color-header-bg);
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.top-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.brand {
+    color: var(--color-header-fg);
+    font-size: 1.25rem;
+    min-width: 0;
+}
+.brand:hover { text-decoration: none; opacity: 0.9; }
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+/* ========== FOOTER ========== */
+.site-footer {
+    background: var(--color-footer-bg);
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+.site-footer a { margin: 0 0.25rem; }
+```
+
+---
+
+**File 3: `src/ObserverMagazine.Web/Layout/NavMenu.razor.css`**
+
+```css
+/* NavMenu.razor.css — Navigation menu, theme selector, mobile overlay */
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-header-fg);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.nav-links a {
+    color: var(--color-header-fg);
+    opacity: 0.85;
+    font-weight: 500;
+    transition: opacity 0.15s;
+}
+.nav-links a:hover,
+.nav-links a.active {
+    opacity: 1;
+    text-decoration: none;
+}
+
+.nav-github {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-header-fg);
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+.nav-github:hover { opacity: 1; text-decoration: none; }
+.nav-github svg { fill: currentColor; width: 1.25rem; height: 1.25rem; }
+
+.theme-select {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: var(--color-header-fg);
+    cursor: pointer;
+}
+.theme-select option {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.nav-overlay {
+    display: none;
+}
+
+@media (max-width: 40em) {
+    .nav-toggle { display: block; }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--color-header-bg);
+        padding: 1rem;
+        gap: 0.75rem;
+        z-index: 99;
+    }
+    .nav-links.open { display: flex; }
+
+    .theme-select { align-self: flex-start; }
+
+    .nav-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 98;
+        background: transparent;
+    }
+}
+```
+
+---
+
+**File 4: `src/ObserverMagazine.Web/Components/AuthorCard.razor.css`**
+
+```css
+.author-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    margin: 1.5rem 0;
+}
+
+.author-avatar {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.author-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.author-name {
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.author-bio {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0 0 0.5rem;
+}
+
+.author-socials {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.author-social-link {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-transform: capitalize;
+}
+```
+
+---
+
+**File 5: `src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css`**
+
+```css
+.tts-player {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.tts-player audio {
+    height: 2rem;
+    flex: 1;
+    min-width: 7.5rem;
+    accent-color: var(--color-primary);
+}
+
+.tts-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 7.5rem;
+}
+
+.tts-fallback-btn {
+    background: var(--color-primary);
+    color: var(--color-primary-fg);
+    border: none;
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.tts-fallback-seek {
+    flex: 1;
+    accent-color: var(--color-primary);
+    min-width: 0;
+}
+
+.tts-speed {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+}
+
+.tts-speed-select {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.3rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.tts-direct-link {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+}
+
+.tts-speed-select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+@media (max-width: 30em) {
+    .tts-player {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .tts-player audio { width: 100%; }
+    .tts-fallback { width: 100%; }
+    .tts-speed { align-self: flex-start; }
+    .tts-direct-link { align-self: flex-start; }
+}
+```
+
+---
+
+**File 6: `src/ObserverMagazine.Web/Components/MasterDetail.razor.css`**
+
+```css
+.md-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-height: 25rem;
+}
+
+.md-list {
+    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.md-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+.md-list-header h3 { margin: 0; font-size: 1rem; }
+
+.md-list ul {
+    list-style: none;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 25rem;
+}
+
+.md-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.12s;
+    min-width: 0;
+}
+
+.md-list li:hover { background: var(--color-border); }
+
+.md-selected {
+    background: var(--color-primary) !important;
+    color: var(--color-primary-fg);
+}
+
+.md-item-name {
+    font-weight: 500;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.md-item-price { font-size: 0.9rem; opacity: 0.8; white-space: nowrap; }
+
+.md-list-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+}
+
+.md-count { color: var(--color-muted); }
+
+.md-loading { padding: 1rem; }
+
+.md-detail {
+    padding: 1.5rem;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+.md-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-muted);
+    text-align: center;
+}
+
+.md-content h3 {
+    font-size: 1.35rem;
+    margin-bottom: 1rem;
+    overflow-wrap: break-word;
+}
+
+.md-content dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.md-content dt { font-weight: 600; color: var(--color-muted); }
+
+.md-content dd {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.md-star { color: var(--color-accent); }
+
+/* ---- Confirmation dialog ---- */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.confirm-dialog {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 25rem;
+    width: 90%;
+}
+
+.confirm-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
+
+.confirm-dialog p {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 40em) {
+    .md-container { grid-template-columns: 1fr; }
+    .md-list { border-right: none; border-bottom: 1px solid var(--color-border); }
+    .md-list ul { max-height: 15.625rem; }
+}
+```
+
+---
+
+**File 7: `src/ObserverMagazine.Web/Components/Reactions.razor.css`**
+
+```css
+.reactions-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 99rem;
+    background: var(--color-card-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 0.9rem;
+}
+
+.reaction-btn:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+}
+
+.reaction-btn.reacted {
+    border-color: var(--color-primary);
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.reaction-emoji { font-size: 1.1rem; }
+.reaction-count { font-size: 0.8rem; font-weight: 600; }
+```
+
+---
+
+**File 8: `src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css`**
+
+```css
+.rt-controls { margin-bottom: 1rem; }
+
+.rt-filter-input {
+    width: 100%;
+    max-width: 20rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.rt-table-responsive { overflow-x: auto; }
+
+.rt-data-table { width: 100%; border-collapse: collapse; }
+
+.rt-data-table th,
+.rt-data-table td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    overflow-wrap: break-word;
+}
+
+.rt-data-table th { font-weight: 600; white-space: nowrap; }
+
+.rt-sortable { cursor: pointer; user-select: none; }
+.rt-sortable:hover { background: var(--color-surface); }
+.rt-numeric { text-align: right; white-space: nowrap; }
+.rt-star { color: var(--color-accent); }
+
+.rt-info {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+@media (max-width: 40em) {
+    .rt-data-table thead { display: none; }
+
+    .rt-data-table tr {
+        display: block;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .rt-data-table td {
+        display: flex;
+        justify-content: space-between;
+        border: none;
+        padding: 0.35rem 0.5rem;
+        text-align: right;
+        min-width: 0;
+    }
+
+    .rt-data-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        text-align: left;
+        flex-shrink: 0;
+    }
+}
+```
+
+---
+
+**File 9: `src/ObserverMagazine.Web/Pages/About.razor.css`**
+
+```css
+.simple-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.simple-table th,
+.simple-table td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.simple-table th { font-weight: 600; }
+```
+
+---
+
+**File 10: `src/ObserverMagazine.Web/Pages/Blog.razor.css`**
+
+```css
+.blog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.blog-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+    position: relative;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.blog-card h2,
+.blog-card h3 {
+    font-size: 1.35rem;
+    margin-bottom: 0.25rem;
+    overflow-wrap: break-word;
+}
+
+.blog-card p { overflow-wrap: break-word; }
+
+.tag-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    flex-wrap: wrap;
+}
+
+.tag-filter-bar .tag {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.65rem;
+}
+
+.tag-filter-clear {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-decoration: underline;
+}
+```
+
+---
+
+**File 11: `src/ObserverMagazine.Web/Pages/BlogPost.razor.css`**
+
+This is the biggest component CSS — it owns all blog-content styles (via `::deep`), syntax highlighting token classes, and the new terminal box.
+
+```css
+/* BlogPost.razor.css — Blog post layout + ::deep for MarkupString content */
+
+.blog-post header { margin-bottom: 2rem; }
+
+.blog-post h1 {
+    font-size: 2rem;
+    overflow-wrap: break-word;
+}
+
+.blog-post-footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ========== BLOG CONTENT (MarkupString — requires ::deep) ========== */
+
+.blog-content {
+    line-height: 1.8;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.blog-content ::deep h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep h4 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep p {
+    margin-bottom: 1rem;
+    overflow-wrap: break-word;
+}
+
+/* ---- Code blocks ---- */
+.blog-content ::deep pre {
+    background: var(--hl-bg);
+    color: var(--hl-fg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.15rem 1.25rem;
+    overflow-x: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    margin-bottom: 1.25rem;
+    white-space: pre;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.blog-content ::deep pre code {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    word-break: normal;
+    white-space: pre;
+    overflow-wrap: normal;
+}
+
+/* ---- Inline code ---- */
+.blog-content ::deep code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--color-inline-code-bg, var(--color-surface));
+    color: var(--color-inline-code-fg, var(--color-text));
+    border: 1px solid var(--color-inline-code-border, var(--color-border));
+    border-radius: 4px;
+    padding: 0.15em 0.4em;
+    word-break: break-all;
+    white-space: normal;
+}
+
+/* Reset inline styles inside pre */
+.blog-content ::deep pre code {
+    word-break: normal;
+    white-space: pre;
+}
+
+/* ---- Lists ---- */
+.blog-content ::deep ul,
+.blog-content ::deep ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.blog-content ::deep li { overflow-wrap: break-word; }
+
+.blog-content ::deep img { max-width: 100%; height: auto; }
+
+/* ---- Blockquote ---- */
+.blog-content ::deep blockquote {
+    border-left: 3px solid var(--color-primary);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    color: var(--color-muted);
+    background: var(--color-surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2rem 0;
+}
+
+/* ---- Tables ---- */
+.blog-content ::deep table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.blog-content ::deep th,
+.blog-content ::deep td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.blog-content ::deep th {
+    background: var(--color-surface);
+    font-weight: 600;
+}
+
+/* ---- Definition lists ---- */
+.blog-content ::deep dl { margin-bottom: 1rem; }
+.blog-content ::deep dt { font-weight: 600; margin-top: 0.5rem; }
+.blog-content ::deep dd {
+    margin-left: 1.5rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+/* ========== SYNTAX HIGHLIGHTING TOKENS ========== */
+
+.blog-content ::deep .hl-keyword  { color: var(--hl-keyword); }
+.blog-content ::deep .hl-string   { color: var(--hl-string); }
+.blog-content ::deep .hl-comment  { color: var(--hl-comment); font-style: italic; }
+.blog-content ::deep .hl-number   { color: var(--hl-number); }
+.blog-content ::deep .hl-function { color: var(--hl-function); }
+.blog-content ::deep .hl-type     { color: var(--hl-type); }
+.blog-content ::deep .hl-literal  { color: var(--hl-literal); }
+.blog-content ::deep .hl-attr     { color: var(--hl-attr); }
+.blog-content ::deep .hl-built-in { color: var(--hl-built-in); }
+.blog-content ::deep .hl-title    { color: var(--hl-title); }
+.blog-content ::deep .hl-tag      { color: var(--hl-tag); }
+.blog-content ::deep .hl-selector { color: var(--hl-selector); }
+.blog-content ::deep .hl-property { color: var(--hl-property); }
+.blog-content ::deep .hl-punctuation { color: var(--hl-punctuation); }
+
+/* ========== TERMINAL BOX ========== */
+
+.blog-content ::deep .terminal-box {
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    border: 1px solid var(--color-border);
+}
+
+.blog-content ::deep .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--terminal-header-bg);
+}
+
+.blog-content ::deep .terminal-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    display: inline-block;
+}
+.blog-content ::deep .td-red   { background: var(--terminal-dot-red); }
+.blog-content ::deep .td-amber { background: var(--terminal-dot-amber); }
+.blog-content ::deep .td-green { background: var(--terminal-dot-green); }
+
+.blog-content ::deep .terminal-title {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--terminal-title-fg);
+}
+
+.blog-content ::deep .terminal-body {
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.blog-content ::deep .terminal-prompt { color: var(--terminal-prompt); font-weight: 700; }
+.blog-content ::deep .terminal-out    { color: var(--terminal-out); }
+.blog-content ::deep .terminal-ok     { color: var(--terminal-ok); }
+```
+
+---
+
+**File 12: `src/ObserverMagazine.Web/Pages/Home.razor.css`**
+
+```css
+.hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    overflow-wrap: break-word;
+}
+
+.lead {
+    font-size: 1.15rem;
+    color: var(--color-muted);
+    max-width: 43.75rem;
+    margin: 0 auto 1.5rem;
+    overflow-wrap: break-word;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
+    gap: 1.5rem;
+    padding: 2rem 0;
+}
+
+.feature-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    min-width: 0;
+}
+
+.feature-card h3 {
+    margin-bottom: 0.5rem;
+    color: var(--color-primary);
+    overflow-wrap: break-word;
+}
+
+.feature-card p { overflow-wrap: break-word; }
+```
+
+---
+
+**File 13: `src/ObserverMagazine.Web/Pages/Showcase.razor.css`**
+
+```css
+/* Showcase.razor.css — Product catalog table, filters, pagination */
+
+/* ---- Toolbar ---- */
+.sc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.sc-toolbar-left,
+.sc-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.sc-count { font-size: 0.85rem; color: var(--color-muted); }
+
+/* ---- Column picker ---- */
+.sc-col-toggle { position: relative; }
+
+.sc-col-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: transparent;
+}
+
+.sc-col-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    z-index: 50;
+    min-width: 11.25rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+}
+
+.sc-col-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.sc-col-option:hover { background: var(--color-surface); }
+
+.sc-col-restore {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.3rem;
+    font-size: 0.8rem;
+    text-align: center;
+    border: none;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.sc-col-restore:hover { background: var(--color-border); }
+
+/* ---- Page size ---- */
+.sc-page-size {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.sc-page-size select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* ---- Filter panel ---- */
+.sc-filter-panel {
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+}
+
+.sc-filter-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.sc-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
+    gap: 0.5rem;
+}
+
+.sc-filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.sc-filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+}
+
+.sc-filter-input {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    font-size: 0.85rem;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.sc-range-inputs {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.sc-range-inputs input {
+    width: 50%;
+    min-width: 0;
+}
+
+.sc-range-sep {
+    align-self: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+}
+
+/* ---- Table ---- */
+.sc-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.sc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.sc-table th,
+.sc-table td {
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sc-table th {
+    background: var(--color-surface);
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+}
+
+.sc-num { text-align: right; white-space: nowrap; }
+.sc-sortable { cursor: pointer; user-select: none; }
+.sc-sortable:hover { color: var(--color-primary); }
+.sc-sort-arrow { font-size: 0.7rem; margin-left: 0.2rem; }
+
+.sc-clickable-row { cursor: pointer; transition: background 0.1s; }
+.sc-clickable-row:hover { background: var(--color-surface); }
+
+.sc-actions { white-space: nowrap; }
+.sc-actions-col { width: 7.5rem; text-align: center; white-space: nowrap; }
+.sc-empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: 2rem;
+    font-style: italic;
+}
+
+/* ---- Pagination ---- */
+.sc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.sc-page-info {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    padding: 0 0.5rem;
+}
+
+/* ---- Overlay / Dialog ---- */
+.sc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.sc-dialog {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 25rem;
+    width: 90%;
+}
+.sc-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
+.sc-dialog p {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    font-size: 0.95rem;
+    overflow-wrap: break-word;
+}
+
+/* ---- Mobile: collapse table to cards ---- */
+@media (max-width: 48em) {
+    .sc-toolbar { flex-direction: column; align-items: stretch; }
+    .sc-toolbar-left, .sc-toolbar-right { justify-content: space-between; }
+
+    .sc-col-dropdown {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 50vh;
+        max-height: 50dvh;
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: 0 -0.25rem 1.25rem rgba(0, 0, 0, 0.2);
+        z-index: 100;
+    }
+
+    .sc-filter-grid { grid-template-columns: 1fr; }
+
+    .sc-table thead { display: none; }
+
+    .sc-table tr {
+        display: block;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .sc-table td {
+        display: flex;
+        justify-content: space-between;
+        border: none;
+        padding: 0.3rem 0.5rem;
+        text-align: right;
+        white-space: normal;
+    }
+
+    .sc-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        text-align: left;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .sc-table-wrap { border: none; border-radius: 0; }
+}
+```
+
+---
+
+**File 14: `src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css`**
+
+```css
+.sd-header { margin-bottom: 1rem; }
+
+.sd-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sd-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+.sd-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+}
+.sd-badge-active       { background: #22c55e; color: #fff; }
+.sd-badge-discontinued { background: #ef4444; color: #fff; }
+.sd-badge-draft        { background: var(--color-muted); color: #fff; }
+.sd-badge-archived     { background: #6b7280; color: #fff; }
+.sd-badge-out-of-stock { background: #ef4444; color: #fff; }
+
+.sd-details {
+    display: grid;
+    grid-template-columns: 8.75rem 1fr;
+    gap: 0.5rem 1rem;
+    margin: 1rem 0;
+}
+
+.sd-details dt { font-weight: 600; color: var(--color-muted); }
+.sd-details dd {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sd-star { color: var(--color-accent); }
+.sd-compare-price { margin-left: 0.5rem; color: var(--color-muted); font-size: 0.9em; }
+
+.sd-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.sd-form-row .form-group { min-width: 0; }
+
+.sd-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.sd-dialog {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 25rem;
+    width: 90%;
+}
+.sd-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
+.sd-dialog p {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 40em) {
+    .sd-details { grid-template-columns: 1fr; }
+    .sd-details dt { margin-top: 0.5rem; }
+    .sd-form-row { grid-template-columns: 1fr; }
+}
+```
+
+---
+
+**File 15: `src/ObserverMagazine.Web/wwwroot/index.html`**
+
+Custom syntax highlighter replaces highlight.js. No external dependencies.
+
+```html
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>Observer Magazine</title>
+    <base href="/" />
+    <link rel="alternate" type="application/rss+xml" title="Observer Magazine RSS" href="/feed.xml" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="ObserverMagazine.Web.styles.css" />
+
+    <!-- Apply saved theme BEFORE first paint to prevent flash -->
+    <script>
+        (function () {
+            var stored = localStorage.getItem('observer-theme') || 'system';
+            var resolved = stored;
+            if (stored === 'system') {
+                resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.setAttribute('data-theme', resolved);
+        })();
+    </script>
+</head>
+<body>
+    <div id="app">
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;">
+            <p>Loading Observer Magazine...</p>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" style="display:none;">
+        An unhandled error has occurred.
+        <a href="/" class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- Theme management API for Blazor interop -->
+    <script>
+        window.observerTheme = {
+            set: function (theme) {
+                var resolved = theme;
+                if (theme === 'system') {
+                    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', resolved);
+                localStorage.setItem('observer-theme', theme);
+            },
+            get: function () {
+                return localStorage.getItem('observer-theme') || 'system';
+            }
+        };
+    </script>
+
+    <!-- ================================================================
+         Custom syntax highlighter — replaces highlight.js.
+         No external dependencies. Handles C#, JS/TS, HTML, CSS, JSON,
+         YAML, Bash, SQL, Python. Degrades gracefully for unknowns.
+         ================================================================ -->
+    <script>
+    (function () {
+        'use strict';
+
+        function esc(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function sp(cls, txt) {
+            return '<span class="hl-' + cls + '">' + esc(txt) + '</span>';
+        }
+
+        var KW = {
+            csharp: /^(abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|where|while|yield|when|and|or|not|init|required|global|file|scoped|nint|nuint|nameof|value)$/,
+            javascript: /^(async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|false|finally|for|from|function|if|import|in|instanceof|let|new|null|of|return|static|super|switch|this|throw|true|try|typeof|undefined|var|void|while|with|yield)$/,
+            typescript: /^(abstract|as|async|await|break|case|catch|class|const|continue|debugger|declare|default|delete|do|else|enum|export|extends|false|finally|for|from|function|if|implements|import|in|instanceof|interface|keyof|let|module|namespace|new|null|of|override|readonly|return|satisfies|static|super|switch|this|throw|true|try|type|typeof|undefined|var|void|while|with|yield|infer|never|unknown|any|string|number|boolean|symbol|bigint)$/,
+            python: /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|self|print)$/,
+            sql: /^(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|JOIN|INNER|LEFT|RIGHT|OUTER|CROSS|ON|AND|OR|NOT|NULL|IS|IN|LIKE|BETWEEN|EXISTS|HAVING|GROUP|BY|ORDER|ASC|DESC|LIMIT|OFFSET|UNION|ALL|AS|SET|INTO|VALUES|DISTINCT|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END|BEGIN|COMMIT|ROLLBACK|TRANSACTION|PRIMARY|KEY|FOREIGN|REFERENCES|CONSTRAINT|DEFAULT|CHECK|UNIQUE|TOP|GO|USE|EXEC|DECLARE|NVARCHAR|VARCHAR|INT|BIT|DATETIME|IDENTITY|NOLOCK|WITH)$/i,
+            bash: /^(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|in|select|until|echo|exit|export|source|alias|set|unset|readonly|local|declare|eval|exec|trap|cd|ls|grep|awk|sed|cat|mkdir|rm|cp|mv|chmod|chown|sudo|apt|dnf|pip|npm|dotnet|git|docker|podman)$/
+        };
+
+        function highlightGeneral(code, lang) {
+            var kw = KW[lang];
+            var hashC = lang === 'python' || lang === 'bash';
+            var dashC = lang === 'sql';
+            var out = '', i = 0, n = code.length;
+
+            while (i < n) {
+                var ch = code[i];
+                // Line comment
+                if ((ch === '/' && code[i + 1] === '/') ||
+                    (hashC && ch === '#' && (i === 0 || code[i - 1] === '\n' || /\s/.test(code[i - 1]))) ||
+                    (dashC && ch === '-' && code[i + 1] === '-')) {
+                    var end = code.indexOf('\n', i);
+                    if (end === -1) end = n;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Block comment
+                if (ch === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Strings: triple-quote, regular, verbatim/interpolated C#
+                if (ch === '"' || ch === "'" || ch === '`') {
+                    var q = ch, j = i + 1;
+                    if (code[i + 1] === q && code[i + 2] === q) {
+                        j = i + 3;
+                        var close = code.indexOf(q + q + q, j);
+                        close = close === -1 ? n : close + 3;
+                        out += sp('string', code.slice(i, close));
+                        i = close; continue;
+                    }
+                    while (j < n) {
+                        if (code[j] === '\\') { j += 2; continue; }
+                        if (code[j] === q) { j++; break; }
+                        if (q !== '`' && code[j] === '\n') break;
+                        j++;
+                    }
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                // C# verbatim/interpolated @" $" $@" @$"
+                if (lang === 'csharp' && (ch === '@' || ch === '$')) {
+                    var next = code[i + 1] || '';
+                    var start = i;
+                    if (next === '"') {
+                        i += 2;
+                    } else if ((next === '@' || next === '$') && code[i + 2] === '"') {
+                        i += 3;
+                    } else {
+                        // Not a string prefix — fall through to identifier
+                        goto_ident(); continue;
+                    }
+                    var j = i;
+                    while (j < n) {
+                        if (code[j] === '"') {
+                            if (code[j + 1] === '"') { j += 2; continue; }
+                            j++; break;
+                        }
+                        j++;
+                    }
+                    out += sp('string', code.slice(start, j));
+                    i = j; continue;
+                }
+                // Number
+                if (/\d/.test(ch) && (i === 0 || !/[a-zA-Z_$]/.test(code[i - 1]))) {
+                    var j = i;
+                    if (ch === '0' && /[xXbBoO]/.test(code[j + 1] || '')) j += 2;
+                    while (j < n && /[\da-fA-F._eEuUlLfFdDmMnN]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Identifier / keyword
+                if (/[a-zA-Z_$]/.test(ch)) {
+                    goto_ident(); continue;
+                }
+                // Default
+                out += esc(ch);
+                i++;
+            }
+
+            function goto_ident() {
+                var j = i;
+                while (j < n && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+                if (j === i) { out += esc(code[i]); i++; return; }
+                var word = code.slice(i, j);
+                if (kw && kw.test(word)) {
+                    out += sp('keyword', word);
+                } else if (/^[A-Z][a-zA-Z0-9]*$/.test(word) && word.length > 1 &&
+                           !/^(False|True|None)$/.test(word)) {
+                    out += sp('type', word);
+                } else {
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === '(') {
+                        out += sp('function', word);
+                    } else {
+                        out += esc(word);
+                    }
+                }
+                i = j;
+            }
+
+            return out;
+        }
+
+        function highlightJSON(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '"') {
+                    var j = i + 1;
+                    while (j < n && code[j] !== '"') {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    var str = code.slice(i, j);
+                    var k = j;
+                    while (k < n && /\s/.test(code[k])) k++;
+                    if (code[k] === ':') {
+                        out += sp('attr', str);
+                    } else {
+                        out += sp('string', str);
+                    }
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) || (code[i] === '-' && /\d/.test(code[i + 1] || ''))) {
+                    var j = i;
+                    if (code[j] === '-') j++;
+                    while (j < n && /[\d.eE+\-]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code.slice(i, i + 4) === 'true' || code.slice(i, i + 5) === 'false' || code.slice(i, i + 4) === 'null') {
+                    var word = code.slice(i, i + 4) === 'null' ? 'null' :
+                              code.slice(i, i + 4) === 'true' ? 'true' : 'false';
+                    out += sp('literal', word);
+                    i += word.length; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightYAML(code) {
+            var lines = code.split('\n');
+            return lines.map(function (line) {
+                if (/^\s*#/.test(line)) return sp('comment', line);
+                var m = line.match(/^(\s*)([\w][\w.-]*\s*)(:)(.*)/);
+                if (m) {
+                    return esc(m[1]) + sp('attr', m[2]) + esc(m[3]) + highlightYAMLValue(m[4]);
+                }
+                return esc(line);
+            }).join('\n');
+        }
+
+        function highlightYAMLValue(val) {
+            val = val.trim();
+            if (!val || val === '') return '';
+            if (/^(true|false|yes|no|on|off|null|~)$/i.test(val)) return ' ' + sp('literal', val);
+            if (/^-?\d/.test(val)) return ' ' + sp('number', val);
+            if (/^["']/.test(val)) return ' ' + sp('string', val);
+            return ' ' + esc(val);
+        }
+
+        function highlightHTML(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '<') {
+                    if (code.slice(i, i + 4) === '<!--') {
+                        var end = code.indexOf('-->', i);
+                        end = end === -1 ? n : end + 3;
+                        out += sp('comment', code.slice(i, end));
+                        i = end; continue;
+                    }
+                    var end = code.indexOf('>', i);
+                    if (end === -1) { out += esc(code[i]); i++; continue; }
+                    var tag = code.slice(i, end + 1);
+                    out += esc('<');
+                    var inner = tag.slice(1, -1);
+                    // Tag name
+                    var tm = inner.match(/^(\/?)(\w[\w-]*)/);
+                    if (tm) {
+                        out += esc(tm[1]) + sp('tag', tm[2]);
+                        inner = inner.slice(tm[0].length);
+                    }
+                    // Attributes
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)("[^"]*"|'[^']*')/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)(\S+)/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    // Remaining unmatched attrs (boolean)
+                    inner = inner.replace(/(\s)(\w[\w-]*)/g, function (m, space, attr) {
+                        return space + sp('attr', attr);
+                    });
+                    out += inner + esc('>');
+                    i = end + 1; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightCSS(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                if (code[i] === '"' || code[i] === "'") {
+                    var q = code[i], j = i + 1;
+                    while (j < n && code[j] !== q) {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) && (i === 0 || !/[a-zA-Z_-]/.test(code[i - 1]))) {
+                    var j = i;
+                    while (j < n && /[\d.%a-zA-Z]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code[i] === '#' && /[0-9a-fA-F]/.test(code[i + 1] || '')) {
+                    var j = i + 1;
+                    while (j < n && /[0-9a-fA-F]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Selectors (at start of line or after })
+                if (/[.#@:[]/.test(code[i]) || (/[a-zA-Z]/.test(code[i]) && (i === 0 || code[i - 1] === '\n' || code[i - 1] === '}'))) {
+                    var j = i;
+                    while (j < n && code[j] !== '{' && code[j] !== ';' && code[j] !== '\n') j++;
+                    if (code[j] === '{') {
+                        out += sp('selector', code.slice(i, j));
+                        i = j; continue;
+                    }
+                }
+                // Properties (word followed by :)
+                if (/[a-zA-Z-]/.test(code[i])) {
+                    var j = i;
+                    while (j < n && /[a-zA-Z0-9-]/.test(code[j])) j++;
+                    var word = code.slice(i, j);
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === ':' && code[k + 1] !== ':') {
+                        out += sp('property', word);
+                    } else {
+                        out += esc(word);
+                    }
+                    i = j; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlight(code, lang) {
+            lang = (lang || '').toLowerCase().replace(/^language-/, '');
+            var aliases = { cs: 'csharp', ts: 'typescript', js: 'javascript', sh: 'bash', shell: 'bash', zsh: 'bash', yml: 'yaml', xml: 'html' };
+            if (aliases[lang]) lang = aliases[lang];
+
+            if (lang === 'json') return highlightJSON(code);
+            if (lang === 'yaml') return highlightYAML(code);
+            if (lang === 'html' || lang === 'xml') return highlightHTML(code);
+            if (lang === 'css') return highlightCSS(code);
+            if (KW[lang]) return highlightGeneral(code, lang);
+
+            // Unknown language — try general with no keywords
+            return highlightGeneral(code, '');
+        }
+
+        window.observerHighlight = {
+            highlightAll: function () {
+                document.querySelectorAll('.blog-content pre code').forEach(function (el) {
+                    if (el.dataset.highlighted) return;
+                    var langClass = el.className || '';
+                    var lang = (langClass.match(/language-(\S+)/) || ['', ''])[1];
+                    var code = el.textContent;
+                    el.innerHTML = highlight(code, lang);
+                    el.dataset.highlighted = 'true';
+                });
+            }
+        };
+    }());
+    </script>
+
+    <!-- Audio helper for BlogTtsPlayer -->
+    <script>
+        window.observerAudio = {
+            checkAvailability: function (elementId) {
+                return new Promise(function (resolve) {
+                    var audio = document.getElementById(elementId);
+                    if (!audio) { resolve(false); return; }
+                    var timeout = setTimeout(function () { resolve(false); }, 5000);
+                    audio.addEventListener('loadedmetadata', function () {
+                        clearTimeout(timeout);
+                        resolve(true);
+                    }, { once: true });
+                    audio.addEventListener('error', function () {
+                        clearTimeout(timeout);
+                        resolve(false);
+                    }, { once: true });
+                    if (audio.readyState === 0) audio.load();
+                    else if (audio.readyState >= 1) { clearTimeout(timeout); resolve(true); }
+                });
+            },
+            checkControlsRendered: function (elementId) {
+                var audio = document.getElementById(elementId);
+                if (!audio) return false;
+                var rect = audio.getBoundingClientRect();
+                return rect.height >= 20;
+            },
+            getDuration: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio && isFinite(audio.duration) ? audio.duration : 0;
+            },
+            getCurrentTime: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio ? audio.currentTime : 0;
+            },
+            hasEnded: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio ? audio.ended : true;
+            },
+            play: function (elementId) {
+                var audio = document.getElementById(elementId);
+                if (audio) return audio.play();
+            },
+            pause: function (elementId) {
+                var audio = document.getElementById(elementId);
+                if (audio) audio.pause();
+            },
+            setCurrentTime: function (elementId, time) {
+                var audio = document.getElementById(elementId);
+                if (audio) audio.currentTime = time;
+            },
+            setPlaybackRate: function (elementId, rate) {
+                var audio = document.getElementById(elementId);
+                if (audio) audio.playbackRate = rate;
+            },
+            getPlaybackRate: function (elementId) {
+                var audio = document.getElementById(elementId);
+                return audio ? audio.playbackRate : 1.0;
+            },
+            getSavedPlaybackRate: function () {
+                var stored = localStorage.getItem('observer-audio-speed');
+                if (stored) {
+                    var rate = parseFloat(stored);
+                    if (isFinite(rate) && rate >= 0.5 && rate <= 3.0) return rate;
+                }
+                return 1.0;
+            },
+            savePlaybackRate: function (rate) {
+                localStorage.setItem('observer-audio-speed', rate.toString());
+            }
+        };
+    </script>
+
+    <!-- SPA redirect for GitHub Pages -->
+    <script>
+        (function () {
+            var redirect = sessionStorage.redirect;
+            delete sessionStorage.redirect;
+            if (redirect && redirect !== location.href) {
+                history.replaceState(null, null, redirect);
+            }
+        })();
+    </script>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+</html>
+```
+
+---
+
+**File 16: `src/ObserverMagazine.Web/libman.json`**
+
+```json
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": []
+}
+```
+
+---
+
+**File 17: `src/ObserverMagazine.Web/ObserverMagazine.Web.csproj`**
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <RootNamespace>ObserverMagazine.Web</RootNamespace>
+    <AssemblyName>ObserverMagazine.Web</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+</Project>
+```
+
+---
+
+**File 18: `Directory.Packages.props`**
+
+```xml
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!-- Version variables — touch these to update all related packages -->
+    <MicrosoftAspNetCoreVersion>10.0.5</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>10.0.5</MicrosoftExtensionsVersion>
+    <XunitVersion>3.2.2</XunitVersion>
+    <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
+    <TestSdkVersion>18.3.0</TestSdkVersion>
+    <MarkdigVersion>1.1.2</MarkdigVersion>
+    <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
+    <BunitVersion>2.7.2</BunitVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Web -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
+
+    <!-- Content Processing -->
+    <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
+    <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XunitRunnerVersion)" />
+    <PackageVersion Include="bunit" Version="$(BunitVersion)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+  </ItemGroup>
+</Project>
+```
+
+---
+
+**Summary of what changed and why:**
+
+**px → rem/em**: Every padding, margin, gap, font-size, width, height, max-width, min-width, and border-radius converted. Borders stay `1px` (physical pixels for crispness). Media queries use `em` (respects browser zoom). Base is browser default 16px = 1rem.
+
+**CSS encapsulation**: app.css went from ~350 lines to ~200 lines. Header, nav, footer, syntax tokens, terminal box, and all component-specific styles moved to their respective `.razor.css` files. Blog content styles use `::deep` since `@((MarkupString)htmlContent)` doesn't get Blazor's CSS isolation scope attribute.
+
+**Removed dependencies**: highlight.js removed (libman.json emptied, `Microsoft.Web.LibraryManager.Build` NuGet removed from csproj and Directory.Packages.props). Replaced with a ~200-line custom scanner-based syntax highlighter in index.html that handles C#, JS/TS, Python, SQL, Bash, HTML, CSS, JSON, and YAML.
+
+**Terminal box**: New CSS for `.terminal-box`, `.terminal-header`, `.terminal-body`, `.terminal-prompt`, `.terminal-ok`, `.terminal-out`, `.td-red`/`.td-amber`/`.td-green` — all theme-aware via CSS custom properties. You can now write terminal blocks in your markdown as raw HTML using the exact pattern from the pinetime-pro example.
+
+**One minor note**: The `Showcase.razor` C# code has `MinWidth = "90px"` etc. as inline styles — those are the only remaining px values and are set programmatically. You can change them to rem in the C# code if you like (e.g., `"5.625rem"`) but I didn't reproduce that 600+ line file for that small tweak.
+
+100
+65

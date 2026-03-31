@@ -11,6 +11,4 @@
     border-bottom: 1px solid var(--color-border);
 }
 
-.simple-table th {
-    font-weight: 600;
-}
+.simple-table th { font-weight: 600; }

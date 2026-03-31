@@ -9,9 +9,6 @@
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="ObserverMagazine.Web.styles.css" />
 
-    <!-- highlight.js core — restored locally via LibMan at build time -->
-    <script src="lib/highlight.js/highlight.min.js"></script>
-
     <!-- Apply saved theme BEFORE first paint to prevent flash -->
     <script>
         (function () {
@@ -26,7 +23,7 @@
 </head>
 <body>
     <div id="app">
-        <div style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;">
             <p>Loading Observer Magazine...</p>
         </div>
     </div>
@@ -54,15 +51,328 @@
         };
     </script>
 
-    <!-- Syntax highlighting interop -->
+    <!-- ================================================================
+         Custom syntax highlighter — replaces highlight.js.
+         No external dependencies. Handles C#, JS/TS, HTML, CSS, JSON,
+         YAML, Bash, SQL, Python. Degrades gracefully for unknowns.
+         ================================================================ -->
     <script>
+    (function () {
+        'use strict';
+
+        function esc(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function sp(cls, txt) {
+            return '<span class="hl-' + cls + '">' + esc(txt) + '</span>';
+        }
+
+        var KW = {
+            csharp: /^(abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|where|while|yield|when|and|or|not|init|required|global|file|scoped|nint|nuint|nameof|value)$/,
+            javascript: /^(async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|false|finally|for|from|function|if|import|in|instanceof|let|new|null|of|return|static|super|switch|this|throw|true|try|typeof|undefined|var|void|while|with|yield)$/,
+            typescript: /^(abstract|as|async|await|break|case|catch|class|const|continue|debugger|declare|default|delete|do|else|enum|export|extends|false|finally|for|from|function|if|implements|import|in|instanceof|interface|keyof|let|module|namespace|new|null|of|override|readonly|return|satisfies|static|super|switch|this|throw|true|try|type|typeof|undefined|var|void|while|with|yield|infer|never|unknown|any|string|number|boolean|symbol|bigint)$/,
+            python: /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|self|print)$/,
+            sql: /^(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|JOIN|INNER|LEFT|RIGHT|OUTER|CROSS|ON|AND|OR|NOT|NULL|IS|IN|LIKE|BETWEEN|EXISTS|HAVING|GROUP|BY|ORDER|ASC|DESC|LIMIT|OFFSET|UNION|ALL|AS|SET|INTO|VALUES|DISTINCT|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END|BEGIN|COMMIT|ROLLBACK|TRANSACTION|PRIMARY|KEY|FOREIGN|REFERENCES|CONSTRAINT|DEFAULT|CHECK|UNIQUE|TOP|GO|USE|EXEC|DECLARE|NVARCHAR|VARCHAR|INT|BIT|DATETIME|IDENTITY|NOLOCK|WITH)$/i,
+            bash: /^(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|in|select|until|echo|exit|export|source|alias|set|unset|readonly|local|declare|eval|exec|trap|cd|ls|grep|awk|sed|cat|mkdir|rm|cp|mv|chmod|chown|sudo|apt|dnf|pip|npm|dotnet|git|docker|podman)$/
+        };
+
+        function highlightGeneral(code, lang) {
+            var kw = KW[lang];
+            var hashC = lang === 'python' || lang === 'bash';
+            var dashC = lang === 'sql';
+            var out = '', i = 0, n = code.length;
+
+            while (i < n) {
+                var ch = code[i];
+                // Line comment
+                if ((ch === '/' && code[i + 1] === '/') ||
+                    (hashC && ch === '#' && (i === 0 || code[i - 1] === '\n' || /\s/.test(code[i - 1]))) ||
+                    (dashC && ch === '-' && code[i + 1] === '-')) {
+                    var end = code.indexOf('\n', i);
+                    if (end === -1) end = n;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Block comment
+                if (ch === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Strings: triple-quote, regular, verbatim/interpolated C#
+                if (ch === '"' || ch === "'" || ch === '`') {
+                    var q = ch, j = i + 1;
+                    if (code[i + 1] === q && code[i + 2] === q) {
+                        j = i + 3;
+                        var close = code.indexOf(q + q + q, j);
+                        close = close === -1 ? n : close + 3;
+                        out += sp('string', code.slice(i, close));
+                        i = close; continue;
+                    }
+                    while (j < n) {
+                        if (code[j] === '\\') { j += 2; continue; }
+                        if (code[j] === q) { j++; break; }
+                        if (q !== '`' && code[j] === '\n') break;
+                        j++;
+                    }
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                // C# verbatim/interpolated @" $" $@" @$"
+                if (lang === 'csharp' && (ch === '@' || ch === '$')) {
+                    var next = code[i + 1] || '';
+                    var start = i;
+                    if (next === '"') {
+                        i += 2;
+                    } else if ((next === '@' || next === '$') && code[i + 2] === '"') {
+                        i += 3;
+                    } else {
+                        // Not a string prefix — fall through to identifier
+                        goto_ident(); continue;
+                    }
+                    var j = i;
+                    while (j < n) {
+                        if (code[j] === '"') {
+                            if (code[j + 1] === '"') { j += 2; continue; }
+                            j++; break;
+                        }
+                        j++;
+                    }
+                    out += sp('string', code.slice(start, j));
+                    i = j; continue;
+                }
+                // Number
+                if (/\d/.test(ch) && (i === 0 || !/[a-zA-Z_$]/.test(code[i - 1]))) {
+                    var j = i;
+                    if (ch === '0' && /[xXbBoO]/.test(code[j + 1] || '')) j += 2;
+                    while (j < n && /[\da-fA-F._eEuUlLfFdDmMnN]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Identifier / keyword
+                if (/[a-zA-Z_$]/.test(ch)) {
+                    goto_ident(); continue;
+                }
+                // Default
+                out += esc(ch);
+                i++;
+            }
+
+            function goto_ident() {
+                var j = i;
+                while (j < n && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+                if (j === i) { out += esc(code[i]); i++; return; }
+                var word = code.slice(i, j);
+                if (kw && kw.test(word)) {
+                    out += sp('keyword', word);
+                } else if (/^[A-Z][a-zA-Z0-9]*$/.test(word) && word.length > 1 &&
+                           !/^(False|True|None)$/.test(word)) {
+                    out += sp('type', word);
+                } else {
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === '(') {
+                        out += sp('function', word);
+                    } else {
+                        out += esc(word);
+                    }
+                }
+                i = j;
+            }
+
+            return out;
+        }
+
+        function highlightJSON(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '"') {
+                    var j = i + 1;
+                    while (j < n && code[j] !== '"') {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    var str = code.slice(i, j);
+                    var k = j;
+                    while (k < n && /\s/.test(code[k])) k++;
+                    if (code[k] === ':') {
+                        out += sp('attr', str);
+                    } else {
+                        out += sp('string', str);
+                    }
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) || (code[i] === '-' && /\d/.test(code[i + 1] || ''))) {
+                    var j = i;
+                    if (code[j] === '-') j++;
+                    while (j < n && /[\d.eE+\-]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code.slice(i, i + 4) === 'true' || code.slice(i, i + 5) === 'false' || code.slice(i, i + 4) === 'null') {
+                    var word = code.slice(i, i + 4) === 'null' ? 'null' :
+                              code.slice(i, i + 4) === 'true' ? 'true' : 'false';
+                    out += sp('literal', word);
+                    i += word.length; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightYAML(code) {
+            var lines = code.split('\n');
+            return lines.map(function (line) {
+                if (/^\s*#/.test(line)) return sp('comment', line);
+                var m = line.match(/^(\s*)([\w][\w.-]*\s*)(:)(.*)/);
+                if (m) {
+                    return esc(m[1]) + sp('attr', m[2]) + esc(m[3]) + highlightYAMLValue(m[4]);
+                }
+                return esc(line);
+            }).join('\n');
+        }
+
+        function highlightYAMLValue(val) {
+            val = val.trim();
+            if (!val || val === '') return '';
+            if (/^(true|false|yes|no|on|off|null|~)$/i.test(val)) return ' ' + sp('literal', val);
+            if (/^-?\d/.test(val)) return ' ' + sp('number', val);
+            if (/^["']/.test(val)) return ' ' + sp('string', val);
+            return ' ' + esc(val);
+        }
+
+        function highlightHTML(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '<') {
+                    if (code.slice(i, i + 4) === '<!--') {
+                        var end = code.indexOf('-->', i);
+                        end = end === -1 ? n : end + 3;
+                        out += sp('comment', code.slice(i, end));
+                        i = end; continue;
+                    }
+                    var end = code.indexOf('>', i);
+                    if (end === -1) { out += esc(code[i]); i++; continue; }
+                    var tag = code.slice(i, end + 1);
+                    out += esc('<');
+                    var inner = tag.slice(1, -1);
+                    // Tag name
+                    var tm = inner.match(/^(\/?)(\w[\w-]*)/);
+                    if (tm) {
+                        out += esc(tm[1]) + sp('tag', tm[2]);
+                        inner = inner.slice(tm[0].length);
+                    }
+                    // Attributes
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)("[^"]*"|'[^']*')/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)(\S+)/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    // Remaining unmatched attrs (boolean)
+                    inner = inner.replace(/(\s)(\w[\w-]*)/g, function (m, space, attr) {
+                        return space + sp('attr', attr);
+                    });
+                    out += inner + esc('>');
+                    i = end + 1; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightCSS(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                if (code[i] === '"' || code[i] === "'") {
+                    var q = code[i], j = i + 1;
+                    while (j < n && code[j] !== q) {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) && (i === 0 || !/[a-zA-Z_-]/.test(code[i - 1]))) {
+                    var j = i;
+                    while (j < n && /[\d.%a-zA-Z]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code[i] === '#' && /[0-9a-fA-F]/.test(code[i + 1] || '')) {
+                    var j = i + 1;
+                    while (j < n && /[0-9a-fA-F]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Selectors (at start of line or after })
+                if (/[.#@:[]/.test(code[i]) || (/[a-zA-Z]/.test(code[i]) && (i === 0 || code[i - 1] === '\n' || code[i - 1] === '}'))) {
+                    var j = i;
+                    while (j < n && code[j] !== '{' && code[j] !== ';' && code[j] !== '\n') j++;
+                    if (code[j] === '{') {
+                        out += sp('selector', code.slice(i, j));
+                        i = j; continue;
+                    }
+                }
+                // Properties (word followed by :)
+                if (/[a-zA-Z-]/.test(code[i])) {
+                    var j = i;
+                    while (j < n && /[a-zA-Z0-9-]/.test(code[j])) j++;
+                    var word = code.slice(i, j);
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === ':' && code[k + 1] !== ':') {
+                        out += sp('property', word);
+                    } else {
+                        out += esc(word);
+                    }
+                    i = j; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlight(code, lang) {
+            lang = (lang || '').toLowerCase().replace(/^language-/, '');
+            var aliases = { cs: 'csharp', ts: 'typescript', js: 'javascript', sh: 'bash', shell: 'bash', zsh: 'bash', yml: 'yaml', xml: 'html' };
+            if (aliases[lang]) lang = aliases[lang];
+
+            if (lang === 'json') return highlightJSON(code);
+            if (lang === 'yaml') return highlightYAML(code);
+            if (lang === 'html' || lang === 'xml') return highlightHTML(code);
+            if (lang === 'css') return highlightCSS(code);
+            if (KW[lang]) return highlightGeneral(code, lang);
+
+            // Unknown language — try general with no keywords
+            return highlightGeneral(code, '');
+        }
+
         window.observerHighlight = {
             highlightAll: function () {
-                document.querySelectorAll('.blog-content pre code').forEach(function (block) {
-                    hljs.highlightElement(block);
+                document.querySelectorAll('.blog-content pre code').forEach(function (el) {
+                    if (el.dataset.highlighted) return;
+                    var langClass = el.className || '';
+                    var lang = (langClass.match(/language-(\S+)/) || ['', ''])[1];
+                    var code = el.textContent;
+                    el.innerHTML = highlight(code, lang);
+                    el.dataset.highlighted = 'true';
                 });
             }
         };
+    }());
     </script>
 
     <!-- Audio helper for BlogTtsPlayer -->
