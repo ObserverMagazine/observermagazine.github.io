@@ -33998,3 +33998,22 @@ Run `bash export.sh` and the dump should be dramatically smaller while still giv
 
 
 
+I've read the full `dump.txt` carefully. You want a new `export.sh` that exports the project but only includes front matter (not full body text) for blog posts. Let me create that.Here's what the new `export.sh` does:
+
+**Blog posts (`content/blog/*.md`)** get only their YAML front matter extracted (the `---` delimited block at the top). The markdown body is omitted entirely. Each blog post entry is labeled `[FRONT MATTER ONLY — body omitted to save context space]` so it's clear when reading the dump.
+
+**Everything else** (C# files, Razor components, CSS, YAML configs, CI workflows, tests, etc.) is exported in full.
+
+**Excluded entirely:** the `docs/` directory (avoids recursion and stale LLM context), and binary files (`.png`, `.jpg`, `.mp3`, etc.).
+
+Key details:
+
+- The front matter extractor reads line-by-line looking for the opening `---` and closing `---`, printing only that block. It never touches the body.
+- `git ls-files` is used to get the file list, so only tracked files are included.
+- Supports `-o` flag for custom output path, defaults to `docs/llm/dump.txt`.
+- The output format matches what your current dump.txt already looks like (same separators, same header/footer structure, same stats).
+
+Make it executable with `chmod +x export.sh` and run `bash export.sh`.
+
+60
+57
