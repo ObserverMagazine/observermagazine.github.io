@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-03-31 22:25:10 UTC
+DATE: 2026-03-31 22:50:11 UTC
 ===============================================================================
 
 ===============================================================================
@@ -85,6 +85,7 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── _Imports.razor
 │       ├── Layout
 │       │   ├── MainLayout.razor
+│       │   ├── MainLayout.razor.css
 │       │   ├── NavMenu.razor
 │       │   └── NavMenu.razor.css
 │       ├── libman.json
@@ -151,7 +152,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 115 files
+28 directories, 116 files
 
 
 -------------------------------------------------------------------------------
@@ -907,7 +908,6 @@ FILE: Directory.Packages.props
     <MarkdigVersion>1.1.2</MarkdigVersion>
     <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
     <BunitVersion>2.7.2</BunitVersion>
-    <LibManVersion>3.0.71</LibManVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -915,9 +915,6 @@ FILE: Directory.Packages.props
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
-
-    <!-- Client-side library management -->
-    <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="$(LibManVersion)" />
 
     <!-- Content Processing -->
     <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
@@ -1712,8 +1709,8 @@ FILE: src/ObserverMagazine.Web/Components/AuthorCard.razor.css
 }
 
 .author-avatar {
-    width: 64px;
-    height: 64px;
+    width: 4rem;
+    height: 4rem;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -2040,13 +2037,6 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 9: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
-   
-   Changes:
-   - Added min-width: 0 to flex children
-   =========================================================================== */
-
 .tts-player {
     display: flex;
     align-items: center;
@@ -2057,13 +2047,13 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     border-radius: var(--radius);
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
 .tts-player audio {
-    height: 32px;
+    height: 2rem;
     flex: 1;
-    min-width: 120px;
+    min-width: 7.5rem;
     accent-color: var(--color-primary);
 }
 
@@ -2072,7 +2062,7 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     align-items: center;
     gap: 0.5rem;
     flex: 1;
-    min-width: 120px;
+    min-width: 7.5rem;
 }
 
 .tts-fallback-btn {
@@ -2080,8 +2070,8 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     color: var(--color-primary-fg);
     border: none;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 1.75rem;
+    height: 1.75rem;
     font-size: 0.8rem;
     cursor: pointer;
     flex-shrink: 0;
@@ -2090,7 +2080,7 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
 .tts-fallback-seek {
     flex: 1;
     accent-color: var(--color-primary);
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
 .tts-speed {
@@ -2123,29 +2113,17 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     outline-offset: -1px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 30em) {
     .tts-player {
         flex-direction: column;
         align-items: stretch;
         gap: 0.5rem;
         padding: 0.5rem 0.75rem;
     }
-
-    .tts-player audio {
-        width: 100%;
-    }
-
-    .tts-fallback {
-        width: 100%;
-    }
-
-    .tts-speed {
-        align-self: flex-start;
-    }
-
-    .tts-direct-link {
-        align-self: flex-start;
-    }
+    .tts-player audio { width: 100%; }
+    .tts-fallback { width: 100%; }
+    .tts-speed { align-self: flex-start; }
+    .tts-direct-link { align-self: flex-start; }
 }
 
 
@@ -2535,16 +2513,6 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 5: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
-   
-   Changes:
-   - Added min-width: 0 to .md-detail and .md-list (grid children)
-   - Added overflow-wrap: break-word to .md-content and .md-content dd
-   - Added min-width: 0 to .md-content dl grid children
-   - Fixed .md-list li:hover to use theme variable instead of hardcoded color
-   =========================================================================== */
-
 .md-container {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -2552,7 +2520,7 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     overflow: hidden;
-    min-height: 400px;
+    min-height: 25rem;
 }
 
 .md-list {
@@ -2560,7 +2528,7 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     background: var(--color-surface);
     display: flex;
     flex-direction: column;
-    min-width: 0; /* FIX: grid child guard */
+    min-width: 0;
 }
 
 .md-list-header {
@@ -2576,7 +2544,7 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     list-style: none;
     flex: 1;
     overflow-y: auto;
-    max-height: 400px;
+    max-height: 25rem;
 }
 
 .md-list li {
@@ -2586,10 +2554,9 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     cursor: pointer;
     border-bottom: 1px solid var(--color-border);
     transition: background 0.12s;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
-/* FIX: was hardcoded #e9ecef in older version — use theme variable */
 .md-list li:hover { background: var(--color-border); }
 
 .md-selected {
@@ -2599,7 +2566,7 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
 
 .md-item-name {
     font-weight: 500;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
     overflow-wrap: break-word;
 }
 
@@ -2621,7 +2588,7 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
 .md-detail {
     padding: 1.5rem;
     overflow-y: auto;
-    min-width: 0; /* FIX: grid child guard — prevents long text from blowing out grid */
+    min-width: 0;
 }
 
 .md-empty {
@@ -2645,14 +2612,9 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     gap: 0.5rem 1rem;
 }
 
-.md-content dt {
-    font-weight: 600;
-    color: var(--color-muted);
-}
+.md-content dt { font-weight: 600; color: var(--color-muted); }
 
 .md-content dd {
-    /* FIX: grid child needs min-width: 0 and overflow-wrap to prevent
-       long descriptions from pushing past the grid boundary */
     min-width: 0;
     overflow-wrap: break-word;
     word-break: break-word;
@@ -2676,14 +2638,11 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    max-width: 400px;
+    max-width: 25rem;
     width: 90%;
 }
 
-.confirm-dialog h4 {
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
+.confirm-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
 
 .confirm-dialog p {
     margin-bottom: 1rem;
@@ -2692,15 +2651,10 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor.css
     overflow-wrap: break-word;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .md-container { grid-template-columns: 1fr; }
-
-    .md-list {
-        border-right: none;
-        border-bottom: 1px solid var(--color-border);
-    }
-
-    .md-list ul { max-height: 250px; }
+    .md-list { border-right: none; border-bottom: 1px solid var(--color-border); }
+    .md-list ul { max-height: 15.625rem; }
 }
 
 
@@ -2780,7 +2734,7 @@ FILE: src/ObserverMagazine.Web/Components/Reactions.razor.css
     gap: 0.35rem;
     padding: 0.35rem 0.75rem;
     border: 1px solid var(--color-border);
-    border-radius: 99px;
+    border-radius: 99rem;
     background: var(--color-card-bg);
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
@@ -2798,14 +2752,8 @@ FILE: src/ObserverMagazine.Web/Components/Reactions.razor.css
     color: #fff;
 }
 
-.reaction-emoji {
-    font-size: 1.1rem;
-}
-
-.reaction-count {
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+.reaction-emoji { font-size: 1.1rem; }
+.reaction-count { font-size: 0.8rem; font-weight: 600; }
 
 
 -------------------------------------------------------------------------------
@@ -2941,19 +2889,11 @@ else
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 8: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to td cells
-   - Added min-width: 0 to mobile card td
-   =========================================================================== */
-
 .rt-controls { margin-bottom: 1rem; }
 
 .rt-filter-input {
     width: 100%;
-    max-width: 320px;
+    max-width: 20rem;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
@@ -2964,29 +2904,19 @@ FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
 
 .rt-table-responsive { overflow-x: auto; }
 
-.rt-data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+.rt-data-table { width: 100%; border-collapse: collapse; }
 
 .rt-data-table th,
 .rt-data-table td {
     text-align: left;
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--color-border);
-    overflow-wrap: break-word; /* FIX: prevent long text overflow */
+    overflow-wrap: break-word;
 }
 
-.rt-data-table th {
-    font-weight: 600;
-    white-space: nowrap;
-}
+.rt-data-table th { font-weight: 600; white-space: nowrap; }
 
-.rt-sortable {
-    cursor: pointer;
-    user-select: none;
-}
-
+.rt-sortable { cursor: pointer; user-select: none; }
 .rt-sortable:hover { background: var(--color-surface); }
 .rt-numeric { text-align: right; white-space: nowrap; }
 .rt-star { color: var(--color-accent); }
@@ -2997,7 +2927,7 @@ FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
     color: var(--color-muted);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .rt-data-table thead { display: none; }
 
     .rt-data-table tr {
@@ -3014,14 +2944,14 @@ FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
         border: none;
         padding: 0.35rem 0.5rem;
         text-align: right;
-        min-width: 0; /* FIX: flex child guard */
+        min-width: 0;
     }
 
     .rt-data-table td::before {
         content: attr(data-label);
         font-weight: 600;
         text-align: left;
-        flex-shrink: 0; /* FIX: label doesn't collapse */
+        flex-shrink: 0;
     }
 }
 
@@ -3082,6 +3012,59 @@ FILE: src/ObserverMagazine.Web/Layout/MainLayout.razor
         </div>
     </footer>
 </div>
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Layout/MainLayout.razor.css
+-------------------------------------------------------------------------------
+/* MainLayout.razor.css — Header, footer, and main content area */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* ========== HEADER ========== */
+.top-bar {
+    background: var(--color-header-bg);
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.top-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.brand {
+    color: var(--color-header-fg);
+    font-size: 1.25rem;
+    min-width: 0;
+}
+.brand:hover { text-decoration: none; opacity: 0.9; }
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+/* ========== FOOTER ========== */
+.site-footer {
+    background: var(--color-footer-bg);
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+}
+.site-footer a { margin: 0 0.25rem; }
 
 
 -------------------------------------------------------------------------------
@@ -3189,11 +3172,90 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor.css
 -------------------------------------------------------------------------------
+/* NavMenu.razor.css — Navigation menu, theme selector, mobile overlay */
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-header-fg);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.nav-links a {
+    color: var(--color-header-fg);
+    opacity: 0.85;
+    font-weight: 500;
+    transition: opacity 0.15s;
+}
+.nav-links a:hover,
+.nav-links a.active {
+    opacity: 1;
+    text-decoration: none;
+}
+
+.nav-github {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-header-fg);
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+.nav-github:hover { opacity: 1; text-decoration: none; }
+.nav-github svg { fill: currentColor; width: 1.25rem; height: 1.25rem; }
+
+.theme-select {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: var(--color-header-fg);
+    cursor: pointer;
+}
+.theme-select option {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
 .nav-overlay {
     display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
+    .nav-toggle { display: block; }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--color-header-bg);
+        padding: 1rem;
+        gap: 0.75rem;
+        z-index: 99;
+    }
+    .nav-links.open { display: flex; }
+
+    .theme-select { align-self: flex-start; }
+
     .nav-overlay {
         display: block;
         position: fixed;
@@ -3210,16 +3272,7 @@ FILE: src/ObserverMagazine.Web/libman.json
 {
   "version": "1.0",
   "defaultProvider": "cdnjs",
-  "libraries": [
-    {
-      "library": "highlight.js@11.11.1",
-      "destination": "wwwroot/lib/highlight.js/",
-      "files": [
-        "highlight.min.js",
-        "styles/default.min.css"
-      ]
-    }
-  ]
+  "libraries": []
 }
 
 
@@ -3330,7 +3383,6 @@ FILE: src/ObserverMagazine.Web/ObserverMagazine.Web.csproj
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Microsoft.Web.LibraryManager.Build" />
   </ItemGroup>
 
 </Project>
@@ -3412,9 +3464,7 @@ FILE: src/ObserverMagazine.Web/Pages/About.razor.css
     border-bottom: 1px solid var(--color-border);
 }
 
-.simple-table th {
-    font-weight: 600;
-}
+.simple-table th { font-weight: 600; }
 
 
 -------------------------------------------------------------------------------
@@ -3554,63 +3604,57 @@ else
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 2: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .blog-content (baseline)
-   - Added overflow-wrap to h2, h3, h4 headings
-   - Added overflow-wrap to .blog-content p
-   - Added table wrapper behavior: display: block; overflow-x: auto on table
-   - Added min-width: 0 on .blog-content (flex/grid child guard)
-   =========================================================================== */
+/* BlogPost.razor.css — Blog post layout + ::deep for MarkupString content */
 
-.blog-post header {
-    margin-bottom: 2rem;
-}
+.blog-post header { margin-bottom: 2rem; }
 
 .blog-post h1 {
     font-size: 2rem;
-    /* FIX: prevent extremely long titles from overflowing */
     overflow-wrap: break-word;
 }
 
+.blog-post-footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ========== BLOG CONTENT (MarkupString — requires ::deep) ========== */
+
 .blog-content {
     line-height: 1.8;
-    /* FIX: baseline overflow protection for all blog text */
     overflow-wrap: break-word;
     word-break: break-word;
     min-width: 0;
 }
 
-.blog-content h2 {
+.blog-content ::deep h2 {
     margin-top: 2rem;
     margin-bottom: 0.75rem;
     overflow-wrap: break-word;
 }
 
-.blog-content h3 {
+.blog-content ::deep h3 {
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
     overflow-wrap: break-word;
 }
 
-.blog-content h4 {
+.blog-content ::deep h4 {
     margin-top: 1.25rem;
     margin-bottom: 0.5rem;
     overflow-wrap: break-word;
 }
 
-.blog-content p {
+.blog-content ::deep p {
     margin-bottom: 1rem;
     overflow-wrap: break-word;
 }
 
-/* ========== CODE BLOCKS ========== */
-
-.blog-content pre {
-    background: var(--hljs-bg);
-    color: var(--hljs-fg);
+/* ---- Code blocks ---- */
+.blog-content ::deep pre {
+    background: var(--hl-bg);
+    color: var(--hl-fg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.15rem 1.25rem;
@@ -3626,11 +3670,9 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     margin-bottom: 1.25rem;
     white-space: pre;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-    /* NOTE: do NOT add overflow-wrap here — code blocks must preserve whitespace
-       and scroll horizontally. The overflow-x: auto handles this correctly. */
 }
 
-.blog-content pre code {
+.blog-content ::deep pre code {
     background: none;
     border: none;
     border-radius: 0;
@@ -3640,13 +3682,11 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     color: inherit;
     word-break: normal;
     white-space: pre;
-    /* Reset overflow-wrap inherited from .blog-content */
     overflow-wrap: normal;
 }
 
-/* ========== INLINE CODE ========== */
-
-.blog-content code {
+/* ---- Inline code ---- */
+.blog-content ::deep code {
     font-family: var(--font-mono);
     font-size: 0.875em;
     background: var(--color-inline-code-bg, var(--color-surface));
@@ -3658,30 +3698,25 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     white-space: normal;
 }
 
-/* Reset inline styles when code is inside a pre (handled above) */
-.blog-content pre code {
+/* Reset inline styles inside pre */
+.blog-content ::deep pre code {
     word-break: normal;
     white-space: pre;
 }
 
-/* ========== REMAINING BLOG CONTENT ========== */
-
-.blog-content ul,
-.blog-content ol {
+/* ---- Lists ---- */
+.blog-content ::deep ul,
+.blog-content ::deep ol {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
 }
 
-.blog-content li {
-    overflow-wrap: break-word;
-}
+.blog-content ::deep li { overflow-wrap: break-word; }
 
-.blog-content img {
-    max-width: 100%;
-    height: auto;
-}
+.blog-content ::deep img { max-width: 100%; height: auto; }
 
-.blog-content blockquote {
+/* ---- Blockquote ---- */
+.blog-content ::deep blockquote {
     border-left: 3px solid var(--color-primary);
     margin: 1rem 0;
     padding: 0.5rem 1rem;
@@ -3691,15 +3726,14 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     overflow-wrap: break-word;
 }
 
-.blog-content hr {
+.blog-content ::deep hr {
     border: none;
     border-top: 1px solid var(--color-border);
     margin: 2rem 0;
 }
 
-/* FIX: tables in blog posts need to scroll horizontally on small screens
-   instead of blowing out the page width */
-.blog-content table {
+/* ---- Tables ---- */
+.blog-content ::deep table {
     display: block;
     width: 100%;
     overflow-x: auto;
@@ -3708,40 +3742,92 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     font-size: 0.95rem;
 }
 
-.blog-content th,
-.blog-content td {
+.blog-content ::deep th,
+.blog-content ::deep td {
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
     text-align: left;
-    white-space: nowrap; /* keep table cells from wrapping — scroll instead */
+    white-space: nowrap;
 }
 
-.blog-content th {
+.blog-content ::deep th {
     background: var(--color-surface);
     font-weight: 600;
 }
 
-/* FIX: definition lists in blog content */
-.blog-content dl {
-    margin-bottom: 1rem;
-}
-
-.blog-content dt {
-    font-weight: 600;
-    margin-top: 0.5rem;
-}
-
-.blog-content dd {
+/* ---- Definition lists ---- */
+.blog-content ::deep dl { margin-bottom: 1rem; }
+.blog-content ::deep dt { font-weight: 600; margin-top: 0.5rem; }
+.blog-content ::deep dd {
     margin-left: 1.5rem;
     margin-bottom: 0.5rem;
     overflow-wrap: break-word;
 }
 
-.blog-post-footer {
-    margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-border);
+/* ========== SYNTAX HIGHLIGHTING TOKENS ========== */
+
+.blog-content ::deep .hl-keyword  { color: var(--hl-keyword); }
+.blog-content ::deep .hl-string   { color: var(--hl-string); }
+.blog-content ::deep .hl-comment  { color: var(--hl-comment); font-style: italic; }
+.blog-content ::deep .hl-number   { color: var(--hl-number); }
+.blog-content ::deep .hl-function { color: var(--hl-function); }
+.blog-content ::deep .hl-type     { color: var(--hl-type); }
+.blog-content ::deep .hl-literal  { color: var(--hl-literal); }
+.blog-content ::deep .hl-attr     { color: var(--hl-attr); }
+.blog-content ::deep .hl-built-in { color: var(--hl-built-in); }
+.blog-content ::deep .hl-title    { color: var(--hl-title); }
+.blog-content ::deep .hl-tag      { color: var(--hl-tag); }
+.blog-content ::deep .hl-selector { color: var(--hl-selector); }
+.blog-content ::deep .hl-property { color: var(--hl-property); }
+.blog-content ::deep .hl-punctuation { color: var(--hl-punctuation); }
+
+/* ========== TERMINAL BOX ========== */
+
+.blog-content ::deep .terminal-box {
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    border: 1px solid var(--color-border);
 }
+
+.blog-content ::deep .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--terminal-header-bg);
+}
+
+.blog-content ::deep .terminal-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    display: inline-block;
+}
+.blog-content ::deep .td-red   { background: var(--terminal-dot-red); }
+.blog-content ::deep .td-amber { background: var(--terminal-dot-amber); }
+.blog-content ::deep .td-green { background: var(--terminal-dot-green); }
+
+.blog-content ::deep .terminal-title {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--terminal-title-fg);
+}
+
+.blog-content ::deep .terminal-body {
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.blog-content ::deep .terminal-prompt { color: var(--terminal-prompt); font-weight: 700; }
+.blog-content ::deep .terminal-out    { color: var(--terminal-out); }
+.blog-content ::deep .terminal-ok     { color: var(--terminal-ok); }
 
 
 -------------------------------------------------------------------------------
@@ -3870,15 +3956,6 @@ else
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/Blog.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 7: src/ObserverMagazine.Web/Pages/Blog.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .blog-card
-   - Added min-width: 0 to .blog-card (flex child guard)
-   - Added overflow-wrap to .blog-card h2, h3, p
-   =========================================================================== */
-
 .blog-list {
     display: flex;
     flex-direction: column;
@@ -3891,7 +3968,7 @@ FILE: src/ObserverMagazine.Web/Pages/Blog.razor.css
     padding: 1.5rem;
     background: var(--color-card-bg);
     position: relative;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
     overflow-wrap: break-word;
 }
 
@@ -3902,9 +3979,7 @@ FILE: src/ObserverMagazine.Web/Pages/Blog.razor.css
     overflow-wrap: break-word;
 }
 
-.blog-card p {
-    overflow-wrap: break-word;
-}
+.blog-card p { overflow-wrap: break-word; }
 
 .tag-filter-bar {
     display: flex;
@@ -4040,15 +4115,6 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 6: src/ObserverMagazine.Web/Pages/Home.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .feature-card p
-   - Added min-width: 0 to .feature-card (grid child guard)
-   - Added overflow-wrap to .hero h1 and .lead
-   =========================================================================== */
-
 .hero {
     text-align: center;
     padding: 3rem 0 2rem;
@@ -4063,7 +4129,7 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
 .lead {
     font-size: 1.15rem;
     color: var(--color-muted);
-    max-width: 700px;
+    max-width: 43.75rem;
     margin: 0 auto 1.5rem;
     overflow-wrap: break-word;
 }
@@ -4077,7 +4143,7 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
     gap: 1.5rem;
     padding: 2rem 0;
 }
@@ -4087,7 +4153,7 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    min-width: 0; /* FIX: grid child guard */
+    min-width: 0;
 }
 
 .feature-card h3 {
@@ -4096,9 +4162,7 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
     overflow-wrap: break-word;
 }
 
-.feature-card p {
-    overflow-wrap: break-word;
-}
+.feature-card p { overflow-wrap: break-word; }
 
 
 -------------------------------------------------------------------------------
@@ -4476,26 +4540,13 @@ else
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 4: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .sd-card
-   - Added overflow-wrap and min-width: 0 to .sd-details dd
-   - Added min-width: 0 to .sd-details (grid child guard)
-   - Added overflow-wrap to .sd-dialog p
-   =========================================================================== */
-
-.sd-header {
-    margin-bottom: 1rem;
-}
+.sd-header { margin-bottom: 1rem; }
 
 .sd-card {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
     background: var(--color-card-bg);
-    /* FIX: prevent long text from overflowing the card */
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -4515,57 +4566,40 @@ FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
     border-radius: 3px;
     margin-bottom: 1rem;
 }
-
-.sd-badge-active { background: #22c55e; color: #fff; }
+.sd-badge-active       { background: #22c55e; color: #fff; }
 .sd-badge-discontinued { background: #ef4444; color: #fff; }
-.sd-badge-draft { background: var(--color-muted); color: #fff; }
-.sd-badge-archived { background: #6b7280; color: #fff; }
+.sd-badge-draft        { background: var(--color-muted); color: #fff; }
+.sd-badge-archived     { background: #6b7280; color: #fff; }
 .sd-badge-out-of-stock { background: #ef4444; color: #fff; }
 
 .sd-details {
     display: grid;
-    grid-template-columns: 140px 1fr;
+    grid-template-columns: 8.75rem 1fr;
     gap: 0.5rem 1rem;
     margin: 1rem 0;
 }
 
-.sd-details dt {
-    font-weight: 600;
-    color: var(--color-muted);
-}
-
+.sd-details dt { font-weight: 600; color: var(--color-muted); }
 .sd-details dd {
-    /* FIX: prevent long descriptions or values from overflowing the grid */
     min-width: 0;
     overflow-wrap: break-word;
     word-break: break-word;
 }
 
-.sd-star {
-    color: var(--color-accent);
-}
-
-.sd-compare-price {
-    margin-left: 0.5rem;
-    color: var(--color-muted);
-    font-size: 0.9em;
-}
+.sd-star { color: var(--color-accent); }
+.sd-compare-price { margin-left: 0.5rem; color: var(--color-muted); font-size: 0.9em; }
 
 .sd-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
-
-/* FIX: form groups inside grid need min-width: 0 */
-.sd-form-row .form-group {
-    min-width: 0;
-}
+.sd-form-row .form-group { min-width: 0; }
 
 .sd-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4577,33 +4611,20 @@ FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    max-width: 400px;
+    max-width: 25rem;
     width: 90%;
 }
-
-.sd-dialog h4 {
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
-
+.sd-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
 .sd-dialog p {
     margin-bottom: 1rem;
     color: var(--color-muted);
     overflow-wrap: break-word;
 }
 
-@media (max-width: 640px) {
-    .sd-details {
-        grid-template-columns: 1fr;
-    }
-
-    .sd-details dt {
-        margin-top: 0.5rem;
-    }
-
-    .sd-form-row {
-        grid-template-columns: 1fr;
-    }
+@media (max-width: 40em) {
+    .sd-details { grid-template-columns: 1fr; }
+    .sd-details dt { margin-top: 0.5rem; }
+    .sd-form-row { grid-template-columns: 1fr; }
 }
 
 
@@ -5266,19 +5287,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 -------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 3: src/ObserverMagazine.Web/Pages/Showcase.razor.css
-   
-   Changes:
-   - Removed white-space: nowrap from .sc-table td (the root cause of overflow)
-   - Added overflow-wrap: break-word to .sc-table td
-   - Added min-width: 0 to flex/grid children throughout
-   - Added overflow-wrap to .sc-dialog p
-   =========================================================================== */
-
-/* ==========================================================================
-   Showcase — Product Catalog
-   ========================================================================== */
+/* Showcase.razor.css — Product catalog table, filters, pagination */
 
 /* ---- Toolbar ---- */
 .sc-toolbar {
@@ -5300,18 +5309,13 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
 }
 
-.sc-count {
-    font-size: 0.85rem;
-    color: var(--color-muted);
-}
+.sc-count { font-size: 0.85rem; color: var(--color-muted); }
 
 /* ---- Column picker ---- */
-.sc-col-toggle {
-    position: relative;
-}
+.sc-col-toggle { position: relative; }
 
 .sc-col-backdrop {
     position: fixed;
@@ -5329,10 +5333,10 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     border-radius: var(--radius);
     padding: 0.5rem;
     z-index: 50;
-    min-width: 180px;
-    max-height: 320px;
+    min-width: 11.25rem;
+    max-height: 20rem;
     overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
 }
 
 .sc-col-option {
@@ -5344,10 +5348,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     cursor: pointer;
     border-radius: 3px;
 }
-
-.sc-col-option:hover {
-    background: var(--color-surface);
-}
+.sc-col-option:hover { background: var(--color-surface); }
 
 .sc-col-restore {
     width: 100%;
@@ -5361,10 +5362,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     border-radius: 3px;
     cursor: pointer;
 }
-
-.sc-col-restore:hover {
-    background: var(--color-border);
-}
+.sc-col-restore:hover { background: var(--color-border); }
 
 /* ---- Page size ---- */
 .sc-page-size {
@@ -5383,11 +5381,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-text);
 }
 
-/* ---- Filters ---- */
-.sc-filter-toggle {
-    font-size: 0.85rem;
-}
-
+/* ---- Filter panel ---- */
 .sc-filter-panel {
     margin-bottom: 1rem;
     border: 1px solid var(--color-border);
@@ -5395,39 +5389,33 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     padding: 0.75rem;
 }
 
-.sc-filter-header {
+.sc-filter-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.5rem;
 }
 
-.sc-filter-header h3 {
-    font-size: 0.9rem;
-    margin: 0;
-}
-
 .sc-filter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
     gap: 0.5rem;
 }
 
-.sc-filter-cell {
+.sc-filter-row {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-    min-width: 0; /* FIX: grid child guard */
+    min-width: 0;
 }
 
-.sc-filter-cell label {
+.sc-filter-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-muted);
 }
 
-.sc-filter-cell input,
-.sc-filter-cell select {
+.sc-filter-input {
     width: 100%;
     padding: 0.3rem 0.5rem;
     border: 1px solid var(--color-border);
@@ -5437,14 +5425,20 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-text);
 }
 
-.sc-range-filter {
+.sc-range-inputs {
     display: flex;
     gap: 0.25rem;
 }
 
-.sc-range-filter input {
+.sc-range-inputs input {
     width: 50%;
-    min-width: 0; /* FIX: flex child guard */
+    min-width: 0;
+}
+
+.sc-range-sep {
+    align-self: center;
+    color: var(--color-muted);
+    font-size: 0.8rem;
 }
 
 /* ---- Table ---- */
@@ -5465,9 +5459,6 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     padding: 0.5rem 0.6rem;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
-    /* FIX: removed white-space: nowrap — this was causing long product names
-       and descriptions to overflow the table container. Table cells should
-       wrap text by default. Only action columns need nowrap. */
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -5479,48 +5470,19 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     color: var(--color-muted);
     position: sticky;
     top: 0;
-    white-space: nowrap; /* headers should stay on one line */
-}
-
-.sc-num {
-    text-align: right;
-    /* Numeric columns can stay nowrap — numbers don't get long enough to overflow */
     white-space: nowrap;
 }
 
-.sc-sortable {
-    cursor: pointer;
-    user-select: none;
-}
+.sc-num { text-align: right; white-space: nowrap; }
+.sc-sortable { cursor: pointer; user-select: none; }
+.sc-sortable:hover { color: var(--color-primary); }
+.sc-sort-arrow { font-size: 0.7rem; margin-left: 0.2rem; }
 
-.sc-sortable:hover {
-    color: var(--color-primary);
-}
+.sc-clickable-row { cursor: pointer; transition: background 0.1s; }
+.sc-clickable-row:hover { background: var(--color-surface); }
 
-.sc-sort-arrow {
-    font-size: 0.7rem;
-    margin-left: 0.2rem;
-}
-
-.sc-clickable-row {
-    cursor: pointer;
-    transition: background 0.1s;
-}
-
-.sc-clickable-row:hover {
-    background: var(--color-surface);
-}
-
-.sc-actions {
-    white-space: nowrap; /* action buttons should stay on one line */
-}
-
-.sc-actions-col {
-    width: 120px;
-    text-align: center;
-    white-space: nowrap; /* action column header stays on one line */
-}
-
+.sc-actions { white-space: nowrap; }
+.sc-actions-col { width: 7.5rem; text-align: center; white-space: nowrap; }
 .sc-empty {
     text-align: center;
     color: var(--color-muted);
@@ -5548,7 +5510,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 .sc-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5560,15 +5522,10 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    max-width: 400px;
+    max-width: 25rem;
     width: 90%;
 }
-
-.sc-dialog h4 {
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
-
+.sc-dialog h4 { margin-bottom: 0.75rem; overflow-wrap: break-word; }
 .sc-dialog p {
     margin-bottom: 1rem;
     color: var(--color-muted);
@@ -5577,16 +5534,9 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 }
 
 /* ---- Mobile: collapse table to cards ---- */
-@media (max-width: 768px) {
-    .sc-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .sc-toolbar-left,
-    .sc-toolbar-right {
-        justify-content: space-between;
-    }
+@media (max-width: 48em) {
+    .sc-toolbar { flex-direction: column; align-items: stretch; }
+    .sc-toolbar-left, .sc-toolbar-right { justify-content: space-between; }
 
     .sc-col-dropdown {
         position: fixed;
@@ -5595,18 +5545,15 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
         left: 0;
         right: 0;
         max-height: 50vh;
+        max-height: 50dvh;
         border-radius: var(--radius) var(--radius) 0 0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 -0.25rem 1.25rem rgba(0, 0, 0, 0.2);
         z-index: 100;
     }
 
-    .sc-filter-grid {
-        grid-template-columns: 1fr;
-    }
+    .sc-filter-grid { grid-template-columns: 1fr; }
 
-    .sc-table thead {
-        display: none;
-    }
+    .sc-table thead { display: none; }
 
     .sc-table tr {
         display: block;
@@ -5630,13 +5577,10 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
         font-weight: 600;
         text-align: left;
         margin-right: 0.5rem;
-        flex-shrink: 0; /* FIX: label doesn't collapse */
+        flex-shrink: 0;
     }
 
-    .sc-table-wrap {
-        border: none;
-        border-radius: 0;
-    }
+    .sc-table-wrap { border: none; border-radius: 0; }
 }
 
 
@@ -6190,16 +6134,8 @@ FILE: src/ObserverMagazine.Web/wwwroot/404.html
 FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
 -------------------------------------------------------------------------------
 /* ===========================================================================
-   FILE 1: src/ObserverMagazine.Web/wwwroot/css/app.css
-   
-   Changes from current version:
-   - Added overflow-wrap: break-word to body
-   - Added overflow-wrap: break-word to .container
-   - Added overflow-wrap: break-word + word-break: break-word to .form-group textarea
-   - Added overflow-wrap: break-word to .form-group input (for displayed value text)
-   - Added word-break: break-word to global code fallback
-   - Added min-width: 0 to .top-bar-inner flex children
-   - Added width: 100%; max-width: 100vw to body (already present, confirmed)
+   app.css — Global design tokens, reset, and shared utilities ONLY.
+   Component-specific styles live in their .razor.css files.
    =========================================================================== */
 
 /* ========== DESIGN TOKENS (Light — default) ========== */
@@ -6219,28 +6155,43 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-footer-bg: #f3f4f6;
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
-    --radius: 6px;
-    --max-width: 960px;
+    --radius: 0.375rem;
+    --max-width: 60rem;
 
     /* Inline code */
     --color-inline-code-bg: #eff1f5;
     --color-inline-code-fg: #1a1a2e;
     --color-inline-code-border: #dde0e6;
 
-    /* Syntax highlighting tokens — light theme (bg #f3f4f6)
-       Contrast ratios verified against #f3f4f6:                   */
-    --hljs-bg: #f3f4f6;
-    --hljs-fg: #1a1a2e;       /* ~15:1 */
-    --hljs-keyword: #6f42c1;  /* ~6.2:1  purple  */
-    --hljs-string: #0a3069;   /* ~12.5:1 dark blue */
-    --hljs-comment: #636c76;  /* ~4.7:1  gray — WCAG AA pass */
-    --hljs-number: #cf7700;   /* ~4.5:1  amber */
-    --hljs-function: #0550ae; /* ~7.1:1  blue */
-    --hljs-title: #c11e3a;    /* ~5.5:1  red */
-    --hljs-type: #0b6e6e;     /* ~5.3:1  teal */
-    --hljs-literal: #cf7700;  /* ~4.5:1  amber */
-    --hljs-attr: #4f46e5;     /* ~5.8:1  indigo */
-    --hljs-built-in: #0b6e6e; /* ~5.3:1  teal */
+    /* Syntax highlighting tokens (bg #f3f4f6) — contrast verified vs bg */
+    --hl-bg: #f3f4f6;
+    --hl-fg: #1a1a2e;       /* ~15:1 */
+    --hl-keyword: #6f42c1;  /* ~6.2:1  purple  */
+    --hl-string: #0a3069;   /* ~12.5:1 dark blue */
+    --hl-comment: #636c76;  /* ~4.7:1  gray — WCAG AA */
+    --hl-number: #cf7700;   /* ~4.5:1  amber */
+    --hl-function: #0550ae; /* ~7.1:1  blue */
+    --hl-title: #c11e3a;    /* ~5.5:1  red */
+    --hl-type: #0b6e6e;     /* ~5.3:1  teal */
+    --hl-literal: #cf7700;  /* ~4.5:1  amber */
+    --hl-attr: #4f46e5;     /* ~5.8:1  indigo */
+    --hl-built-in: #0b6e6e; /* ~5.3:1  teal */
+    --hl-tag: #0550ae;
+    --hl-selector: #6f42c1;
+    --hl-property: #4f46e5;
+    --hl-punctuation: #1a1a2e;
+
+    /* Terminal box — always dark-tinted */
+    --terminal-bg: #1e1e2e;
+    --terminal-fg: #cdd6f4;
+    --terminal-prompt: #a6e3a1;
+    --terminal-ok: #a6e3a1;
+    --terminal-out: #cdd6f4;
+    --terminal-dot-red: #f38ba8;
+    --terminal-dot-amber: #f9e2af;
+    --terminal-dot-green: #a6e3a1;
+    --terminal-header-bg: #313244;
+    --terminal-title-fg: #bac2de;
 }
 
 /* ---- Dark ---- */
@@ -6262,20 +6213,34 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-inline-code-fg: #e2e8f0;
     --color-inline-code-border: #2d3a4d;
 
-    /* Syntax tokens — dark theme (bg #1e293b)
-       Contrast ratios verified against #1e293b:                    */
-    --hljs-bg: #1e293b;
-    --hljs-fg: #e2e8f0;       /* ~11:1 */
-    --hljs-keyword: #c084fc;  /* ~5.8:1  purple */
-    --hljs-string: #7ee7a8;   /* ~7.9:1  green */
-    --hljs-comment: #8b949e;  /* ~4.8:1  gray — WCAG AA pass */
-    --hljs-number: #fbbf24;   /* ~9.5:1  amber */
-    --hljs-function: #6cb6ff; /* ~6.5:1  blue */
-    --hljs-title: #f87171;    /* ~5.5:1  red */
-    --hljs-type: #22d3ee;     /* ~8.6:1  cyan */
-    --hljs-literal: #fbbf24;  /* ~9.5:1  amber */
-    --hljs-attr: #a5b4fc;     /* ~6.4:1  indigo */
-    --hljs-built-in: #22d3ee; /* ~8.6:1  cyan */
+    /* Syntax tokens (bg #1e293b) */
+    --hl-bg: #1e293b;
+    --hl-fg: #e2e8f0;       /* ~11:1 */
+    --hl-keyword: #c084fc;  /* ~5.8:1  purple */
+    --hl-string: #7ee7a8;   /* ~7.9:1  green */
+    --hl-comment: #8b949e;  /* ~4.8:1  gray — WCAG AA */
+    --hl-number: #fbbf24;   /* ~9.5:1  amber */
+    --hl-function: #6cb6ff; /* ~6.5:1  blue */
+    --hl-title: #f87171;    /* ~5.5:1  red */
+    --hl-type: #22d3ee;     /* ~8.6:1  cyan */
+    --hl-literal: #fbbf24;  /* ~9.5:1  amber */
+    --hl-attr: #a5b4fc;     /* ~6.4:1  indigo */
+    --hl-built-in: #22d3ee; /* ~8.6:1  cyan */
+    --hl-tag: #6cb6ff;
+    --hl-selector: #c084fc;
+    --hl-property: #a5b4fc;
+    --hl-punctuation: #e2e8f0;
+
+    --terminal-bg: #11111b;
+    --terminal-fg: #cdd6f4;
+    --terminal-prompt: #a6e3a1;
+    --terminal-ok: #a6e3a1;
+    --terminal-out: #cdd6f4;
+    --terminal-dot-red: #f38ba8;
+    --terminal-dot-amber: #f9e2af;
+    --terminal-dot-green: #a6e3a1;
+    --terminal-header-bg: #1e1e2e;
+    --terminal-title-fg: #bac2de;
 }
 
 /* ---- Sepia ---- */
@@ -6297,19 +6262,33 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-inline-code-fg: #433422;
     --color-inline-code-border: #cdbfa5;
 
-    /* Syntax tokens — sepia (bg #ede0c8) */
-    --hljs-bg: #ede0c8;
-    --hljs-fg: #433422;
-    --hljs-keyword: #7a3510;
-    --hljs-string: #2e6e32;
-    --hljs-comment: #8a7a66;
-    --hljs-number: #b05800;
-    --hljs-function: #6b3410;
-    --hljs-title: #a01c1c;
-    --hljs-type: #006050;
-    --hljs-literal: #b05800;
-    --hljs-attr: #4a148c;
-    --hljs-built-in: #006050;
+    --hl-bg: #ede0c8;
+    --hl-fg: #433422;
+    --hl-keyword: #7a3510;
+    --hl-string: #2e6e32;
+    --hl-comment: #8a7a66;
+    --hl-number: #b05800;
+    --hl-function: #6b3410;
+    --hl-title: #a01c1c;
+    --hl-type: #006050;
+    --hl-literal: #b05800;
+    --hl-attr: #4a148c;
+    --hl-built-in: #006050;
+    --hl-tag: #6b3410;
+    --hl-selector: #7a3510;
+    --hl-property: #4a148c;
+    --hl-punctuation: #433422;
+
+    --terminal-bg: #2a2013;
+    --terminal-fg: #d4c4a8;
+    --terminal-prompt: #6b8e23;
+    --terminal-ok: #6b8e23;
+    --terminal-out: #d4c4a8;
+    --terminal-dot-red: #cd5c5c;
+    --terminal-dot-amber: #daa520;
+    --terminal-dot-green: #6b8e23;
+    --terminal-header-bg: #3a2d1a;
+    --terminal-title-fg: #b8a88a;
 }
 
 /* ---- Solarized Light ---- */
@@ -6331,18 +6310,33 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-inline-code-fg: #586e75;
     --color-inline-code-border: #d0c8b0;
 
-    --hljs-bg: #eee8d5;
-    --hljs-fg: #657b83;
-    --hljs-keyword: #859900;
-    --hljs-string: #2aa198;
-    --hljs-comment: #93a1a1;
-    --hljs-number: #d33682;
-    --hljs-function: #268bd2;
-    --hljs-title: #cb4b16;
-    --hljs-type: #b58900;
-    --hljs-literal: #d33682;
-    --hljs-attr: #6c71c4;
-    --hljs-built-in: #b58900;
+    --hl-bg: #eee8d5;
+    --hl-fg: #657b83;
+    --hl-keyword: #859900;
+    --hl-string: #2aa198;
+    --hl-comment: #93a1a1;
+    --hl-number: #d33682;
+    --hl-function: #268bd2;
+    --hl-title: #cb4b16;
+    --hl-type: #b58900;
+    --hl-literal: #d33682;
+    --hl-attr: #6c71c4;
+    --hl-built-in: #b58900;
+    --hl-tag: #268bd2;
+    --hl-selector: #859900;
+    --hl-property: #6c71c4;
+    --hl-punctuation: #657b83;
+
+    --terminal-bg: #002b36;
+    --terminal-fg: #839496;
+    --terminal-prompt: #859900;
+    --terminal-ok: #859900;
+    --terminal-out: #839496;
+    --terminal-dot-red: #dc322f;
+    --terminal-dot-amber: #b58900;
+    --terminal-dot-green: #859900;
+    --terminal-header-bg: #073642;
+    --terminal-title-fg: #93a1a1;
 }
 
 /* ---- Solarized Dark ---- */
@@ -6364,18 +6358,33 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-inline-code-fg: #93a1a1;
     --color-inline-code-border: #1f4852;
 
-    --hljs-bg: #073642;
-    --hljs-fg: #839496;
-    --hljs-keyword: #859900;
-    --hljs-string: #2aa198;
-    --hljs-comment: #586e75;
-    --hljs-number: #d33682;
-    --hljs-function: #268bd2;
-    --hljs-title: #cb4b16;
-    --hljs-type: #b58900;
-    --hljs-literal: #d33682;
-    --hljs-attr: #6c71c4;
-    --hljs-built-in: #b58900;
+    --hl-bg: #073642;
+    --hl-fg: #839496;
+    --hl-keyword: #859900;
+    --hl-string: #2aa198;
+    --hl-comment: #586e75;
+    --hl-number: #d33682;
+    --hl-function: #268bd2;
+    --hl-title: #cb4b16;
+    --hl-type: #b58900;
+    --hl-literal: #d33682;
+    --hl-attr: #6c71c4;
+    --hl-built-in: #b58900;
+    --hl-tag: #268bd2;
+    --hl-selector: #859900;
+    --hl-property: #6c71c4;
+    --hl-punctuation: #839496;
+
+    --terminal-bg: #00212b;
+    --terminal-fg: #839496;
+    --terminal-prompt: #859900;
+    --terminal-ok: #859900;
+    --terminal-out: #839496;
+    --terminal-dot-red: #dc322f;
+    --terminal-dot-amber: #b58900;
+    --terminal-dot-green: #859900;
+    --terminal-header-bg: #002b36;
+    --terminal-title-fg: #93a1a1;
 }
 
 /* ---- High Contrast ---- */
@@ -6397,18 +6406,33 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
     --color-inline-code-fg: #ffffff;
     --color-inline-code-border: #555555;
 
-    --hljs-bg: #1a1a1a;
-    --hljs-fg: #ffffff;
-    --hljs-keyword: #ffff00;
-    --hljs-string: #00ff00;
-    --hljs-comment: #888888;
-    --hljs-number: #ff6600;
-    --hljs-function: #00ffff;
-    --hljs-title: #ff4444;
-    --hljs-type: #44ffff;
-    --hljs-literal: #ff6600;
-    --hljs-attr: #ffff00;
-    --hljs-built-in: #44ffff;
+    --hl-bg: #1a1a1a;
+    --hl-fg: #ffffff;
+    --hl-keyword: #ffff00;
+    --hl-string: #00ff00;
+    --hl-comment: #888888;
+    --hl-number: #ff6600;
+    --hl-function: #00ffff;
+    --hl-title: #ff4444;
+    --hl-type: #44ffff;
+    --hl-literal: #ff6600;
+    --hl-attr: #ffff00;
+    --hl-built-in: #44ffff;
+    --hl-tag: #00ffff;
+    --hl-selector: #ffff00;
+    --hl-property: #ffff00;
+    --hl-punctuation: #ffffff;
+
+    --terminal-bg: #000000;
+    --terminal-fg: #ffffff;
+    --terminal-prompt: #00ff00;
+    --terminal-ok: #00ff00;
+    --terminal-out: #ffffff;
+    --terminal-dot-red: #ff0000;
+    --terminal-dot-amber: #ffff00;
+    --terminal-dot-green: #00ff00;
+    --terminal-header-bg: #111111;
+    --terminal-title-fg: #cccccc;
 }
 
 /* ========== RESET ========== */
@@ -6424,7 +6448,6 @@ body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
-    /* FIX: baseline word-wrap safety net for all content */
     overflow-wrap: break-word;
     word-break: break-word;
 }
@@ -6434,146 +6457,20 @@ a:hover { text-decoration: underline; }
 
 img { max-width: 100%; height: auto; }
 
+code { font-family: var(--font-mono); }
+pre { min-width: 0; }
+
 .container {
     max-width: var(--max-width);
     margin: 0 auto;
     padding: 0 1rem;
-    /* FIX: prevent long unbroken strings from blowing out the container */
     overflow-wrap: break-word;
 }
 
-/* ========== GLOBAL CODE DEFAULTS ========== */
-
-code {
-    font-family: var(--font-mono);
-}
-
-pre {
-    min-width: 0;
-}
-
-/* ========== HEADER ========== */
-.top-bar {
-    background: var(--color-header-bg);
-    padding: 0.75rem 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.top-bar-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-width: 0; /* FIX: prevent flex children from overflowing */
-}
-
-.brand {
-    color: var(--color-header-fg);
-    font-size: 1.25rem;
-    min-width: 0; /* FIX: flex child guard */
-}
-.brand:hover { text-decoration: none; opacity: 0.9; }
-
-/* ========== NAV ========== */
-.nav-menu {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-width: 0; /* FIX: flex child guard */
-}
-
-.nav-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: var(--color-header-fg);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.nav-links {
-    display: flex;
-    list-style: none;
-    gap: 1.25rem;
-    align-items: center;
-}
-
-.nav-links a {
-    color: var(--color-header-fg);
-    opacity: 0.85;
-    font-weight: 500;
-    transition: opacity 0.15s;
-}
-.nav-links a:hover,
-.nav-links a.active {
-    opacity: 1;
-    text-decoration: none;
-}
-
-.nav-github {
-    display: inline-flex;
-    align-items: center;
-    color: var(--color-header-fg);
-    opacity: 0.85;
-    transition: opacity 0.15s;
-}
-.nav-github:hover { opacity: 1; text-decoration: none; }
-.nav-github svg { fill: currentColor; width: 20px; height: 20px; }
-
-.theme-select {
-    font-size: 0.8rem;
-    padding: 0.2rem 0.4rem;
-    border-radius: var(--radius);
-    border: 1px solid rgba(255,255,255,0.3);
-    background: transparent;
-    color: var(--color-header-fg);
-    cursor: pointer;
-}
-.theme-select option {
-    background: var(--color-bg);
-    color: var(--color-text);
-}
-
-@media (max-width: 640px) {
-    .nav-toggle { display: block; }
-    .nav-links {
-        display: none;
-        flex-direction: column;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: var(--color-header-bg);
-        padding: 1rem;
-        gap: 0.75rem;
-        z-index: 99;
-    }
-    .nav-links.open { display: flex; }
-    .theme-select { align-self: flex-start; }
-}
-
-/* ========== FOOTER ========== */
-.site-footer {
-    background: var(--color-footer-bg);
-    border-top: 1px solid var(--color-border);
-    padding: 1.5rem 0;
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--color-muted);
-}
-.site-footer a { margin: 0 0.25rem; }
-
-/* ========== MAIN CONTENT ========== */
-.main-content {
-    min-height: calc(100vh - 200px);
-    padding: 2rem 1rem;
-}
-
-/* ========== BUTTONS ========== */
+/* ========== BUTTONS (shared utility) ========== */
 .btn {
     display: inline-block;
-    padding: 0.65rem 1.5rem;
+    padding: 0.625rem 1.5rem;
     border-radius: var(--radius);
     font-weight: 600;
     text-decoration: none;
@@ -6596,7 +6493,7 @@ pre {
     font-size: 0.85rem;
 }
 
-/* ========== SHARED BLOG / TAG STYLES ========== */
+/* ========== SHARED BLOG / TAG STYLES (used in Blog, BlogPost, Home) ========== */
 .blog-meta { color: var(--color-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
 
 .tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
@@ -6632,10 +6529,8 @@ a.tag:hover {
     margin-bottom: 0.5rem;
 }
 
-/* ========== FORMS (shared across CRUD components) ========== */
-.form-group {
-    margin-bottom: 1rem;
-}
+/* ========== FORMS (shared across MasterDetail, Showcase, ShowcaseDetail) ========== */
+.form-group { margin-bottom: 1rem; }
 .form-group label {
     display: block;
     font-weight: 600;
@@ -6654,9 +6549,7 @@ a.tag:hover {
     font-family: var(--font-sans);
     background: var(--color-bg);
     color: var(--color-text);
-    /* FIX: prevent long unbroken words from overflowing form inputs */
     overflow-wrap: break-word;
-    word-break: break-word;
 }
 .form-group input:focus,
 .form-group textarea:focus {
@@ -6666,76 +6559,12 @@ a.tag:hover {
 }
 .form-group textarea {
     resize: vertical;
-    min-height: 80px;
-    /* FIX: ensure textarea wraps long lines */
+    min-height: 5rem;
     white-space: pre-wrap;
     overflow-wrap: break-word;
-    word-break: break-word;
 }
-.form-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-.form-validation {
-    color: #dc2626;
-    font-size: 0.8rem;
-    margin-top: 0.25rem;
-}
-
-/* ========== SYNTAX HIGHLIGHTING (highlight.js tokens) ========== */
-
-.hljs {
-    background: var(--hljs-bg) !important;
-    color: var(--hljs-fg) !important;
-    padding: 0 !important;
-}
-
-.hljs-keyword,
-.hljs-selector-tag { color: var(--hljs-keyword) !important; }
-
-.hljs-string,
-.hljs-doctag { color: var(--hljs-string) !important; }
-
-.hljs-comment { color: var(--hljs-comment) !important; font-style: italic; }
-
-.hljs-number { color: var(--hljs-number) !important; }
-
-.hljs-literal { color: var(--hljs-literal) !important; }
-
-.hljs-function { color: var(--hljs-function) !important; }
-
-.hljs-title,
-.hljs-title.class_,
-.hljs-title.function_ { color: var(--hljs-title) !important; }
-
-.hljs-type,
-.hljs-built_in { color: var(--hljs-built-in) !important; }
-
-.hljs-attr,
-.hljs-attribute { color: var(--hljs-attr) !important; }
-
-.hljs-meta,
-.hljs-meta .hljs-keyword { color: var(--hljs-keyword) !important; }
-
-.hljs-name { color: var(--hljs-title) !important; }
-
-.hljs-params { color: var(--hljs-fg) !important; }
-
-.hljs-variable { color: var(--hljs-fg) !important; }
-
-.hljs-regexp { color: var(--hljs-string) !important; }
-
-.hljs-selector-class,
-.hljs-selector-id { color: var(--hljs-attr) !important; }
-
-.hljs-property { color: var(--hljs-attr) !important; }
-
-.hljs-operator { color: var(--hljs-fg) !important; }
-
-.hljs-punctuation { color: var(--hljs-fg) !important; }
-
-.hljs-symbol { color: var(--hljs-number) !important; }
+.form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.form-validation { color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
 
 /* ========== LOADING ========== */
 .loading { text-align: center; padding: 2rem; color: var(--color-muted); }
@@ -6764,9 +6593,6 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="ObserverMagazine.Web.styles.css" />
 
-    <!-- highlight.js core — restored locally via LibMan at build time -->
-    <script src="lib/highlight.js/highlight.min.js"></script>
-
     <!-- Apply saved theme BEFORE first paint to prevent flash -->
     <script>
         (function () {
@@ -6781,7 +6607,7 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
 </head>
 <body>
     <div id="app">
-        <div style="display:flex;align-items:center;justify-content:center;height:100vh;">
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;height:100dvh;">
             <p>Loading Observer Magazine...</p>
         </div>
     </div>
@@ -6809,15 +6635,328 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
         };
     </script>
 
-    <!-- Syntax highlighting interop -->
+    <!-- ================================================================
+         Custom syntax highlighter — replaces highlight.js.
+         No external dependencies. Handles C#, JS/TS, HTML, CSS, JSON,
+         YAML, Bash, SQL, Python. Degrades gracefully for unknowns.
+         ================================================================ -->
     <script>
+    (function () {
+        'use strict';
+
+        function esc(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function sp(cls, txt) {
+            return '<span class="hl-' + cls + '">' + esc(txt) + '</span>';
+        }
+
+        var KW = {
+            csharp: /^(abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|false|finally|fixed|float|for|foreach|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|return|sbyte|sealed|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|where|while|yield|when|and|or|not|init|required|global|file|scoped|nint|nuint|nameof|value)$/,
+            javascript: /^(async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|false|finally|for|from|function|if|import|in|instanceof|let|new|null|of|return|static|super|switch|this|throw|true|try|typeof|undefined|var|void|while|with|yield)$/,
+            typescript: /^(abstract|as|async|await|break|case|catch|class|const|continue|debugger|declare|default|delete|do|else|enum|export|extends|false|finally|for|from|function|if|implements|import|in|instanceof|interface|keyof|let|module|namespace|new|null|of|override|readonly|return|satisfies|static|super|switch|this|throw|true|try|type|typeof|undefined|var|void|while|with|yield|infer|never|unknown|any|string|number|boolean|symbol|bigint)$/,
+            python: /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|self|print)$/,
+            sql: /^(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|JOIN|INNER|LEFT|RIGHT|OUTER|CROSS|ON|AND|OR|NOT|NULL|IS|IN|LIKE|BETWEEN|EXISTS|HAVING|GROUP|BY|ORDER|ASC|DESC|LIMIT|OFFSET|UNION|ALL|AS|SET|INTO|VALUES|DISTINCT|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END|BEGIN|COMMIT|ROLLBACK|TRANSACTION|PRIMARY|KEY|FOREIGN|REFERENCES|CONSTRAINT|DEFAULT|CHECK|UNIQUE|TOP|GO|USE|EXEC|DECLARE|NVARCHAR|VARCHAR|INT|BIT|DATETIME|IDENTITY|NOLOCK|WITH)$/i,
+            bash: /^(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|in|select|until|echo|exit|export|source|alias|set|unset|readonly|local|declare|eval|exec|trap|cd|ls|grep|awk|sed|cat|mkdir|rm|cp|mv|chmod|chown|sudo|apt|dnf|pip|npm|dotnet|git|docker|podman)$/
+        };
+
+        function highlightGeneral(code, lang) {
+            var kw = KW[lang];
+            var hashC = lang === 'python' || lang === 'bash';
+            var dashC = lang === 'sql';
+            var out = '', i = 0, n = code.length;
+
+            while (i < n) {
+                var ch = code[i];
+                // Line comment
+                if ((ch === '/' && code[i + 1] === '/') ||
+                    (hashC && ch === '#' && (i === 0 || code[i - 1] === '\n' || /\s/.test(code[i - 1]))) ||
+                    (dashC && ch === '-' && code[i + 1] === '-')) {
+                    var end = code.indexOf('\n', i);
+                    if (end === -1) end = n;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Block comment
+                if (ch === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                // Strings: triple-quote, regular, verbatim/interpolated C#
+                if (ch === '"' || ch === "'" || ch === '`') {
+                    var q = ch, j = i + 1;
+                    if (code[i + 1] === q && code[i + 2] === q) {
+                        j = i + 3;
+                        var close = code.indexOf(q + q + q, j);
+                        close = close === -1 ? n : close + 3;
+                        out += sp('string', code.slice(i, close));
+                        i = close; continue;
+                    }
+                    while (j < n) {
+                        if (code[j] === '\\') { j += 2; continue; }
+                        if (code[j] === q) { j++; break; }
+                        if (q !== '`' && code[j] === '\n') break;
+                        j++;
+                    }
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                // C# verbatim/interpolated @" $" $@" @$"
+                if (lang === 'csharp' && (ch === '@' || ch === '$')) {
+                    var next = code[i + 1] || '';
+                    var start = i;
+                    if (next === '"') {
+                        i += 2;
+                    } else if ((next === '@' || next === '$') && code[i + 2] === '"') {
+                        i += 3;
+                    } else {
+                        // Not a string prefix — fall through to identifier
+                        goto_ident(); continue;
+                    }
+                    var j = i;
+                    while (j < n) {
+                        if (code[j] === '"') {
+                            if (code[j + 1] === '"') { j += 2; continue; }
+                            j++; break;
+                        }
+                        j++;
+                    }
+                    out += sp('string', code.slice(start, j));
+                    i = j; continue;
+                }
+                // Number
+                if (/\d/.test(ch) && (i === 0 || !/[a-zA-Z_$]/.test(code[i - 1]))) {
+                    var j = i;
+                    if (ch === '0' && /[xXbBoO]/.test(code[j + 1] || '')) j += 2;
+                    while (j < n && /[\da-fA-F._eEuUlLfFdDmMnN]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Identifier / keyword
+                if (/[a-zA-Z_$]/.test(ch)) {
+                    goto_ident(); continue;
+                }
+                // Default
+                out += esc(ch);
+                i++;
+            }
+
+            function goto_ident() {
+                var j = i;
+                while (j < n && /[a-zA-Z0-9_$]/.test(code[j])) j++;
+                if (j === i) { out += esc(code[i]); i++; return; }
+                var word = code.slice(i, j);
+                if (kw && kw.test(word)) {
+                    out += sp('keyword', word);
+                } else if (/^[A-Z][a-zA-Z0-9]*$/.test(word) && word.length > 1 &&
+                           !/^(False|True|None)$/.test(word)) {
+                    out += sp('type', word);
+                } else {
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === '(') {
+                        out += sp('function', word);
+                    } else {
+                        out += esc(word);
+                    }
+                }
+                i = j;
+            }
+
+            return out;
+        }
+
+        function highlightJSON(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '"') {
+                    var j = i + 1;
+                    while (j < n && code[j] !== '"') {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    var str = code.slice(i, j);
+                    var k = j;
+                    while (k < n && /\s/.test(code[k])) k++;
+                    if (code[k] === ':') {
+                        out += sp('attr', str);
+                    } else {
+                        out += sp('string', str);
+                    }
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) || (code[i] === '-' && /\d/.test(code[i + 1] || ''))) {
+                    var j = i;
+                    if (code[j] === '-') j++;
+                    while (j < n && /[\d.eE+\-]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code.slice(i, i + 4) === 'true' || code.slice(i, i + 5) === 'false' || code.slice(i, i + 4) === 'null') {
+                    var word = code.slice(i, i + 4) === 'null' ? 'null' :
+                              code.slice(i, i + 4) === 'true' ? 'true' : 'false';
+                    out += sp('literal', word);
+                    i += word.length; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightYAML(code) {
+            var lines = code.split('\n');
+            return lines.map(function (line) {
+                if (/^\s*#/.test(line)) return sp('comment', line);
+                var m = line.match(/^(\s*)([\w][\w.-]*\s*)(:)(.*)/);
+                if (m) {
+                    return esc(m[1]) + sp('attr', m[2]) + esc(m[3]) + highlightYAMLValue(m[4]);
+                }
+                return esc(line);
+            }).join('\n');
+        }
+
+        function highlightYAMLValue(val) {
+            val = val.trim();
+            if (!val || val === '') return '';
+            if (/^(true|false|yes|no|on|off|null|~)$/i.test(val)) return ' ' + sp('literal', val);
+            if (/^-?\d/.test(val)) return ' ' + sp('number', val);
+            if (/^["']/.test(val)) return ' ' + sp('string', val);
+            return ' ' + esc(val);
+        }
+
+        function highlightHTML(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '<') {
+                    if (code.slice(i, i + 4) === '<!--') {
+                        var end = code.indexOf('-->', i);
+                        end = end === -1 ? n : end + 3;
+                        out += sp('comment', code.slice(i, end));
+                        i = end; continue;
+                    }
+                    var end = code.indexOf('>', i);
+                    if (end === -1) { out += esc(code[i]); i++; continue; }
+                    var tag = code.slice(i, end + 1);
+                    out += esc('<');
+                    var inner = tag.slice(1, -1);
+                    // Tag name
+                    var tm = inner.match(/^(\/?)(\w[\w-]*)/);
+                    if (tm) {
+                        out += esc(tm[1]) + sp('tag', tm[2]);
+                        inner = inner.slice(tm[0].length);
+                    }
+                    // Attributes
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)("[^"]*"|'[^']*')/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    inner = inner.replace(/(\w[\w-]*)(\s*=\s*)(\S+)/g, function (m, attr, eq, val) {
+                        return sp('attr', attr) + esc(eq) + sp('string', val);
+                    });
+                    // Remaining unmatched attrs (boolean)
+                    inner = inner.replace(/(\s)(\w[\w-]*)/g, function (m, space, attr) {
+                        return space + sp('attr', attr);
+                    });
+                    out += inner + esc('>');
+                    i = end + 1; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlightCSS(code) {
+            var out = '', i = 0, n = code.length;
+            while (i < n) {
+                if (code[i] === '/' && code[i + 1] === '*') {
+                    var end = code.indexOf('*/', i + 2);
+                    end = end === -1 ? n : end + 2;
+                    out += sp('comment', code.slice(i, end));
+                    i = end; continue;
+                }
+                if (code[i] === '"' || code[i] === "'") {
+                    var q = code[i], j = i + 1;
+                    while (j < n && code[j] !== q) {
+                        if (code[j] === '\\') j++;
+                        j++;
+                    }
+                    if (j < n) j++;
+                    out += sp('string', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (/\d/.test(code[i]) && (i === 0 || !/[a-zA-Z_-]/.test(code[i - 1]))) {
+                    var j = i;
+                    while (j < n && /[\d.%a-zA-Z]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                if (code[i] === '#' && /[0-9a-fA-F]/.test(code[i + 1] || '')) {
+                    var j = i + 1;
+                    while (j < n && /[0-9a-fA-F]/.test(code[j])) j++;
+                    out += sp('number', code.slice(i, j));
+                    i = j; continue;
+                }
+                // Selectors (at start of line or after })
+                if (/[.#@:[]/.test(code[i]) || (/[a-zA-Z]/.test(code[i]) && (i === 0 || code[i - 1] === '\n' || code[i - 1] === '}'))) {
+                    var j = i;
+                    while (j < n && code[j] !== '{' && code[j] !== ';' && code[j] !== '\n') j++;
+                    if (code[j] === '{') {
+                        out += sp('selector', code.slice(i, j));
+                        i = j; continue;
+                    }
+                }
+                // Properties (word followed by :)
+                if (/[a-zA-Z-]/.test(code[i])) {
+                    var j = i;
+                    while (j < n && /[a-zA-Z0-9-]/.test(code[j])) j++;
+                    var word = code.slice(i, j);
+                    var k = j;
+                    while (k < n && code[k] === ' ') k++;
+                    if (code[k] === ':' && code[k + 1] !== ':') {
+                        out += sp('property', word);
+                    } else {
+                        out += esc(word);
+                    }
+                    i = j; continue;
+                }
+                out += esc(code[i]);
+                i++;
+            }
+            return out;
+        }
+
+        function highlight(code, lang) {
+            lang = (lang || '').toLowerCase().replace(/^language-/, '');
+            var aliases = { cs: 'csharp', ts: 'typescript', js: 'javascript', sh: 'bash', shell: 'bash', zsh: 'bash', yml: 'yaml', xml: 'html' };
+            if (aliases[lang]) lang = aliases[lang];
+
+            if (lang === 'json') return highlightJSON(code);
+            if (lang === 'yaml') return highlightYAML(code);
+            if (lang === 'html' || lang === 'xml') return highlightHTML(code);
+            if (lang === 'css') return highlightCSS(code);
+            if (KW[lang]) return highlightGeneral(code, lang);
+
+            // Unknown language — try general with no keywords
+            return highlightGeneral(code, '');
+        }
+
         window.observerHighlight = {
             highlightAll: function () {
-                document.querySelectorAll('.blog-content pre code').forEach(function (block) {
-                    hljs.highlightElement(block);
+                document.querySelectorAll('.blog-content pre code').forEach(function (el) {
+                    if (el.dataset.highlighted) return;
+                    var langClass = el.className || '';
+                    var lang = (langClass.match(/language-(\S+)/) || ['', ''])[1];
+                    var code = el.textContent;
+                    el.innerHTML = highlight(code, lang);
+                    el.dataset.highlighted = 'true';
                 });
             }
         };
+    }());
     </script>
 
     <!-- Audio helper for BlogTtsPlayer -->
@@ -9549,9 +9688,9 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 110
+Total Files Exported: 111
   Blog posts (front matter only): 34
-  Full content files: 74
+  Full content files: 75
   Binary files skipped: 2
 Output File: docs/llm/dump.txt
 ===============================================================================
