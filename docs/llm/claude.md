@@ -33600,3 +33600,327 @@ a.tag:hover {
 
 32
 53
+
+this is good but I think it can be better. 
+also I see a lot of px in our css. 
+I don't think this is the state of the art. 
+We should use things like em, rem, vh, dvh, and things like that, right? 
+also, we should encapsulate all the css as much as necessary 
+meaning app.css should have minimal css and the vast majority of the css should belong to individual components 
+also please minimize the use of packages 
+lets not use third party dependencies unless essential 
+I read the news that some package got compromised yesterday 
+and it feels like the winds are blowing away from using as many packages as possible 
+and toward writing code oneself 
+especially if a package does ten things and we only need two or three 
+so yes, I understand this is a big lift but please bear with me 
+also please do not hallucinate 
+for the code blocks, we should use something like this 
+how do we make it so it works everywhere not just a single html page 
+implemented here 
+https://collabskus.neocities.org/pinetime-pro
+
+```html
+<div class="terminal-box reveal visible" role="region" aria-label="Example development board bringup terminal session" tabindex="0">
+      <div class="terminal-header">
+        <span class="terminal-dot td-red" aria-hidden="true"></span>
+        <span class="terminal-dot td-amber" aria-hidden="true"></span>
+        <span class="terminal-dot td-green" aria-hidden="true"></span>
+        <span class="terminal-title">pinetime-pro — OpenOCD bring-up</span>
+      </div>
+      <div class="terminal-body"><span class="terminal-prompt">$ </span><span class="terminal-out">openocd -f interface/cmsis-dap.cfg -f target/cortex-m33.cfg</span>
+<span class="terminal-ok">Open On-Chip Debugger 0.12.0</span>
+<span class="terminal-out">Info : CMSIS-DAP: SWD supported</span>
+<span class="terminal-out">Info : Listening on port 3333 for gdb connections</span>
+<span class="terminal-ok">Info : SWD DPIDR 0x6ba02477  ← M33 detected</span>
+<span class="terminal-out">Info : cortex_m reset_config sysresetreq</span>
+<span class="terminal-prompt">$ </span><span class="terminal-out">arm-none-eabi-gdb build/blinky.elf -ex "target remote :3333"</span>
+<span class="terminal-ok">Remote debugging using :3333</span>
+<span class="terminal-out">0x00000000 in Reset_Handler ()</span>
+<span class="terminal-prompt">(gdb) </span><span class="terminal-out">load</span>
+<span class="terminal-ok">Loading section .text, 0x4 bytes at 0x00000000.</span>
+<span class="terminal-ok">Start address 0x000001f8, load size 18224</span>
+<span class="terminal-ok">Transfer rate: 42 KB/sec, 4556 bytes/write.</span>
+<span class="terminal-prompt">(gdb) </span><span class="terminal-out">continue</span>
+<span class="terminal-ok">[LED blinks on prototype board — progress!]</span></div>
+</div>
+```
+It is described in the instructions below 
+if there are other good ideas in the instructions below, use them as well 
+remember they have to work everywhere for every theme though so please be careful. 
+also please generate a completely new and updated export.sh that only has the title and metadata of blog posts but not the full text 
+I feel like the dump does not need the full text of blog posts 
+as it is not essential to write new blog posts or to edit code 
+you should not have to read every single blog post ever to process prompts
+
+ok so here are the instructions, remember these instructions I have copy pasted from elsewhere 
+Create a complete, fully self-contained single-file HTML page about [TOPIC].
+
+═══════════════════════════════════════════════════════════
+ABSOLUTE REQUIREMENT: RETURN THE FULL HTML SOURCE EVERY TIME
+No summaries. No diffs. No "here is the changed section."
+The entire file, from <!DOCTYPE html> to </html>, every time.
+═══════════════════════════════════════════════════════════
+
+━━━ SELF-CONTAINED / NO EXTERNAL DEPENDENCIES ━━━━━━━━━━━━
+- Zero external resources. No CDN links. No @import.
+- All CSS is inside a single <style> block in <head>.
+- All JavaScript is inside a single <script> block before </body>.
+- All fonts must be system fonts or web-safe fonts only.
+  Acceptable stack example:
+    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', 'Courier New', monospace;
+- Any syntax highlighting, icon rendering, or animation must be
+  implemented from scratch in the inline CSS/JS — never loaded.
+
+━━━ HEAD / META TAGS — INCLUDE ALL OF THESE ━━━━━━━━━━━━━━
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description"          content="…">
+<meta name="keywords"             content="…">
+<meta name="author"               content="…">
+<meta name="robots"               content="index, follow">
+<meta name="theme-color"          content="…" media="(prefers-color-scheme: light)">
+<meta name="theme-color"          content="…" media="(prefers-color-scheme: dark)">
+
+<!-- Open Graph -->
+<meta property="og:type"          content="article">
+<meta property="og:title"         content="…">
+<meta property="og:description"   content="…">
+<meta property="og:url"           content="…">
+<meta property="og:image"         content="…">
+<meta property="og:site_name"     content="…">
+<meta property="og:locale"        content="en_US">
+<meta property="article:published_time" content="…">
+
+<!-- Twitter / X Card -->
+<meta name="twitter:card"         content="summary_large_image">
+<meta name="twitter:title"        content="…">
+<meta name="twitter:description"  content="…">
+<meta name="twitter:image"        content="…">
+
+<!-- Canonical -->
+<link rel="canonical" href="…">
+
+<title>Page Title — Site Name</title>
+
+━━━ COLOR SCHEME — LIGHT MODE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Page background: very slowly cycling pastel colors using a
+  CSS @keyframes animation (45–60 second cycle, ease-in-out).
+  Pastel examples: soft blue → soft lavender → soft mint →
+  soft peach → soft sky → back. Colors must be subtle enough
+  that text remains trivially readable at all times.
+  Example keyframe stops: #eef2fb, #f2eefb, #eefbf3, #fbf4ee, #eef7fb
+- Page text: near-black, minimum #1a1a1a, target contrast ≥ 7:1.
+- Surfaces (cards, nav, footer): rgba(255,255,255,0.88) with
+  backdrop-filter: blur(12px) for a frosted-glass feel.
+- Borders: rgba(0,0,0,0.10) to 1px solid #d0d7de.
+
+━━━ COLOR SCHEME — DARK MODE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Page background: same slow cycling animation but near-black
+  pastels (e.g. #07090f, #09070f, #07100a, #100a07, #070f10).
+- Page text: near-white, minimum #c9d1d9, target contrast ≥ 7:1.
+- Surfaces: rgba(22,27,34,0.90).
+- Borders: rgba(255,255,255,0.08) to 1px solid #30363d.
+- EVERY element must adapt. No hardcoded dark or light colors
+  anywhere in the stylesheet. Every color value must be a
+  CSS custom property (var(--…)) defined separately inside
+  @media (prefers-color-scheme: light) and
+  @media (prefers-color-scheme: dark) blocks.
+- This includes: callout boxes, code blocks, error boxes,
+  terminal-style boxes, tags, badges, stat cards, nav, footer,
+  blockquotes, inline code, table rows — everything.
+
+━━━ CODE BLOCK THEMING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Light mode → light code theme (e.g. GitHub Light: bg #f6f8fa,
+  base text #24292f).
+- Dark mode  → dark code theme (e.g. GitHub Dark Dimmed: bg #1c2128,
+  base text #adbac7).
+- Every syntax token color must be defined as a CSS variable and
+  must achieve WCAG AA contrast (≥ 4.5:1) against its code
+  background in BOTH modes. Provide verified ratios in a comment.
+  Suggested light tokens (on #f6f8fa):
+    keyword  #0550ae  (7.0:1)
+    type     #953800  (5.2:1)
+    string   #032f62  (13.2:1)
+    comment  #57606a  (4.6:1)
+    number   #116329  (5.9:1)
+    method   #6639ba  (6.1:1)
+  Suggested dark tokens (on #1c2128):
+    keyword  #6cb6ff  (6.0:1)
+    type     #f69d50  (5.3:1)
+    string   #96d0ff  (7.5:1)
+    comment  #8b949e  (4.9:1)
+    number   #6bc46d  (4.6:1)
+    method   #dcbdfb  (8.3:1)
+- Code block chrome (header bar, border, filename label) must also
+  follow the page theme via CSS variables.
+- If the page includes any "terminal" or "IDE error" styled boxes,
+  those must also adapt: light background in light mode, dark in dark.
+
+━━━ MOBILE & RESPONSIVE — NO HORIZONTAL SCROLL ━━━━━━━━━━━
+This is the most critical layout requirement. Apply ALL of:
+
+1. html { overflow-x: hidden; }
+   body { overflow-x: hidden; width: 100%; max-width: 100vw; }
+
+2. Every CSS Grid and Flexbox child must declare min-width: 0.
+   This overrides the default min-width: auto which causes children
+   to grow past their container and create horizontal overflow.
+
+3. <pre> elements (code blocks) must use:
+     width: 100%;
+     min-width: 0;
+     overflow-x: auto;    ← scroll WITHIN the box, not the page
+     white-space: pre;
+   Never use overflow: hidden on <pre>.
+
+4. Compare / side-by-side grids:
+   • Stack to a single column at ≤ 740px using a breakpoint.
+   • Each panel must have min-width: 0; overflow: hidden.
+
+5. Long prose inline <code> tags: word-break: break-all.
+
+6. The nav bar must have width: 100%; max-width: 100vw.
+   Hide secondary nav text on very small screens if needed.
+
+7. All containers: max-width capped, padding-based (never margin-based)
+   side gutters, and width: 100%.
+
+8. Use clamp() for all headings:
+     font-size: clamp(minRem, vwValue, maxRem);
+   so text never forces the page wider than the viewport.
+
+9. Test mentally: place a long code snippet (40+ chars per line) inside
+   a two-column compare grid. The grid should collapse to 1 column on
+   mobile; the code should scroll horizontally within its own box.
+
+━━━ ACCESSIBILITY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- All text contrast ≥ 4.5:1 (WCAG AA). Aim for 7:1 on body text.
+- <html lang="en"> always set.
+- Semantic HTML: <nav>, <main>, <section>, <article>, <footer>,
+  <h1>…<h6> in logical order, <blockquote>, <cite>, <code>, <pre>.
+- Every interactive element (links, buttons) must have visible
+  focus styles: outline or box-shadow that meets contrast requirements.
+- Images (if any) must have descriptive alt attributes.
+- Animated elements must respect:
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+- ARIA roles only where semantic HTML is insufficient.
+- Scrollable code blocks should have tabindex="0" and
+  role="region" aria-label="code sample" for keyboard access.
+
+━━━ TYPOGRAPHY & READABILITY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Base font size: 18px on html element (never smaller than 16px).
+- Body line-height: 1.75 – 1.80.
+- Code line-height: 1.65 – 1.75.
+- Paragraph margin-bottom: 18px–20px.
+- Maximum content column width: 900px (prose), 1100px (wide layouts).
+- Section vertical padding: 80px–90px desktop, 56px mobile.
+- Generous spacing between all UI elements.
+- Headings use letter-spacing: -0.02em to -0.025em for large sizes.
+
+━━━ ANIMATIONS & MOTION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Background color cycle: 45–60s, ease-in-out, infinite.
+  Transition between stops must be imperceptible moment-to-moment.
+- Hero section: fadeUp (opacity + translateY) with staggered
+  animation-delay on child elements (0.1s, 0.2s, 0.35s, 0.5s).
+- Cards, stat blocks, timeline items: scroll-triggered reveal using
+  IntersectionObserver (opacity 0→1 + translateY 24px→0, 0.55s ease).
+  Add class "visible" on intersection; define .reveal and .reveal.visible.
+- Hover states on cards: transform: translateY(-3px), shadow deepens.
+- No janky, distracting, or rapid animations. Subtle is always better.
+- All animations must respect prefers-reduced-motion (see Accessibility).
+
+━━━ STRUCTURE & CONTENT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Include these sections as appropriate to the topic:
+1. Sticky navigation bar (title + section indicator)
+2. Hero section with large title, eyebrow label, subtitle, meta tags
+3. Numbered sections (§ 1, § 2, …) with section-label eyebrows
+4. Callout / alert boxes in three variants:
+   - Warning  (amber left border)
+   - Success  (green left border)
+   - Danger   (red left border + pulse animation)
+5. Before / After compare grids (two-column, collapses on mobile)
+6. Taxonomy / feature cards (CSS Grid, auto-fill, hover lift)
+7. Statistics row (large number + label cards)
+8. Block quotes with <cite>
+9. Prose ordered/unordered lists
+10. Timeline (vertical line + dot + year label + content)
+11. Five Whys table (or similar structured Q&A component)
+12. Dividers with centered labels
+13. Footer with:
+    - Numbered reference list with external links
+    - Dated timeline of background events
+    - Copyright / disclaimer note
+
+━━━ CSS ARCHITECTURE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- All colors via CSS custom properties only. No hardcoded hex
+  values outside the :root / media query variable definitions.
+- Organize the stylesheet in this order:
+  1. Reset
+  2. overflow-x guards (html, body)
+  3. @keyframes
+  4. @media (prefers-color-scheme: light) { :root { … } body { animation … } }
+  5. @media (prefers-color-scheme: dark)  { :root { … } body { animation … } }
+  6. Base typography
+  7. Nav
+  8. Layout containers
+  9. Hero
+  10. Section headings
+  11. Prose elements (p, strong, a, code, blockquote, ul/ol)
+  12. Callouts
+  13. VS/terminal error boxes
+  14. Code blocks (wrapper, header, pre, syntax spans, dead-line)
+  15. Compare grid
+  16. Cards
+  17. Stats
+  18. Stack trace
+  19. Timeline
+  20. Five Whys
+  21. Scroll reveal
+  22. Footer
+  23. @media responsive overrides (max-width: 740px, 640px)
+  24. @media prefers-reduced-motion
+
+━━━ JAVASCRIPT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Wrap everything in an IIFE: (function(){ 'use strict'; … }());
+- IntersectionObserver for scroll-reveal (threshold: 0.06–0.08).
+  Select: document.querySelectorAll('.reveal, .tl-item')
+- If the page contains code blocks, implement a lightweight
+  tokenizer/syntax-highlighter from scratch.
+  It must handle: line comments, block comments, string literals
+  (verbatim, interpolated, regular), char literals, numeric literals
+  (decimal, hex, float with suffixes), keywords, PascalCase types,
+  camelCase method calls (detected by peeking for '(' after identifier).
+  Output span elements with classes: cs-keyword, cs-type, cs-string,
+  cs-comment, cs-number, cs-method. Colors come from CSS variables only.
+
+━━━ FINAL CHECKLIST BEFORE OUTPUTTING ━━━━━━━━━━━━━━━━━━━━
+□ File starts with <!DOCTYPE html> and ends with </html>
+□ All meta tags present (see list above)
+□ Zero <link>, <script src="">, or @import statements
+□ html overflow-x: hidden set
+□ body overflow-x: hidden; width:100%; max-width:100vw set
+□ Every grid/flex child has min-width: 0
+□ All compare panels collapse to 1 column at ≤ 740px
+□ <pre> has overflow-x:auto + width:100% + min-width:0
+□ All CSS color values are CSS variables, not hardcoded
+□ Light mode and dark mode both defined completely
+□ Code blocks light in light mode, dark in dark mode
+□ All syntax tokens verified ≥ 4.5:1 contrast (comment ratio next to value)
+□ Callout boxes, terminal boxes, stack traces — all mode-adaptive
+□ Base font-size 18px; body line-height ≥ 1.75
+□ All heading font-sizes use clamp()
+□ Background animation: 45–60s, imperceptible moment-to-moment
+□ Scroll-reveal via IntersectionObserver applied
+□ prefers-reduced-motion override present
+□ Semantic HTML: nav, main, section, footer, h1–h6 in order
+□ lang="en" on <html>
+□ Footer includes references with links and a dated timeline
+□ FULL FILE returned — not a diff, not a partial, not a summary
