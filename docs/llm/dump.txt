@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-03-31 22:19:52 UTC
+DATE: 2026-03-31 22:25:10 UTC
 ===============================================================================
 
 ===============================================================================
@@ -151,407 +151,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-
--------------------------------------------------------------------------------
-FILE: .github/workflows/deploy.yml
--------------------------------------------------------------------------------
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-  schedule:
-    # Rebuild daily at 6 AM UTC to publish scheduled posts
-    - cron: '0 6 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore .NET dependencies
-        run: dotnet restore
-
-      - name: Run content processor (markdown → JSON + HTML)
-        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
-
-      # ── Audio generation with caching ──────────────────────────────
-      # Cache key is based on the content of all blog markdown files.
-      # Exact hit  → all MP3s restored, ALL Python steps skipped.
-      # Partial hit → most MP3s restored, only changed posts regenerated.
-      # Miss        → full regeneration (first run or cache eviction).
-
-      - name: Restore audio cache
-        id: audio-cache
-        uses: actions/cache@v4
-        with:
-          path: .audio-cache
-          key: audio-v1-${{ hashFiles('content/blog/**/*.md') }}
-          restore-keys: |
-            audio-v1-
-
-      - name: Copy cached audio to output
-        run: |
-          mkdir -p src/ObserverMagazine.Web/wwwroot/blog-data
-          if [ -d .audio-cache ] && [ "$(ls -A .audio-cache 2>/dev/null)" ]; then
-            cp .audio-cache/*.mp3 src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
-            cp .audio-cache/audio-manifest.json src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
-            echo "Restored $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) cached MP3 file(s)"
-          else
-            echo "No audio cache to restore"
-          fi
-
-      # All Python/audio steps are skipped on exact cache hit
-      - name: Setup Python 3.12 (for TTS audio generation)
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-
-      - name: Install system dependencies (espeak-ng + ffmpeg)
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        run: sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
-
-      - name: Cache HuggingFace model
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/huggingface
-          key: hf-kitten-tts-nano-0.8
-
-      - name: Cache pip packages
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-audio-${{ hashFiles('tools/requirements-audio.txt') }}
-          restore-keys: |
-            pip-audio-
-
-      - name: Install Python audio dependencies
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        run: |
-          pip install onnxruntime
-          pip install -r tools/requirements-audio.txt
-
-      - name: Generate TTS audio (markdown → MP3)
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        run: python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
-
-      - name: Update audio cache
-        if: steps.audio-cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p .audio-cache
-          cp src/ObserverMagazine.Web/wwwroot/blog-data/*.mp3 .audio-cache/ 2>/dev/null || true
-          cp src/ObserverMagazine.Web/wwwroot/blog-data/audio-manifest.json .audio-cache/ 2>/dev/null || true
-          echo "Cached $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) MP3 file(s) for next build"
-
-      # ── End audio generation ───────────────────────────────────────
-
-      - name: Run tests
-        run: dotnet test --no-restore --verbosity normal
-
-      - name: Publish Blazor WASM
-        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
-
-      - name: Strip source map references from framework JS
-        run: |
-          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
-          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
-
-      - name: Prepare GitHub Pages artifacts
-        run: |
-          cp publish/wwwroot/.nojekyll publish/wwwroot/.nojekyll 2>/dev/null || touch publish/wwwroot/.nojekyll
-          cp publish/wwwroot/index.html publish/wwwroot/404.html
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: publish/wwwroot
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-
--------------------------------------------------------------------------------
-FILE: .github/workflows/pr-check.yml
--------------------------------------------------------------------------------
-name: PR Check
-
-on:
-  pull_request:
-    branches: [main]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Run content processor
-        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
-
-      - name: Run tests
-        run: dotnet test --no-restore --verbosity normal
-
-      - name: Publish Blazor WASM
-        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
-
-      - name: Strip source map references from framework JS
-        run: |
-          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
-          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
-
-      - name: Prepare preview
-        run: |
-          touch publish/wwwroot/.nojekyll
-          cp publish/wwwroot/index.html publish/wwwroot/404.html
-
-      - name: Upload preview site
-        uses: actions/upload-artifact@v4
-        with:
-          name: site-preview
-          path: publish/wwwroot
-          retention-days: 7
-
-
--------------------------------------------------------------------------------
-FILE: .gitignore
--------------------------------------------------------------------------------
-## .NET
-bin/
-obj/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-*.userprefs
-
-## Build results
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-build/
-bld/
-
-## NuGet
-**/packages/*
-*.nupkg
-**/[Pp]ackages/build/
-*.nuget.props
-*.nuget.targets
-project.lock.json
-project.fragment.lock.json
-
-## Visual Studio
-.vs/
-*.rsuser
-*.csproj.user
-
-## JetBrains
-.idea/
-*.sln.iml
-
-## VS Code
-.vscode/
-
-## OS
-.DS_Store
-Thumbs.db
-
-## Publish output
-publish/
-
-## Test results
-TestResults/
-*.trx
-
-## Generated blog data (created by ContentProcessor at build time)
-src/ObserverMagazine.Web/wwwroot/blog-data/
-
-## Generated RSS feed
-src/ObserverMagazine.Web/wwwroot/feed.xml
-
-## Client-side libraries (restored by LibMan at build time)
-src/ObserverMagazine.Web/wwwroot/lib/
-
-## Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-*.egg-info/
-
-
--------------------------------------------------------------------------------
-FILE: .nojekyll
--------------------------------------------------------------------------------
-
-
--------------------------------------------------------------------------------
-FILE: Directory.Build.props
--------------------------------------------------------------------------------
-<Project>
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>14.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-</Project>
-
-
--------------------------------------------------------------------------------
-FILE: Directory.Packages.props
--------------------------------------------------------------------------------
-<Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-
-    <!-- Version variables — touch these to update all related packages -->
-    <MicrosoftAspNetCoreVersion>10.0.5</MicrosoftAspNetCoreVersion>
-    <MicrosoftExtensionsVersion>10.0.5</MicrosoftExtensionsVersion>
-    <XunitVersion>3.2.2</XunitVersion>
-    <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
-    <TestSdkVersion>18.3.0</TestSdkVersion>
-    <MarkdigVersion>1.1.2</MarkdigVersion>
-    <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
-    <BunitVersion>2.7.2</BunitVersion>
-    <LibManVersion>3.0.71</LibManVersion>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <!-- Web -->
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
-
-    <!-- Client-side library management -->
-    <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="$(LibManVersion)" />
-
-    <!-- Content Processing -->
-    <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
-    <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
-
-    <!-- Testing -->
-    <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XunitRunnerVersion)" />
-    <PackageVersion Include="bunit" Version="$(BunitVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-  </ItemGroup>
-</Project>
-
-
--------------------------------------------------------------------------------
-FILE: ObserverMagazine.slnx
--------------------------------------------------------------------------------
-<Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="Directory.Build.props" />
-    <File Path="Directory.Packages.props" />
-    <File Path="global.json" />
-    <File Path="README.md" />
-  </Folder>
-  <Folder Name="/src/">
-    <Project Path="src/ObserverMagazine.Web/ObserverMagazine.Web.csproj" />
-  </Folder>
-  <Folder Name="/tools/">
-    <Project Path="tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj" />
-    <Project Path="tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj" />
-  </Folder>
-</Solution>
-
-
--------------------------------------------------------------------------------
-FILE: README.md
--------------------------------------------------------------------------------
-# Observer Magazine
-
-A free, open-source Blazor WebAssembly application deployed to GitHub Pages.
-
-Built with **.NET 10** (LTS) and **C# 14**.
-
-## Features
-
-- **Blog** — Write posts in Markdown with YAML front matter; compiled to static JSON at build time
-- **RSS Feed** — Auto-generated `feed.xml`
-- **Responsive Tables** — Sortable, filterable data tables that work on mobile
-- **Master-Detail Flow** — Click a list item to view full details
-- **OpenTelemetry-ready Logging** — Structured logging via `ILogger`
-- **Full Test Suite** — bUnit component tests + xUnit integration tests
-
-## Quick Start
-```bash
-# Restore & process blog content
-dotnet run --project tools/ObserverMagazine.ContentProcessor
-
-# Run the app locally
-dotnet run --project src/ObserverMagazine.Web
-
-# Run all tests
-dotnet test
-```
-
-## Technology
-
-| Component | Technology | License |
-|-----------|-----------|---------|
-| Framework | .NET 10 / Blazor WASM | MIT |
-| Markdown | Markdig 1.1.1 | BSD-2-Clause |
-| YAML | YamlDotNet 16.3.0 | MIT |
-| Testing | xUnit v3 3.2.2 + bUnit 2.6.2 | Apache-2.0 / MIT |
-
-All dependencies are free for any use — no payment required, ever.
-
-## License
-
-AGPLv3
+28 directories, 115 files
 
 
 -------------------------------------------------------------------------------
@@ -1277,6 +877,543 @@ tags:
 
 
 -------------------------------------------------------------------------------
+FILE: Directory.Build.props
+-------------------------------------------------------------------------------
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
+
+
+-------------------------------------------------------------------------------
+FILE: Directory.Packages.props
+-------------------------------------------------------------------------------
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!-- Version variables — touch these to update all related packages -->
+    <MicrosoftAspNetCoreVersion>10.0.5</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>10.0.5</MicrosoftExtensionsVersion>
+    <XunitVersion>3.2.2</XunitVersion>
+    <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
+    <TestSdkVersion>18.3.0</TestSdkVersion>
+    <MarkdigVersion>1.1.2</MarkdigVersion>
+    <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
+    <BunitVersion>2.7.2</BunitVersion>
+    <LibManVersion>3.0.71</LibManVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Web -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
+
+    <!-- Client-side library management -->
+    <PackageVersion Include="Microsoft.Web.LibraryManager.Build" Version="$(LibManVersion)" />
+
+    <!-- Content Processing -->
+    <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
+    <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XunitRunnerVersion)" />
+    <PackageVersion Include="bunit" Version="$(BunitVersion)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+  </ItemGroup>
+</Project>
+
+
+-------------------------------------------------------------------------------
+FILE: export.sh
+-------------------------------------------------------------------------------
+#!/usr/bin/env bash
+# ===========================================================================
+# export.sh — Export git-tracked project files to docs/llm/dump.txt
+#
+# Blog posts (content/blog/*.md): only front matter is included; the
+# markdown body is omitted to save context space. Every other git-tracked
+# file is exported in full.
+#
+# Excluded from export:
+#   - The docs/ directory itself (to avoid recursion / stale LLM context)
+#   - Binary files (images, fonts, etc.)
+#
+# Usage:
+#   bash export.sh            # writes docs/llm/dump.txt
+#   bash export.sh -o out.txt # writes to a custom path
+# ===========================================================================
+
+set -euo pipefail
+
+# ── Configuration ────────────────────────────────────────────────────────────
+
+OUTPUT_FILE="docs/llm/dump.txt"
+BLOG_DIR="content/blog"
+SEPARATOR="-------------------------------------------------------------------------------"
+WIDE_SEP="==============================================================================="
+
+# Binary file extensions to skip (lowercase comparison)
+BINARY_EXTENSIONS="png jpg jpeg gif ico bmp svg webp woff woff2 ttf eot otf mp3 mp4 wav ogg pdf zip tar gz"
+
+# ── Parse arguments ──────────────────────────────────────────────────────────
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: bash export.sh [-o OUTPUT_FILE]"
+            echo "  Exports git-tracked project files to docs/llm/dump.txt"
+            echo "  Blog posts include front matter only (body omitted)."
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+is_binary_extension() {
+    local file="$1"
+    local ext="${file##*.}"
+    ext="${ext,,}" # lowercase
+    for bin_ext in $BINARY_EXTENSIONS; do
+        if [[ "$ext" == "$bin_ext" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+is_blog_post() {
+    local file="$1"
+    [[ "$file" == ${BLOG_DIR}/*.md ]]
+}
+
+is_excluded_dir() {
+    local file="$1"
+    [[ "$file" == docs/* ]]
+}
+
+# Extract only the YAML front matter (between first --- and second ---).
+# Prints the front matter block including delimiters.
+extract_front_matter() {
+    local file="$1"
+    local in_front_matter=0
+    local found_start=0
+
+    while IFS= read -r line; do
+        if [[ "$found_start" -eq 0 && "$line" == "---" ]]; then
+            found_start=1
+            in_front_matter=1
+            echo "$line"
+            continue
+        fi
+        if [[ "$in_front_matter" -eq 1 && "$line" == "---" ]]; then
+            echo "$line"
+            return
+        fi
+        if [[ "$in_front_matter" -eq 1 ]]; then
+            echo "$line"
+        fi
+    done < "$file"
+}
+
+# ── Collect git-tracked files ────────────────────────────────────────────────
+
+mapfile -t ALL_FILES < <(git ls-files --cached --others --exclude-standard | sort)
+
+# ── Counters ─────────────────────────────────────────────────────────────────
+
+total_files=0
+blog_front_matter_only=0
+full_content_files=0
+binary_skipped=0
+
+# ── Ensure output directory exists ───────────────────────────────────────────
+
+mkdir -p "$(dirname "$OUTPUT_FILE")"
+
+# ── Write output ─────────────────────────────────────────────────────────────
+
+{
+    # Header
+    echo "$WIDE_SEP"
+    echo "PROJECT EXPORT: observermagazine.github.io"
+    echo "DATE: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+    echo "$WIDE_SEP"
+    echo ""
+
+    # Directory tree
+    echo "$WIDE_SEP"
+    echo "DIRECTORY TREE (all git-tracked files)"
+    echo "$WIDE_SEP"
+    echo ""
+
+    # Use tree if available, otherwise fall back to a simple listing
+    if command -v tree &>/dev/null; then
+        # Build a temp file list for tree --fromfile
+        printf '%s\n' "${ALL_FILES[@]}" | tree --fromfile --charset utf-8 -a 2>/dev/null || {
+            # Fallback: just print the sorted file list as an indented tree
+            echo "."
+            printf '%s\n' "${ALL_FILES[@]}" | sed 's|^|├── |'
+        }
+    else
+        echo "."
+        printf '%s\n' "${ALL_FILES[@]}" | sed 's|^|├── |'
+    fi
+
+    echo ""
+
+    # File contents
+    for file in "${ALL_FILES[@]}"; do
+        # Skip files in docs/ directory
+        if is_excluded_dir "$file"; then
+            continue
+        fi
+
+        # Skip binary files
+        if is_binary_extension "$file"; then
+            binary_skipped=$((binary_skipped + 1))
+            total_files=$((total_files + 1))
+            continue
+        fi
+
+        # Skip the export script itself
+        if [[ "$file" == "export.sh" ]]; then
+            # Still include it — it's useful context for the LLM
+            :
+        fi
+
+        echo ""
+        echo "$SEPARATOR"
+
+        if is_blog_post "$file"; then
+            # Blog post: front matter only
+            echo "FILE: ${file}  [FRONT MATTER ONLY — body omitted to save context space]"
+            echo "$SEPARATOR"
+            extract_front_matter "$file"
+            echo ""
+            blog_front_matter_only=$((blog_front_matter_only + 1))
+        else
+            # All other files: full content
+            echo "FILE: ${file}"
+            echo "$SEPARATOR"
+            cat "$file"
+            echo ""
+            full_content_files=$((full_content_files + 1))
+        fi
+
+        total_files=$((total_files + 1))
+    done
+
+    # Footer
+    echo ""
+    echo "$WIDE_SEP"
+    echo "EXPORT COMPLETED"
+    echo "Total Files Exported: ${total_files}"
+    echo "  Blog posts (front matter only): ${blog_front_matter_only}"
+    echo "  Full content files: ${full_content_files}"
+    echo "  Binary files skipped: ${binary_skipped}"
+    echo "Output File: ${OUTPUT_FILE}"
+    echo "$WIDE_SEP"
+
+} > "$OUTPUT_FILE"
+
+echo "Export complete: ${OUTPUT_FILE}"
+echo "  Total files: ${total_files}"
+echo "  Blog posts (front matter only): ${blog_front_matter_only}"
+echo "  Full content files: ${full_content_files}"
+echo "  Binary files skipped: ${binary_skipped}"
+
+
+-------------------------------------------------------------------------------
+FILE: .github/workflows/deploy.yml
+-------------------------------------------------------------------------------
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Rebuild daily at 6 AM UTC to publish scheduled posts
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Run content processor (markdown → JSON + HTML)
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      # ── Audio generation with caching ──────────────────────────────
+      # Cache key is based on the content of all blog markdown files.
+      # Exact hit  → all MP3s restored, ALL Python steps skipped.
+      # Partial hit → most MP3s restored, only changed posts regenerated.
+      # Miss        → full regeneration (first run or cache eviction).
+
+      - name: Restore audio cache
+        id: audio-cache
+        uses: actions/cache@v4
+        with:
+          path: .audio-cache
+          key: audio-v1-${{ hashFiles('content/blog/**/*.md') }}
+          restore-keys: |
+            audio-v1-
+
+      - name: Copy cached audio to output
+        run: |
+          mkdir -p src/ObserverMagazine.Web/wwwroot/blog-data
+          if [ -d .audio-cache ] && [ "$(ls -A .audio-cache 2>/dev/null)" ]; then
+            cp .audio-cache/*.mp3 src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            cp .audio-cache/audio-manifest.json src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            echo "Restored $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) cached MP3 file(s)"
+          else
+            echo "No audio cache to restore"
+          fi
+
+      # All Python/audio steps are skipped on exact cache hit
+      - name: Setup Python 3.12 (for TTS audio generation)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies (espeak-ng + ffmpeg)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
+
+      - name: Cache HuggingFace model
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-kitten-tts-nano-0.8
+
+      - name: Cache pip packages
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-audio-${{ hashFiles('tools/requirements-audio.txt') }}
+          restore-keys: |
+            pip-audio-
+
+      - name: Install Python audio dependencies
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: |
+          pip install onnxruntime
+          pip install -r tools/requirements-audio.txt
+
+      - name: Generate TTS audio (markdown → MP3)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
+
+      - name: Update audio cache
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .audio-cache
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/*.mp3 .audio-cache/ 2>/dev/null || true
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/audio-manifest.json .audio-cache/ 2>/dev/null || true
+          echo "Cached $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) MP3 file(s) for next build"
+
+      # ── End audio generation ───────────────────────────────────────
+
+      - name: Run tests
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare GitHub Pages artifacts
+        run: |
+          cp publish/wwwroot/.nojekyll publish/wwwroot/.nojekyll 2>/dev/null || touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: publish/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+
+-------------------------------------------------------------------------------
+FILE: .github/workflows/pr-check.yml
+-------------------------------------------------------------------------------
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run content processor
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      - name: Run tests
+        run: dotnet test --no-restore --verbosity normal
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare preview
+        run: |
+          touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Upload preview site
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview
+          path: publish/wwwroot
+          retention-days: 7
+
+
+-------------------------------------------------------------------------------
+FILE: .gitignore
+-------------------------------------------------------------------------------
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+## NuGet
+**/packages/*
+*.nupkg
+**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+
+## Visual Studio
+.vs/
+*.rsuser
+*.csproj.user
+
+## JetBrains
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Publish output
+publish/
+
+## Test results
+TestResults/
+*.trx
+
+## Generated blog data (created by ContentProcessor at build time)
+src/ObserverMagazine.Web/wwwroot/blog-data/
+
+## Generated RSS feed
+src/ObserverMagazine.Web/wwwroot/feed.xml
+
+## Client-side libraries (restored by LibMan at build time)
+src/ObserverMagazine.Web/wwwroot/lib/
+
+## Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+
+-------------------------------------------------------------------------------
 FILE: global.json
 -------------------------------------------------------------------------------
 {
@@ -1285,6 +1422,80 @@ FILE: global.json
     "rollForward": "latestFeature"
   }
 }
+
+
+-------------------------------------------------------------------------------
+FILE: .nojekyll
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+FILE: ObserverMagazine.slnx
+-------------------------------------------------------------------------------
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ObserverMagazine.Web/ObserverMagazine.Web.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj" />
+    <Project Path="tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj" />
+  </Folder>
+</Solution>
+
+
+-------------------------------------------------------------------------------
+FILE: README.md
+-------------------------------------------------------------------------------
+# Observer Magazine
+
+A free, open-source Blazor WebAssembly application deployed to GitHub Pages.
+
+Built with **.NET 10** (LTS) and **C# 14**.
+
+## Features
+
+- **Blog** — Write posts in Markdown with YAML front matter; compiled to static JSON at build time
+- **RSS Feed** — Auto-generated `feed.xml`
+- **Responsive Tables** — Sortable, filterable data tables that work on mobile
+- **Master-Detail Flow** — Click a list item to view full details
+- **OpenTelemetry-ready Logging** — Structured logging via `ILogger`
+- **Full Test Suite** — bUnit component tests + xUnit integration tests
+
+## Quick Start
+```bash
+# Restore & process blog content
+dotnet run --project tools/ObserverMagazine.ContentProcessor
+
+# Run the app locally
+dotnet run --project src/ObserverMagazine.Web
+
+# Run all tests
+dotnet test
+```
+
+## Technology
+
+| Component | Technology | License |
+|-----------|-----------|---------|
+| Framework | .NET 10 / Blazor WASM | MIT |
+| Markdown | Markdig 1.1.1 | BSD-2-Clause |
+| YAML | YamlDotNet 16.3.0 | MIT |
+| Testing | xUnit v3 3.2.2 + bUnit 2.6.2 | Apache-2.0 / MIT |
+
+All dependencies are free for any use — no payment required, ever.
+
+## License
+
+AGPLv3
 
 
 -------------------------------------------------------------------------------
@@ -2816,6 +3027,26 @@ FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor.css
 
 
 -------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/_Imports.razor
+-------------------------------------------------------------------------------
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.Extensions.Logging
+@using Microsoft.JSInterop
+@using ObserverMagazine.Web
+@using ObserverMagazine.Web.Layout
+@using ObserverMagazine.Web.Pages
+@using ObserverMagazine.Web.Components
+@using ObserverMagazine.Web.Models
+@using ObserverMagazine.Web.Services
+
+
+-------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Layout/MainLayout.razor
 -------------------------------------------------------------------------------
 @inherits LayoutComponentBase
@@ -2970,6 +3201,25 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor.css
         z-index: 98;
         background: transparent;
     }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/libman.json
+-------------------------------------------------------------------------------
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "highlight.js@11.11.1",
+      "destination": "wwwroot/lib/highlight.js/",
+      "files": [
+        "highlight.min.js",
+        "styles/default.min.css"
+      ]
+    }
+  ]
 }
 
 
@@ -3164,195 +3414,6 @@ FILE: src/ObserverMagazine.Web/Pages/About.razor.css
 
 .simple-table th {
     font-weight: 600;
-}
-
-
--------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/Pages/Blog.razor
--------------------------------------------------------------------------------
-@page "/blog"
-@page "/blog/tag/{Tag}"
-@inject IBlogService BlogService
-@inject ILogger<Blog> Logger
-@inject IAnalyticsService Analytics
-@inject NavigationManager Nav
-
-<PageTitle>@(string.IsNullOrEmpty(Tag) ? "Blog" : $"Posts tagged \"{Tag}\"") — Observer Magazine</PageTitle>
-
-<h1>Blog</h1>
-
-@if (!string.IsNullOrEmpty(Tag))
-{
-    <div class="tag-filter-bar">
-        <span>Filtering by tag:</span>
-        <span class="tag">@Tag</span>
-        <button class="tag-filter-clear" @onclick="ClearFilter">Clear filter</button>
-    </div>
-}
-
-@if (posts is null)
-{
-    <p><em>Loading posts...</em></p>
-}
-else if (filteredPosts.Length == 0)
-{
-    <p>No posts found. <a href="blog">View all posts</a></p>
-}
-else
-{
-    <div class="blog-list">
-        @foreach (var post in filteredPosts)
-        {
-            <article class="blog-card">
-                @if (post.Featured)
-                {
-                    <span class="featured-badge">Featured</span>
-                }
-                <h2><a href="blog/@post.Slug">@post.Title</a></h2>
-                <div class="blog-meta">
-                    <time datetime="@post.Date.ToString("yyyy-MM-dd")">
-                        @post.Date.ToString("MMMM d, yyyy")
-                    </time>
-                    @if (!string.IsNullOrEmpty(post.AuthorName))
-                    {
-                        <span> · @post.AuthorName</span>
-                    }
-                    @if (post.ReadingTimeMinutes > 0)
-                    {
-                        <span> · @post.ReadingTimeMinutes min read</span>
-                    }
-                    @if (!string.IsNullOrEmpty(post.Series))
-                    {
-                        <span> · Series: @post.Series</span>
-                    }
-                </div>
-                <p>@post.Summary</p>
-                @if (post.Tags is { Length: > 0 })
-                {
-                    <div class="tag-list">
-                        @foreach (var tag in post.Tags)
-                        {
-                            <a class="tag" href="blog/tag/@Uri.EscapeDataString(tag)">@tag</a>
-                        }
-                    </div>
-                }
-            </article>
-        }
-    </div>
-}
-
-@code {
-    [Parameter] public string? Tag { get; set; }
-
-    private BlogPostMetadata[]? posts;
-    private BlogPostMetadata[] filteredPosts = [];
-
-    protected override async Task OnInitializedAsync()
-    {
-        Logger.LogInformation("Loading blog index");
-        try
-        {
-            posts = await BlogService.GetPostsAsync();
-            await Analytics.TrackPageViewAsync("Blog", $"{posts?.Length ?? 0} posts");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to load blog index");
-            posts = [];
-        }
-        ApplyFilter();
-    }
-
-    protected override void OnParametersSet()
-    {
-        ApplyFilter();
-    }
-
-    private void ApplyFilter()
-    {
-        if (posts is null)
-        {
-            filteredPosts = [];
-            return;
-        }
-
-        filteredPosts = string.IsNullOrEmpty(Tag)
-            ? posts
-            : posts.Where(p =>
-                p.Tags.Any(t => string.Equals(t, Tag, StringComparison.OrdinalIgnoreCase)))
-              .ToArray();
-    }
-
-    private void ClearFilter()
-    {
-        Nav.NavigateTo("blog");
-    }
-}
-
-
--------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/Pages/Blog.razor.css
--------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 7: src/ObserverMagazine.Web/Pages/Blog.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .blog-card
-   - Added min-width: 0 to .blog-card (flex child guard)
-   - Added overflow-wrap to .blog-card h2, h3, p
-   =========================================================================== */
-
-.blog-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.blog-card {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    background: var(--color-card-bg);
-    position: relative;
-    min-width: 0; /* FIX: flex child guard */
-    overflow-wrap: break-word;
-}
-
-.blog-card h2,
-.blog-card h3 {
-    font-size: 1.35rem;
-    margin-bottom: 0.25rem;
-    overflow-wrap: break-word;
-}
-
-.blog-card p {
-    overflow-wrap: break-word;
-}
-
-.tag-filter-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    flex-wrap: wrap;
-}
-
-.tag-filter-bar .tag {
-    font-size: 0.9rem;
-    padding: 0.25rem 0.65rem;
-}
-
-.tag-filter-clear {
-    font-size: 0.85rem;
-    color: var(--color-primary);
-    cursor: pointer;
-    background: none;
-    border: none;
-    text-decoration: underline;
 }
 
 
@@ -3684,6 +3745,195 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
 
 
 -------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Pages/Blog.razor
+-------------------------------------------------------------------------------
+@page "/blog"
+@page "/blog/tag/{Tag}"
+@inject IBlogService BlogService
+@inject ILogger<Blog> Logger
+@inject IAnalyticsService Analytics
+@inject NavigationManager Nav
+
+<PageTitle>@(string.IsNullOrEmpty(Tag) ? "Blog" : $"Posts tagged \"{Tag}\"") — Observer Magazine</PageTitle>
+
+<h1>Blog</h1>
+
+@if (!string.IsNullOrEmpty(Tag))
+{
+    <div class="tag-filter-bar">
+        <span>Filtering by tag:</span>
+        <span class="tag">@Tag</span>
+        <button class="tag-filter-clear" @onclick="ClearFilter">Clear filter</button>
+    </div>
+}
+
+@if (posts is null)
+{
+    <p><em>Loading posts...</em></p>
+}
+else if (filteredPosts.Length == 0)
+{
+    <p>No posts found. <a href="blog">View all posts</a></p>
+}
+else
+{
+    <div class="blog-list">
+        @foreach (var post in filteredPosts)
+        {
+            <article class="blog-card">
+                @if (post.Featured)
+                {
+                    <span class="featured-badge">Featured</span>
+                }
+                <h2><a href="blog/@post.Slug">@post.Title</a></h2>
+                <div class="blog-meta">
+                    <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                        @post.Date.ToString("MMMM d, yyyy")
+                    </time>
+                    @if (!string.IsNullOrEmpty(post.AuthorName))
+                    {
+                        <span> · @post.AuthorName</span>
+                    }
+                    @if (post.ReadingTimeMinutes > 0)
+                    {
+                        <span> · @post.ReadingTimeMinutes min read</span>
+                    }
+                    @if (!string.IsNullOrEmpty(post.Series))
+                    {
+                        <span> · Series: @post.Series</span>
+                    }
+                </div>
+                <p>@post.Summary</p>
+                @if (post.Tags is { Length: > 0 })
+                {
+                    <div class="tag-list">
+                        @foreach (var tag in post.Tags)
+                        {
+                            <a class="tag" href="blog/tag/@Uri.EscapeDataString(tag)">@tag</a>
+                        }
+                    </div>
+                }
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Tag { get; set; }
+
+    private BlogPostMetadata[]? posts;
+    private BlogPostMetadata[] filteredPosts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("Loading blog index");
+        try
+        {
+            posts = await BlogService.GetPostsAsync();
+            await Analytics.TrackPageViewAsync("Blog", $"{posts?.Length ?? 0} posts");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load blog index");
+            posts = [];
+        }
+        ApplyFilter();
+    }
+
+    protected override void OnParametersSet()
+    {
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (posts is null)
+        {
+            filteredPosts = [];
+            return;
+        }
+
+        filteredPosts = string.IsNullOrEmpty(Tag)
+            ? posts
+            : posts.Where(p =>
+                p.Tags.Any(t => string.Equals(t, Tag, StringComparison.OrdinalIgnoreCase)))
+              .ToArray();
+    }
+
+    private void ClearFilter()
+    {
+        Nav.NavigateTo("blog");
+    }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Pages/Blog.razor.css
+-------------------------------------------------------------------------------
+/* ===========================================================================
+   FILE 7: src/ObserverMagazine.Web/Pages/Blog.razor.css
+   
+   Changes:
+   - Added overflow-wrap: break-word to .blog-card
+   - Added min-width: 0 to .blog-card (flex child guard)
+   - Added overflow-wrap to .blog-card h2, h3, p
+   =========================================================================== */
+
+.blog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.blog-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+    position: relative;
+    min-width: 0; /* FIX: flex child guard */
+    overflow-wrap: break-word;
+}
+
+.blog-card h2,
+.blog-card h3 {
+    font-size: 1.35rem;
+    margin-bottom: 0.25rem;
+    overflow-wrap: break-word;
+}
+
+.blog-card p {
+    overflow-wrap: break-word;
+}
+
+.tag-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    flex-wrap: wrap;
+}
+
+.tag-filter-bar .tag {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.65rem;
+}
+
+.tag-filter-clear {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-decoration: underline;
+}
+
+
+-------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/Home.razor
 -------------------------------------------------------------------------------
 @page "/"
@@ -3848,6 +4098,512 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
 
 .feature-card p {
     overflow-wrap: break-word;
+}
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
+-------------------------------------------------------------------------------
+@page "/showcase/new"
+@page "/showcase/{ProductId:guid}"
+@inject IJSRuntime JS
+@inject ILogger<ShowcaseDetail> Logger
+@inject NavigationManager Nav
+@inject IAnalyticsService Analytics
+
+<PageTitle>@(isNew ? "New Product" : (editing ? "Edit Product" : product?.Name ?? "Product")) — Showcase</PageTitle>
+
+<div class="sd-header">
+    <button class="btn btn-outline btn-sm" @onclick="BackToList">← Back to Catalog</button>
+</div>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (product is null && !isNew)
+{
+    <h2>Product Not Found</h2>
+    <p>The product you're looking for doesn't exist. <a href="showcase">Back to Catalog</a></p>
+}
+else
+{
+    <div class="sd-card">
+        @if (!editing && !isNew)
+        {
+            @* ---- View mode ---- *@
+            <h2>@product!.Name</h2>
+            <div class="sd-badge sd-badge-@product.Status.ToLowerInvariant().Replace(" ", "-")">@product.Status</div>
+
+            <dl class="sd-details">
+                <dt>SKU</dt><dd>@product.Sku</dd>
+                <dt>Brand</dt><dd>@product.Brand</dd>
+                <dt>Category</dt><dd>@product.Category</dd>
+                <dt>Price</dt>
+                <dd>
+                    @product.Price.ToString("C")
+                    @if (product.CompareAtPrice.HasValue)
+                    {
+                        <s class="sd-compare-price">@product.CompareAtPrice.Value.ToString("C")</s>
+                    }
+                </dd>
+                <dt>In Stock</dt><dd>@product.Stock units</dd>
+                <dt>Rating</dt>
+                <dd>
+                    @for (int i = 0; i < (int)Math.Round(product.Rating); i++)
+                    {
+                        <span class="sd-star">★</span>
+                    }
+                    (@product.Rating.ToString("F1") — @product.ReviewCount.ToString("N0") reviews)
+                </dd>
+                <dt>Color</dt><dd>@product.Color</dd>
+                <dt>Weight</dt><dd>@product.WeightKg.ToString("F2") kg</dd>
+                <dt>Warranty</dt><dd>@(product.WarrantyMonths > 0 ? $"{product.WarrantyMonths} months" : "None")</dd>
+                <dt>Date Added</dt><dd>@product.DateAdded.ToString("yyyy-MM-dd")</dd>
+                <dt>Description</dt><dd>@product.Description</dd>
+            </dl>
+
+            <div class="form-actions" style="margin-top:1.5rem;">
+                <button class="btn btn-primary btn-sm" @onclick="StartEdit">Edit</button>
+                <button class="btn btn-danger btn-sm" @onclick="ConfirmDeleteProduct">Delete</button>
+            </div>
+        }
+        else
+        {
+            @* ---- Edit / Create mode ---- *@
+            <h2>@(isNew ? "New Product" : $"Editing: {product!.Name}")</h2>
+
+            <div class="form-group">
+                <label for="f-name">Name</label>
+                <input id="f-name" @bind="editName" @bind:event="oninput" />
+                @if (showVal && string.IsNullOrWhiteSpace(editName))
+                {
+                    <div class="form-validation">Name is required.</div>
+                }
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-sku">SKU</label>
+                    <input id="f-sku" @bind="editSku" @bind:event="oninput" />
+                </div>
+                <div class="form-group">
+                    <label for="f-brand">Brand</label>
+                    <input id="f-brand" @bind="editBrand" @bind:event="oninput" />
+                </div>
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-cat">Category</label>
+                    <select id="f-cat" @bind="editCategory">
+                        <option value="Electronics">Electronics</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Sports & Outdoors">Sports & Outdoors</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Accessories">Accessories</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="f-status">Status</label>
+                    <select id="f-status" @bind="editStatus">
+                        <option value="Active">Active</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Archived">Archived</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                    </select>
+                </div>
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-price">Price</label>
+                    <input id="f-price" type="number" step="0.01" min="0" @bind="editPrice" />
+                </div>
+                <div class="form-group">
+                    <label for="f-compare">Compare-at Price</label>
+                    <input id="f-compare" type="number" step="0.01" min="0" @bind="editComparePrice" />
+                </div>
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-stock">Stock</label>
+                    <input id="f-stock" type="number" min="0" @bind="editStock" />
+                </div>
+                <div class="form-group">
+                    <label for="f-color">Color</label>
+                    <input id="f-color" @bind="editColor" @bind:event="oninput" />
+                </div>
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-rating">Rating (0–5)</label>
+                    <input id="f-rating" type="number" step="0.1" min="0" max="5" @bind="editRating" />
+                </div>
+                <div class="form-group">
+                    <label for="f-reviews">Review Count</label>
+                    <input id="f-reviews" type="number" min="0" @bind="editReviewCount" />
+                </div>
+            </div>
+            <div class="sd-form-row">
+                <div class="form-group">
+                    <label for="f-weight">Weight (kg)</label>
+                    <input id="f-weight" type="number" step="0.01" min="0" @bind="editWeight" />
+                </div>
+                <div class="form-group">
+                    <label for="f-warranty">Warranty (months)</label>
+                    <input id="f-warranty" type="number" min="0" @bind="editWarranty" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="f-desc">Description</label>
+                <textarea id="f-desc" @bind="editDescription" @bind:event="oninput"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary btn-sm" @onclick="Save">Save</button>
+                <button class="btn btn-outline btn-sm" @onclick="CancelEdit">Cancel</button>
+            </div>
+        }
+    </div>
+}
+
+@* ---- Delete confirm ---- *@
+@if (showDeleteConfirm)
+{
+    <div class="sd-overlay" @onclick="() => showDeleteConfirm = false">
+        <div class="sd-dialog" @onclick:stopPropagation="true">
+            <h4>Delete Product</h4>
+            <p>Are you sure you want to delete <strong>@product?.Name</strong>? This cannot be undone.</p>
+            <div class="form-actions">
+                <button class="btn btn-outline btn-sm" @onclick="() => showDeleteConfirm = false">Cancel</button>
+                <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // MUST match Showcase.razor's StorageKey so both pages share the same data
+    private const string StorageKey = "observer-catalog-products";
+
+    [Parameter] public Guid? ProductId { get; set; }
+
+    private bool isNew => ProductId is null;
+    private bool loading = true;
+    private bool editing;
+    private bool showVal;
+    private bool showDeleteConfirm;
+
+    private List<CatalogProduct> allProducts = [];
+    private CatalogProduct? product;
+
+    // Edit fields
+    private string editName = "", editSku = "", editBrand = "", editCategory = "Electronics",
+        editStatus = "Active", editColor = "", editDescription = "";
+    private decimal editPrice, editComparePrice;
+    private int editStock, editReviewCount, editWarranty;
+    private double editRating, editWeight;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        await LoadAll();
+
+        if (isNew)
+        {
+            product = null;
+            editing = true;
+            ResetFormFields();
+        }
+        else
+        {
+            product = allProducts.FirstOrDefault(p => p.Id == ProductId);
+            editing = false;
+        }
+
+        loading = false;
+    }
+
+    private async Task LoadAll()
+    {
+        try
+        {
+            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            if (!string.IsNullOrEmpty(saved))
+            {
+                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(saved,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (deserialized is { Count: > 0 })
+                {
+                    allProducts = deserialized;
+                    return;
+                }
+            }
+        }
+        catch { /* best effort */ }
+
+        allProducts = ProductDataGenerator.Generate(2000);
+        await SaveAll();
+    }
+
+    private async Task SaveAll()
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(allProducts,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+        }
+        catch { /* best effort */ }
+    }
+
+    private void StartEdit()
+    {
+        if (product is null) return;
+        editName = product.Name;
+        editSku = product.Sku;
+        editBrand = product.Brand;
+        editCategory = product.Category;
+        editStatus = product.Status;
+        editPrice = product.Price;
+        editComparePrice = product.CompareAtPrice ?? 0;
+        editStock = product.Stock;
+        editRating = product.Rating;
+        editReviewCount = product.ReviewCount;
+        editWeight = product.WeightKg;
+        editColor = product.Color;
+        editWarranty = product.WarrantyMonths;
+        editDescription = product.Description;
+        showVal = false;
+        editing = true;
+    }
+
+    private void ResetFormFields()
+    {
+        editName = ""; editSku = ""; editBrand = ""; editCategory = "Electronics";
+        editStatus = "Active"; editColor = ""; editDescription = "";
+        editPrice = 0; editComparePrice = 0; editStock = 0; editReviewCount = 0;
+        editRating = 0; editWeight = 0; editWarranty = 0;
+        showVal = false;
+    }
+
+    private async Task Save()
+    {
+        showVal = true;
+        if (string.IsNullOrWhiteSpace(editName)) return;
+
+        if (isNew)
+        {
+            var newP = new CatalogProduct
+            {
+                Id = Guid.NewGuid(),
+                Sku = editSku.Trim(),
+                Name = editName.Trim(),
+                Brand = editBrand.Trim(),
+                Category = editCategory,
+                Price = editPrice,
+                CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
+                Stock = editStock,
+                Rating = Math.Clamp(editRating, 0, 5),
+                ReviewCount = editReviewCount,
+                WeightKg = editWeight,
+                Color = editColor.Trim(),
+                WarrantyMonths = editWarranty,
+                DateAdded = DateTime.UtcNow,
+                Status = editStatus,
+                Description = editDescription.Trim()
+            };
+            allProducts.Add(newP);
+            await SaveAll();
+            Nav.NavigateTo($"showcase/{newP.Id}");
+        }
+        else if (product is not null)
+        {
+            var idx = allProducts.FindIndex(p => p.Id == product.Id);
+            if (idx >= 0)
+            {
+                allProducts[idx] = new CatalogProduct
+                {
+                    Id = product.Id,
+                    Sku = editSku.Trim(),
+                    Name = editName.Trim(),
+                    Brand = editBrand.Trim(),
+                    Category = editCategory,
+                    Price = editPrice,
+                    CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
+                    Stock = editStock,
+                    Rating = Math.Clamp(editRating, 0, 5),
+                    ReviewCount = editReviewCount,
+                    WeightKg = editWeight,
+                    Color = editColor.Trim(),
+                    WarrantyMonths = editWarranty,
+                    DateAdded = product.DateAdded,
+                    Status = editStatus,
+                    Description = editDescription.Trim()
+                };
+                product = allProducts[idx];
+            }
+            await SaveAll();
+            editing = false;
+            showVal = false;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        if (isNew)
+            Nav.NavigateTo("showcase");
+        else
+            editing = false;
+    }
+
+    private void ConfirmDeleteProduct() => showDeleteConfirm = true;
+
+    private async Task ExecuteDelete()
+    {
+        if (product is not null)
+        {
+            allProducts.RemoveAll(p => p.Id == product.Id);
+            await SaveAll();
+        }
+        Nav.NavigateTo("showcase");
+    }
+
+    private void BackToList() => Nav.NavigateTo("showcase");
+}
+
+
+-------------------------------------------------------------------------------
+FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
+-------------------------------------------------------------------------------
+/* ===========================================================================
+   FILE 4: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
+   
+   Changes:
+   - Added overflow-wrap: break-word to .sd-card
+   - Added overflow-wrap and min-width: 0 to .sd-details dd
+   - Added min-width: 0 to .sd-details (grid child guard)
+   - Added overflow-wrap to .sd-dialog p
+   =========================================================================== */
+
+.sd-header {
+    margin-bottom: 1rem;
+}
+
+.sd-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    background: var(--color-card-bg);
+    /* FIX: prevent long text from overflowing the card */
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sd-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+.sd-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+}
+
+.sd-badge-active { background: #22c55e; color: #fff; }
+.sd-badge-discontinued { background: #ef4444; color: #fff; }
+.sd-badge-draft { background: var(--color-muted); color: #fff; }
+.sd-badge-archived { background: #6b7280; color: #fff; }
+.sd-badge-out-of-stock { background: #ef4444; color: #fff; }
+
+.sd-details {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.5rem 1rem;
+    margin: 1rem 0;
+}
+
+.sd-details dt {
+    font-weight: 600;
+    color: var(--color-muted);
+}
+
+.sd-details dd {
+    /* FIX: prevent long descriptions or values from overflowing the grid */
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sd-star {
+    color: var(--color-accent);
+}
+
+.sd-compare-price {
+    margin-left: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9em;
+}
+
+.sd-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* FIX: form groups inside grid need min-width: 0 */
+.sd-form-row .form-group {
+    min-width: 0;
+}
+
+.sd-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.sd-dialog {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
+}
+
+.sd-dialog h4 {
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+.sd-dialog p {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 640px) {
+    .sd-details {
+        grid-template-columns: 1fr;
+    }
+
+    .sd-details dt {
+        margin-top: 0.5rem;
+    }
+
+    .sd-form-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 
@@ -4885,512 +5641,6 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor.css
 
 
 -------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
--------------------------------------------------------------------------------
-@page "/showcase/new"
-@page "/showcase/{ProductId:guid}"
-@inject IJSRuntime JS
-@inject ILogger<ShowcaseDetail> Logger
-@inject NavigationManager Nav
-@inject IAnalyticsService Analytics
-
-<PageTitle>@(isNew ? "New Product" : (editing ? "Edit Product" : product?.Name ?? "Product")) — Showcase</PageTitle>
-
-<div class="sd-header">
-    <button class="btn btn-outline btn-sm" @onclick="BackToList">← Back to Catalog</button>
-</div>
-
-@if (loading)
-{
-    <p><em>Loading...</em></p>
-}
-else if (product is null && !isNew)
-{
-    <h2>Product Not Found</h2>
-    <p>The product you're looking for doesn't exist. <a href="showcase">Back to Catalog</a></p>
-}
-else
-{
-    <div class="sd-card">
-        @if (!editing && !isNew)
-        {
-            @* ---- View mode ---- *@
-            <h2>@product!.Name</h2>
-            <div class="sd-badge sd-badge-@product.Status.ToLowerInvariant().Replace(" ", "-")">@product.Status</div>
-
-            <dl class="sd-details">
-                <dt>SKU</dt><dd>@product.Sku</dd>
-                <dt>Brand</dt><dd>@product.Brand</dd>
-                <dt>Category</dt><dd>@product.Category</dd>
-                <dt>Price</dt>
-                <dd>
-                    @product.Price.ToString("C")
-                    @if (product.CompareAtPrice.HasValue)
-                    {
-                        <s class="sd-compare-price">@product.CompareAtPrice.Value.ToString("C")</s>
-                    }
-                </dd>
-                <dt>In Stock</dt><dd>@product.Stock units</dd>
-                <dt>Rating</dt>
-                <dd>
-                    @for (int i = 0; i < (int)Math.Round(product.Rating); i++)
-                    {
-                        <span class="sd-star">★</span>
-                    }
-                    (@product.Rating.ToString("F1") — @product.ReviewCount.ToString("N0") reviews)
-                </dd>
-                <dt>Color</dt><dd>@product.Color</dd>
-                <dt>Weight</dt><dd>@product.WeightKg.ToString("F2") kg</dd>
-                <dt>Warranty</dt><dd>@(product.WarrantyMonths > 0 ? $"{product.WarrantyMonths} months" : "None")</dd>
-                <dt>Date Added</dt><dd>@product.DateAdded.ToString("yyyy-MM-dd")</dd>
-                <dt>Description</dt><dd>@product.Description</dd>
-            </dl>
-
-            <div class="form-actions" style="margin-top:1.5rem;">
-                <button class="btn btn-primary btn-sm" @onclick="StartEdit">Edit</button>
-                <button class="btn btn-danger btn-sm" @onclick="ConfirmDeleteProduct">Delete</button>
-            </div>
-        }
-        else
-        {
-            @* ---- Edit / Create mode ---- *@
-            <h2>@(isNew ? "New Product" : $"Editing: {product!.Name}")</h2>
-
-            <div class="form-group">
-                <label for="f-name">Name</label>
-                <input id="f-name" @bind="editName" @bind:event="oninput" />
-                @if (showVal && string.IsNullOrWhiteSpace(editName))
-                {
-                    <div class="form-validation">Name is required.</div>
-                }
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-sku">SKU</label>
-                    <input id="f-sku" @bind="editSku" @bind:event="oninput" />
-                </div>
-                <div class="form-group">
-                    <label for="f-brand">Brand</label>
-                    <input id="f-brand" @bind="editBrand" @bind:event="oninput" />
-                </div>
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-cat">Category</label>
-                    <select id="f-cat" @bind="editCategory">
-                        <option value="Electronics">Electronics</option>
-                        <option value="Furniture">Furniture</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Home & Kitchen">Home & Kitchen</option>
-                        <option value="Sports & Outdoors">Sports & Outdoors</option>
-                        <option value="Office Supplies">Office Supplies</option>
-                        <option value="Accessories">Accessories</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="f-status">Status</label>
-                    <select id="f-status" @bind="editStatus">
-                        <option value="Active">Active</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Archived">Archived</option>
-                        <option value="Out of Stock">Out of Stock</option>
-                    </select>
-                </div>
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-price">Price</label>
-                    <input id="f-price" type="number" step="0.01" min="0" @bind="editPrice" />
-                </div>
-                <div class="form-group">
-                    <label for="f-compare">Compare-at Price</label>
-                    <input id="f-compare" type="number" step="0.01" min="0" @bind="editComparePrice" />
-                </div>
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-stock">Stock</label>
-                    <input id="f-stock" type="number" min="0" @bind="editStock" />
-                </div>
-                <div class="form-group">
-                    <label for="f-color">Color</label>
-                    <input id="f-color" @bind="editColor" @bind:event="oninput" />
-                </div>
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-rating">Rating (0–5)</label>
-                    <input id="f-rating" type="number" step="0.1" min="0" max="5" @bind="editRating" />
-                </div>
-                <div class="form-group">
-                    <label for="f-reviews">Review Count</label>
-                    <input id="f-reviews" type="number" min="0" @bind="editReviewCount" />
-                </div>
-            </div>
-            <div class="sd-form-row">
-                <div class="form-group">
-                    <label for="f-weight">Weight (kg)</label>
-                    <input id="f-weight" type="number" step="0.01" min="0" @bind="editWeight" />
-                </div>
-                <div class="form-group">
-                    <label for="f-warranty">Warranty (months)</label>
-                    <input id="f-warranty" type="number" min="0" @bind="editWarranty" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="f-desc">Description</label>
-                <textarea id="f-desc" @bind="editDescription" @bind:event="oninput"></textarea>
-            </div>
-
-            <div class="form-actions">
-                <button class="btn btn-primary btn-sm" @onclick="Save">Save</button>
-                <button class="btn btn-outline btn-sm" @onclick="CancelEdit">Cancel</button>
-            </div>
-        }
-    </div>
-}
-
-@* ---- Delete confirm ---- *@
-@if (showDeleteConfirm)
-{
-    <div class="sd-overlay" @onclick="() => showDeleteConfirm = false">
-        <div class="sd-dialog" @onclick:stopPropagation="true">
-            <h4>Delete Product</h4>
-            <p>Are you sure you want to delete <strong>@product?.Name</strong>? This cannot be undone.</p>
-            <div class="form-actions">
-                <button class="btn btn-outline btn-sm" @onclick="() => showDeleteConfirm = false">Cancel</button>
-                <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
-            </div>
-        </div>
-    </div>
-}
-
-@code {
-    // MUST match Showcase.razor's StorageKey so both pages share the same data
-    private const string StorageKey = "observer-catalog-products";
-
-    [Parameter] public Guid? ProductId { get; set; }
-
-    private bool isNew => ProductId is null;
-    private bool loading = true;
-    private bool editing;
-    private bool showVal;
-    private bool showDeleteConfirm;
-
-    private List<CatalogProduct> allProducts = [];
-    private CatalogProduct? product;
-
-    // Edit fields
-    private string editName = "", editSku = "", editBrand = "", editCategory = "Electronics",
-        editStatus = "Active", editColor = "", editDescription = "";
-    private decimal editPrice, editComparePrice;
-    private int editStock, editReviewCount, editWarranty;
-    private double editRating, editWeight;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        loading = true;
-        await LoadAll();
-
-        if (isNew)
-        {
-            product = null;
-            editing = true;
-            ResetFormFields();
-        }
-        else
-        {
-            product = allProducts.FirstOrDefault(p => p.Id == ProductId);
-            editing = false;
-        }
-
-        loading = false;
-    }
-
-    private async Task LoadAll()
-    {
-        try
-        {
-            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-            if (!string.IsNullOrEmpty(saved))
-            {
-                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(saved,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (deserialized is { Count: > 0 })
-                {
-                    allProducts = deserialized;
-                    return;
-                }
-            }
-        }
-        catch { /* best effort */ }
-
-        allProducts = ProductDataGenerator.Generate(2000);
-        await SaveAll();
-    }
-
-    private async Task SaveAll()
-    {
-        try
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(allProducts,
-                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
-        }
-        catch { /* best effort */ }
-    }
-
-    private void StartEdit()
-    {
-        if (product is null) return;
-        editName = product.Name;
-        editSku = product.Sku;
-        editBrand = product.Brand;
-        editCategory = product.Category;
-        editStatus = product.Status;
-        editPrice = product.Price;
-        editComparePrice = product.CompareAtPrice ?? 0;
-        editStock = product.Stock;
-        editRating = product.Rating;
-        editReviewCount = product.ReviewCount;
-        editWeight = product.WeightKg;
-        editColor = product.Color;
-        editWarranty = product.WarrantyMonths;
-        editDescription = product.Description;
-        showVal = false;
-        editing = true;
-    }
-
-    private void ResetFormFields()
-    {
-        editName = ""; editSku = ""; editBrand = ""; editCategory = "Electronics";
-        editStatus = "Active"; editColor = ""; editDescription = "";
-        editPrice = 0; editComparePrice = 0; editStock = 0; editReviewCount = 0;
-        editRating = 0; editWeight = 0; editWarranty = 0;
-        showVal = false;
-    }
-
-    private async Task Save()
-    {
-        showVal = true;
-        if (string.IsNullOrWhiteSpace(editName)) return;
-
-        if (isNew)
-        {
-            var newP = new CatalogProduct
-            {
-                Id = Guid.NewGuid(),
-                Sku = editSku.Trim(),
-                Name = editName.Trim(),
-                Brand = editBrand.Trim(),
-                Category = editCategory,
-                Price = editPrice,
-                CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
-                Stock = editStock,
-                Rating = Math.Clamp(editRating, 0, 5),
-                ReviewCount = editReviewCount,
-                WeightKg = editWeight,
-                Color = editColor.Trim(),
-                WarrantyMonths = editWarranty,
-                DateAdded = DateTime.UtcNow,
-                Status = editStatus,
-                Description = editDescription.Trim()
-            };
-            allProducts.Add(newP);
-            await SaveAll();
-            Nav.NavigateTo($"showcase/{newP.Id}");
-        }
-        else if (product is not null)
-        {
-            var idx = allProducts.FindIndex(p => p.Id == product.Id);
-            if (idx >= 0)
-            {
-                allProducts[idx] = new CatalogProduct
-                {
-                    Id = product.Id,
-                    Sku = editSku.Trim(),
-                    Name = editName.Trim(),
-                    Brand = editBrand.Trim(),
-                    Category = editCategory,
-                    Price = editPrice,
-                    CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
-                    Stock = editStock,
-                    Rating = Math.Clamp(editRating, 0, 5),
-                    ReviewCount = editReviewCount,
-                    WeightKg = editWeight,
-                    Color = editColor.Trim(),
-                    WarrantyMonths = editWarranty,
-                    DateAdded = product.DateAdded,
-                    Status = editStatus,
-                    Description = editDescription.Trim()
-                };
-                product = allProducts[idx];
-            }
-            await SaveAll();
-            editing = false;
-            showVal = false;
-        }
-    }
-
-    private void CancelEdit()
-    {
-        if (isNew)
-            Nav.NavigateTo("showcase");
-        else
-            editing = false;
-    }
-
-    private void ConfirmDeleteProduct() => showDeleteConfirm = true;
-
-    private async Task ExecuteDelete()
-    {
-        if (product is not null)
-        {
-            allProducts.RemoveAll(p => p.Id == product.Id);
-            await SaveAll();
-        }
-        Nav.NavigateTo("showcase");
-    }
-
-    private void BackToList() => Nav.NavigateTo("showcase");
-}
-
-
--------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
--------------------------------------------------------------------------------
-/* ===========================================================================
-   FILE 4: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor.css
-   
-   Changes:
-   - Added overflow-wrap: break-word to .sd-card
-   - Added overflow-wrap and min-width: 0 to .sd-details dd
-   - Added min-width: 0 to .sd-details (grid child guard)
-   - Added overflow-wrap to .sd-dialog p
-   =========================================================================== */
-
-.sd-header {
-    margin-bottom: 1rem;
-}
-
-.sd-card {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    background: var(--color-card-bg);
-    /* FIX: prevent long text from overflowing the card */
-    overflow-wrap: break-word;
-    word-break: break-word;
-}
-
-.sd-card h2 {
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
-
-.sd-badge {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.15rem 0.5rem;
-    border-radius: 3px;
-    margin-bottom: 1rem;
-}
-
-.sd-badge-active { background: #22c55e; color: #fff; }
-.sd-badge-discontinued { background: #ef4444; color: #fff; }
-.sd-badge-draft { background: var(--color-muted); color: #fff; }
-.sd-badge-archived { background: #6b7280; color: #fff; }
-.sd-badge-out-of-stock { background: #ef4444; color: #fff; }
-
-.sd-details {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 0.5rem 1rem;
-    margin: 1rem 0;
-}
-
-.sd-details dt {
-    font-weight: 600;
-    color: var(--color-muted);
-}
-
-.sd-details dd {
-    /* FIX: prevent long descriptions or values from overflowing the grid */
-    min-width: 0;
-    overflow-wrap: break-word;
-    word-break: break-word;
-}
-
-.sd-star {
-    color: var(--color-accent);
-}
-
-.sd-compare-price {
-    margin-left: 0.5rem;
-    color: var(--color-muted);
-    font-size: 0.9em;
-}
-
-.sd-form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-/* FIX: form groups inside grid need min-width: 0 */
-.sd-form-row .form-group {
-    min-width: 0;
-}
-
-.sd-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-}
-
-.sd-dialog {
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    max-width: 400px;
-    width: 90%;
-}
-
-.sd-dialog h4 {
-    margin-bottom: 0.75rem;
-    overflow-wrap: break-word;
-}
-
-.sd-dialog p {
-    margin-bottom: 1rem;
-    color: var(--color-muted);
-    overflow-wrap: break-word;
-}
-
-@media (max-width: 640px) {
-    .sd-details {
-        grid-template-columns: 1fr;
-    }
-
-    .sd-details dt {
-        margin-top: 0.5rem;
-    }
-
-    .sd-form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-
--------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Program.cs
 -------------------------------------------------------------------------------
 using Microsoft.AspNetCore.Components.Web;
@@ -5907,45 +6157,6 @@ public sealed class TelemetryService(ILogger<TelemetryService> logger)
         IncrementCounter($"pageview:{pageName}");
         TrackEvent("PageView", new Dictionary<string, string> { ["page"] = pageName });
     }
-}
-
-
--------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/_Imports.razor
--------------------------------------------------------------------------------
-@using System.Net.Http
-@using System.Net.Http.Json
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components.Routing
-@using Microsoft.AspNetCore.Components.Web
-@using Microsoft.AspNetCore.Components.Web.Virtualization
-@using Microsoft.AspNetCore.Components.WebAssembly.Http
-@using Microsoft.Extensions.Logging
-@using Microsoft.JSInterop
-@using ObserverMagazine.Web
-@using ObserverMagazine.Web.Layout
-@using ObserverMagazine.Web.Pages
-@using ObserverMagazine.Web.Components
-@using ObserverMagazine.Web.Models
-@using ObserverMagazine.Web.Services
-
-
--------------------------------------------------------------------------------
-FILE: src/ObserverMagazine.Web/libman.json
--------------------------------------------------------------------------------
-{
-  "version": "1.0",
-  "defaultProvider": "cdnjs",
-  "libraries": [
-    {
-      "library": "highlight.js@11.11.1",
-      "destination": "wwwroot/lib/highlight.js/",
-      "files": [
-        "highlight.min.js",
-        "styles/default.min.css"
-      ]
-    }
-  ]
 }
 
 
@@ -8437,438 +8648,6 @@ public sealed class NoOpAnalyticsService : IAnalyticsService
 
 
 -------------------------------------------------------------------------------
-FILE: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
--------------------------------------------------------------------------------
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
-namespace ObserverMagazine.ContentProcessor;
-
-public static class FrontMatterParser
-{
-    private static readonly IDeserializer Deserializer = new DeserializerBuilder()
-        .WithNamingConvention(CamelCaseNamingConvention.Instance)
-        .IgnoreUnmatchedProperties()
-        .Build();
-
-    /// <summary>
-    /// Splits a markdown file into YAML front matter and markdown body.
-    /// Front matter is delimited by --- at the start and end.
-    /// </summary>
-    public static (FrontMatter FrontMatter, string MarkdownBody) Parse(string rawContent)
-    {
-        if (!rawContent.StartsWith("---"))
-        {
-            return (new FrontMatter(), rawContent);
-        }
-
-        var endIndex = rawContent.IndexOf("---", 3, StringComparison.Ordinal);
-        if (endIndex < 0)
-        {
-            return (new FrontMatter(), rawContent);
-        }
-
-        var yamlBlock = rawContent[3..endIndex].Trim();
-        var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
-
-        var frontMatter = Deserializer.Deserialize<FrontMatter>(yamlBlock);
-        return (frontMatter ?? new FrontMatter(), body);
-    }
-
-    /// <summary>
-    /// Parses an author YAML file into an AuthorProfile.
-    /// </summary>
-    public static AuthorProfile? ParseAuthor(string yamlContent, string id)
-    {
-        try
-        {
-            var profile = Deserializer.Deserialize<AuthorProfile>(yamlContent);
-            if (profile is null) return null;
-            profile.Id = id;
-            return profile;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Derives a slug from a filename like "2026-01-15-welcome-to-observer-magazine".
-    /// Strips the leading date prefix if present.
-    /// </summary>
-    public static string DeriveSlug(string fileName)
-    {
-        // Pattern: YYYY-MM-DD-rest-of-slug
-        if (fileName.Length > 11 &&
-            char.IsDigit(fileName[0]) &&
-            fileName[4] == '-' &&
-            fileName[7] == '-' &&
-            fileName[10] == '-')
-        {
-            return fileName[11..];
-        }
-        return fileName;
-    }
-
-    /// <summary>
-    /// Calculates estimated reading time in minutes from markdown text.
-    /// Uses 200 words per minute, minimum 1 minute.
-    /// </summary>
-    public static int CalculateReadingTime(string markdownBody)
-    {
-        var wordCount = markdownBody
-            .Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
-            .Length;
-        return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
-    }
-}
-
-public sealed class FrontMatter
-{
-    public string Title { get; set; } = "";
-    public DateTime Date { get; set; } = DateTime.MinValue;
-    public DateTime? Updated { get; set; }
-    public string? Author { get; set; }
-    public string? Summary { get; set; }
-    public string[]? Tags { get; set; }
-    public bool Draft { get; set; }
-    public bool Featured { get; set; }
-    public string? Series { get; set; }
-    public string? Image { get; set; }
-}
-
-public sealed class AuthorProfile
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string? Email { get; set; }
-    public string? Bio { get; set; }
-    public string? Avatar { get; set; }
-    public Dictionary<string, string>? Socials { get; set; }
-}
-
-
--------------------------------------------------------------------------------
-FILE: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
--------------------------------------------------------------------------------
-using Markdig;
-
-namespace ObserverMagazine.ContentProcessor;
-
-public static class MarkdownProcessor
-{
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
-        .UseAdvancedExtensions()
-        .Build();
-
-    public static string ToHtml(string markdown)
-    {
-        return Markdown.ToHtml(markdown, Pipeline);
-    }
-}
-
-
--------------------------------------------------------------------------------
-FILE: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
--------------------------------------------------------------------------------
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>ObserverMagazine.ContentProcessor</RootNamespace>
-    <AssemblyName>ObserverMagazine.ContentProcessor</AssemblyName>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Markdig" />
-    <PackageReference Include="YamlDotNet" />
-  </ItemGroup>
-
-</Project>
-
-
--------------------------------------------------------------------------------
-FILE: tools/ObserverMagazine.ContentProcessor/Program.cs
--------------------------------------------------------------------------------
-using System.Text.Json;
-using ObserverMagazine.ContentProcessor;
-
-// Parse command-line arguments
-string contentDir = "content/blog";
-string outputDir = "src/ObserverMagazine.Web/wwwroot";
-string authorsDir = "content/authors";
-DateTime publishBefore = DateTime.UtcNow;
-
-for (int i = 0; i < args.Length; i++)
-{
-    if (args[i] == "--content-dir" && i + 1 < args.Length)
-        contentDir = args[++i];
-    else if (args[i] == "--output-dir" && i + 1 < args.Length)
-        outputDir = args[++i];
-    else if (args[i] == "--authors-dir" && i + 1 < args.Length)
-        authorsDir = args[++i];
-    else if (args[i] == "--publish-before" && i + 1 < args.Length)
-        publishBefore = DateTime.Parse(args[++i]);
-}
-
-Console.WriteLine($"Content directory: {contentDir}");
-Console.WriteLine($"Output directory:  {outputDir}");
-Console.WriteLine($"Authors directory: {authorsDir}");
-Console.WriteLine($"Publish before:    {publishBefore:yyyy-MM-dd HH:mm:ss} UTC");
-
-// --- Process author profiles ---
-var authorProfiles = new Dictionary<string, AuthorProfile>(StringComparer.OrdinalIgnoreCase);
-
-if (Directory.Exists(authorsDir))
-{
-    var authorFiles = Directory.GetFiles(authorsDir, "*.yml", SearchOption.TopDirectoryOnly);
-    Console.WriteLine($"Found {authorFiles.Length} author profile(s)");
-
-    foreach (var authorFile in authorFiles)
-    {
-        var authorId = Path.GetFileNameWithoutExtension(authorFile);
-        var yamlContent = File.ReadAllText(authorFile);
-        var profile = FrontMatterParser.ParseAuthor(yamlContent, authorId);
-
-        if (profile is not null)
-        {
-            authorProfiles[authorId] = profile;
-            Console.WriteLine($"  Loaded author: {authorId} ({profile.Name})");
-        }
-        else
-        {
-            Console.WriteLine($"  WARNING: Could not parse author file {authorFile}");
-        }
-    }
-}
-else
-{
-    Console.WriteLine($"Authors directory '{authorsDir}' does not exist. No author profiles loaded.");
-}
-
-// Write authors.json
-string blogDataDir = Path.Combine(outputDir, "blog-data");
-Directory.CreateDirectory(blogDataDir);
-
-var jsonOptions = new JsonSerializerOptions
-{
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    WriteIndented = true
-};
-
-var authorsPath = Path.Combine(blogDataDir, "authors.json");
-var authorsJson = JsonSerializer.Serialize(authorProfiles.Values.ToArray(), jsonOptions);
-File.WriteAllText(authorsPath, authorsJson);
-Console.WriteLine($"Wrote authors index: {authorsPath} ({authorProfiles.Count} authors)");
-
-// --- Process blog posts ---
-if (!Directory.Exists(contentDir))
-{
-    Console.WriteLine($"Content directory '{contentDir}' does not exist. Creating with no posts.");
-    Directory.CreateDirectory(contentDir);
-}
-
-var markdownFiles = Directory.GetFiles(contentDir, "*.md", SearchOption.TopDirectoryOnly);
-Console.WriteLine($"Found {markdownFiles.Length} markdown files");
-
-var allPostMetadata = new List<PostIndexEntry>();
-var postHtmlMap = new Dictionary<string, string>();
-int skippedDrafts = 0;
-int skippedFuture = 0;
-
-foreach (var mdFile in markdownFiles)
-{
-    Console.WriteLine($"Processing: {Path.GetFileName(mdFile)}");
-
-    var rawContent = File.ReadAllText(mdFile);
-    var (frontMatter, markdownBody) = FrontMatterParser.Parse(rawContent);
-
-    if (string.IsNullOrEmpty(frontMatter.Title))
-    {
-        Console.WriteLine($"  WARNING: No title in front matter, skipping {mdFile}");
-        continue;
-    }
-
-    // Skip drafts
-    if (frontMatter.Draft)
-    {
-        Console.WriteLine($"  SKIPPED: Draft post '{frontMatter.Title}'");
-        skippedDrafts++;
-        continue;
-    }
-
-    // Skip future-dated posts
-    if (frontMatter.Date > publishBefore)
-    {
-        Console.WriteLine($"  SKIPPED: Future post '{frontMatter.Title}' (date: {frontMatter.Date:yyyy-MM-dd}, publish-before: {publishBefore:yyyy-MM-dd})");
-        skippedFuture++;
-        continue;
-    }
-
-    // Derive slug from filename
-    var fileName = Path.GetFileNameWithoutExtension(mdFile);
-    var slug = FrontMatterParser.DeriveSlug(fileName);
-
-    var html = MarkdownProcessor.ToHtml(markdownBody);
-    var readingTime = FrontMatterParser.CalculateReadingTime(markdownBody);
-
-    // Resolve author display name
-    var authorId = frontMatter.Author ?? "";
-    var authorName = authorId;
-    string? authorEmail = null;
-    if (authorProfiles.TryGetValue(authorId, out var authorProfile))
-    {
-        authorName = authorProfile.Name;
-        authorEmail = authorProfile.Email;
-    }
-    else if (!string.IsNullOrEmpty(authorId))
-    {
-        Console.WriteLine($"  WARNING: No author profile found for '{authorId}'");
-    }
-
-    // Write individual post HTML
-    var htmlPath = Path.Combine(blogDataDir, $"{slug}.html");
-    File.WriteAllText(htmlPath, html);
-    Console.WriteLine($"  Wrote: {htmlPath} (~{readingTime} min read)");
-
-    postHtmlMap[slug] = html;
-
-    allPostMetadata.Add(new PostIndexEntry
-    {
-        Slug = slug,
-        Title = frontMatter.Title,
-        Date = frontMatter.Date,
-        Updated = frontMatter.Updated,
-        Author = authorId,
-        AuthorName = authorName,
-        AuthorEmail = authorEmail,
-        Summary = frontMatter.Summary ?? "",
-        Tags = frontMatter.Tags ?? [],
-        Featured = frontMatter.Featured,
-        Series = frontMatter.Series,
-        Image = frontMatter.Image,
-        ReadingTimeMinutes = readingTime
-    });
-}
-
-// Sort by date descending
-allPostMetadata.Sort((a, b) => b.Date.CompareTo(a.Date));
-
-// Write posts index JSON
-var indexPath = Path.Combine(blogDataDir, "posts-index.json");
-var indexJson = JsonSerializer.Serialize(allPostMetadata, jsonOptions);
-File.WriteAllText(indexPath, indexJson);
-Console.WriteLine($"Wrote posts index: {indexPath} ({allPostMetadata.Count} posts, {skippedDrafts} drafts skipped, {skippedFuture} future posts skipped)");
-
-// Generate RSS feed with full post content
-var feedPath = Path.Combine(outputDir, "feed.xml");
-var rssXml = RssGenerator.Generate(
-    title: "Observer Magazine",
-    description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
-    siteUrl: "https://observermagazine.github.io",
-    posts: allPostMetadata,
-    getPostHtml: slug => postHtmlMap.GetValueOrDefault(slug)
-);
-File.WriteAllText(feedPath, rssXml);
-Console.WriteLine($"Wrote RSS feed: {feedPath}");
-
-Console.WriteLine("Content processing complete.");
-
-// --- Types used by the index ---
-public sealed class PostIndexEntry
-{
-    public string Slug { get; init; } = "";
-    public string Title { get; init; } = "";
-    public DateTime Date { get; init; }
-    public DateTime? Updated { get; init; }
-    public string Author { get; init; } = "";
-    public string AuthorName { get; init; } = "";
-    public string? AuthorEmail { get; init; }
-    public string Summary { get; init; } = "";
-    public string[] Tags { get; init; } = [];
-    public bool Featured { get; init; }
-    public string? Series { get; init; }
-    public string? Image { get; init; }
-    public int ReadingTimeMinutes { get; init; }
-}
-
-
--------------------------------------------------------------------------------
-FILE: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
--------------------------------------------------------------------------------
-using System.Xml.Linq;
-
-namespace ObserverMagazine.ContentProcessor;
-
-public static class RssGenerator
-{
-    private static readonly XNamespace ContentNs = "http://purl.org/rss/1.0/modules/content/";
-
-    public static string Generate(
-        string title, string description, string siteUrl,
-        IReadOnlyList<PostIndexEntry> posts,
-        Func<string, string?>? getPostHtml = null)
-    {
-        var items = posts.Select(p =>
-        {
-            var itemElements = new List<object>
-            {
-                new XElement("title", p.Title),
-                new XElement("link", $"{siteUrl}/blog/{p.Slug}"),
-                new XElement("description", p.Summary),
-                new XElement("pubDate", p.Date.ToString("R")),
-                new XElement("guid", $"{siteUrl}/blog/{p.Slug}")
-            };
-
-            // Include author email if available (RSS spec: email (name))
-            if (!string.IsNullOrEmpty(p.AuthorEmail))
-            {
-                itemElements.Add(new XElement("author", $"{p.AuthorEmail} ({p.AuthorName})"));
-            }
-            else if (!string.IsNullOrEmpty(p.AuthorName))
-            {
-                // dc:creator could be used here, but for simplicity just skip <author>
-                // when no email is available (RSS spec requires email in <author>)
-            }
-
-            // Include full HTML content if available
-            var html = getPostHtml?.Invoke(p.Slug);
-            if (!string.IsNullOrEmpty(html))
-            {
-                itemElements.Add(new XElement(ContentNs + "encoded", new XCData(html)));
-            }
-
-            if (p.Tags.Length > 0)
-            {
-                itemElements.AddRange(p.Tags.Select(t => new XElement("category", t)));
-            }
-
-            return new XElement("item", itemElements);
-        });
-
-        var rss = new XDocument(
-            new XDeclaration("1.0", "utf-8", null),
-            new XElement("rss",
-                new XAttribute("version", "2.0"),
-                new XAttribute(XNamespace.Xmlns + "content", ContentNs),
-                new XElement("channel",
-                    new XElement("title", title),
-                    new XElement("link", siteUrl),
-                    new XElement("description", description),
-                    new XElement("language", "en-us"),
-                    new XElement("lastBuildDate", DateTime.UtcNow.ToString("R")),
-                    items
-                )
-            )
-        );
-
-        return rss.Declaration + Environment.NewLine + rss;
-    }
-}
-
-
--------------------------------------------------------------------------------
 FILE: tools/generate_audio.py
 -------------------------------------------------------------------------------
 #!/usr/bin/env python3
@@ -9323,6 +9102,438 @@ if __name__ == "__main__":
 
 
 -------------------------------------------------------------------------------
+FILE: tools/ObserverMagazine.ContentProcessor/FrontMatterParser.cs
+-------------------------------------------------------------------------------
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace ObserverMagazine.ContentProcessor;
+
+public static class FrontMatterParser
+{
+    private static readonly IDeserializer Deserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    /// <summary>
+    /// Splits a markdown file into YAML front matter and markdown body.
+    /// Front matter is delimited by --- at the start and end.
+    /// </summary>
+    public static (FrontMatter FrontMatter, string MarkdownBody) Parse(string rawContent)
+    {
+        if (!rawContent.StartsWith("---"))
+        {
+            return (new FrontMatter(), rawContent);
+        }
+
+        var endIndex = rawContent.IndexOf("---", 3, StringComparison.Ordinal);
+        if (endIndex < 0)
+        {
+            return (new FrontMatter(), rawContent);
+        }
+
+        var yamlBlock = rawContent[3..endIndex].Trim();
+        var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
+
+        var frontMatter = Deserializer.Deserialize<FrontMatter>(yamlBlock);
+        return (frontMatter ?? new FrontMatter(), body);
+    }
+
+    /// <summary>
+    /// Parses an author YAML file into an AuthorProfile.
+    /// </summary>
+    public static AuthorProfile? ParseAuthor(string yamlContent, string id)
+    {
+        try
+        {
+            var profile = Deserializer.Deserialize<AuthorProfile>(yamlContent);
+            if (profile is null) return null;
+            profile.Id = id;
+            return profile;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Derives a slug from a filename like "2026-01-15-welcome-to-observer-magazine".
+    /// Strips the leading date prefix if present.
+    /// </summary>
+    public static string DeriveSlug(string fileName)
+    {
+        // Pattern: YYYY-MM-DD-rest-of-slug
+        if (fileName.Length > 11 &&
+            char.IsDigit(fileName[0]) &&
+            fileName[4] == '-' &&
+            fileName[7] == '-' &&
+            fileName[10] == '-')
+        {
+            return fileName[11..];
+        }
+        return fileName;
+    }
+
+    /// <summary>
+    /// Calculates estimated reading time in minutes from markdown text.
+    /// Uses 200 words per minute, minimum 1 minute.
+    /// </summary>
+    public static int CalculateReadingTime(string markdownBody)
+    {
+        var wordCount = markdownBody
+            .Split([' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
+            .Length;
+        return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+    }
+}
+
+public sealed class FrontMatter
+{
+    public string Title { get; set; } = "";
+    public DateTime Date { get; set; } = DateTime.MinValue;
+    public DateTime? Updated { get; set; }
+    public string? Author { get; set; }
+    public string? Summary { get; set; }
+    public string[]? Tags { get; set; }
+    public bool Draft { get; set; }
+    public bool Featured { get; set; }
+    public string? Series { get; set; }
+    public string? Image { get; set; }
+}
+
+public sealed class AuthorProfile
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string? Email { get; set; }
+    public string? Bio { get; set; }
+    public string? Avatar { get; set; }
+    public Dictionary<string, string>? Socials { get; set; }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: tools/ObserverMagazine.ContentProcessor/MarkdownProcessor.cs
+-------------------------------------------------------------------------------
+using Markdig;
+
+namespace ObserverMagazine.ContentProcessor;
+
+public static class MarkdownProcessor
+{
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
+    public static string ToHtml(string markdown)
+    {
+        return Markdown.ToHtml(markdown, Pipeline);
+    }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: tools/ObserverMagazine.ContentProcessor/ObserverMagazine.ContentProcessor.csproj
+-------------------------------------------------------------------------------
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ObserverMagazine.ContentProcessor</RootNamespace>
+    <AssemblyName>ObserverMagazine.ContentProcessor</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+</Project>
+
+
+-------------------------------------------------------------------------------
+FILE: tools/ObserverMagazine.ContentProcessor/Program.cs
+-------------------------------------------------------------------------------
+using System.Text.Json;
+using ObserverMagazine.ContentProcessor;
+
+// Parse command-line arguments
+string contentDir = "content/blog";
+string outputDir = "src/ObserverMagazine.Web/wwwroot";
+string authorsDir = "content/authors";
+DateTime publishBefore = DateTime.UtcNow;
+
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--content-dir" && i + 1 < args.Length)
+        contentDir = args[++i];
+    else if (args[i] == "--output-dir" && i + 1 < args.Length)
+        outputDir = args[++i];
+    else if (args[i] == "--authors-dir" && i + 1 < args.Length)
+        authorsDir = args[++i];
+    else if (args[i] == "--publish-before" && i + 1 < args.Length)
+        publishBefore = DateTime.Parse(args[++i]);
+}
+
+Console.WriteLine($"Content directory: {contentDir}");
+Console.WriteLine($"Output directory:  {outputDir}");
+Console.WriteLine($"Authors directory: {authorsDir}");
+Console.WriteLine($"Publish before:    {publishBefore:yyyy-MM-dd HH:mm:ss} UTC");
+
+// --- Process author profiles ---
+var authorProfiles = new Dictionary<string, AuthorProfile>(StringComparer.OrdinalIgnoreCase);
+
+if (Directory.Exists(authorsDir))
+{
+    var authorFiles = Directory.GetFiles(authorsDir, "*.yml", SearchOption.TopDirectoryOnly);
+    Console.WriteLine($"Found {authorFiles.Length} author profile(s)");
+
+    foreach (var authorFile in authorFiles)
+    {
+        var authorId = Path.GetFileNameWithoutExtension(authorFile);
+        var yamlContent = File.ReadAllText(authorFile);
+        var profile = FrontMatterParser.ParseAuthor(yamlContent, authorId);
+
+        if (profile is not null)
+        {
+            authorProfiles[authorId] = profile;
+            Console.WriteLine($"  Loaded author: {authorId} ({profile.Name})");
+        }
+        else
+        {
+            Console.WriteLine($"  WARNING: Could not parse author file {authorFile}");
+        }
+    }
+}
+else
+{
+    Console.WriteLine($"Authors directory '{authorsDir}' does not exist. No author profiles loaded.");
+}
+
+// Write authors.json
+string blogDataDir = Path.Combine(outputDir, "blog-data");
+Directory.CreateDirectory(blogDataDir);
+
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true
+};
+
+var authorsPath = Path.Combine(blogDataDir, "authors.json");
+var authorsJson = JsonSerializer.Serialize(authorProfiles.Values.ToArray(), jsonOptions);
+File.WriteAllText(authorsPath, authorsJson);
+Console.WriteLine($"Wrote authors index: {authorsPath} ({authorProfiles.Count} authors)");
+
+// --- Process blog posts ---
+if (!Directory.Exists(contentDir))
+{
+    Console.WriteLine($"Content directory '{contentDir}' does not exist. Creating with no posts.");
+    Directory.CreateDirectory(contentDir);
+}
+
+var markdownFiles = Directory.GetFiles(contentDir, "*.md", SearchOption.TopDirectoryOnly);
+Console.WriteLine($"Found {markdownFiles.Length} markdown files");
+
+var allPostMetadata = new List<PostIndexEntry>();
+var postHtmlMap = new Dictionary<string, string>();
+int skippedDrafts = 0;
+int skippedFuture = 0;
+
+foreach (var mdFile in markdownFiles)
+{
+    Console.WriteLine($"Processing: {Path.GetFileName(mdFile)}");
+
+    var rawContent = File.ReadAllText(mdFile);
+    var (frontMatter, markdownBody) = FrontMatterParser.Parse(rawContent);
+
+    if (string.IsNullOrEmpty(frontMatter.Title))
+    {
+        Console.WriteLine($"  WARNING: No title in front matter, skipping {mdFile}");
+        continue;
+    }
+
+    // Skip drafts
+    if (frontMatter.Draft)
+    {
+        Console.WriteLine($"  SKIPPED: Draft post '{frontMatter.Title}'");
+        skippedDrafts++;
+        continue;
+    }
+
+    // Skip future-dated posts
+    if (frontMatter.Date > publishBefore)
+    {
+        Console.WriteLine($"  SKIPPED: Future post '{frontMatter.Title}' (date: {frontMatter.Date:yyyy-MM-dd}, publish-before: {publishBefore:yyyy-MM-dd})");
+        skippedFuture++;
+        continue;
+    }
+
+    // Derive slug from filename
+    var fileName = Path.GetFileNameWithoutExtension(mdFile);
+    var slug = FrontMatterParser.DeriveSlug(fileName);
+
+    var html = MarkdownProcessor.ToHtml(markdownBody);
+    var readingTime = FrontMatterParser.CalculateReadingTime(markdownBody);
+
+    // Resolve author display name
+    var authorId = frontMatter.Author ?? "";
+    var authorName = authorId;
+    string? authorEmail = null;
+    if (authorProfiles.TryGetValue(authorId, out var authorProfile))
+    {
+        authorName = authorProfile.Name;
+        authorEmail = authorProfile.Email;
+    }
+    else if (!string.IsNullOrEmpty(authorId))
+    {
+        Console.WriteLine($"  WARNING: No author profile found for '{authorId}'");
+    }
+
+    // Write individual post HTML
+    var htmlPath = Path.Combine(blogDataDir, $"{slug}.html");
+    File.WriteAllText(htmlPath, html);
+    Console.WriteLine($"  Wrote: {htmlPath} (~{readingTime} min read)");
+
+    postHtmlMap[slug] = html;
+
+    allPostMetadata.Add(new PostIndexEntry
+    {
+        Slug = slug,
+        Title = frontMatter.Title,
+        Date = frontMatter.Date,
+        Updated = frontMatter.Updated,
+        Author = authorId,
+        AuthorName = authorName,
+        AuthorEmail = authorEmail,
+        Summary = frontMatter.Summary ?? "",
+        Tags = frontMatter.Tags ?? [],
+        Featured = frontMatter.Featured,
+        Series = frontMatter.Series,
+        Image = frontMatter.Image,
+        ReadingTimeMinutes = readingTime
+    });
+}
+
+// Sort by date descending
+allPostMetadata.Sort((a, b) => b.Date.CompareTo(a.Date));
+
+// Write posts index JSON
+var indexPath = Path.Combine(blogDataDir, "posts-index.json");
+var indexJson = JsonSerializer.Serialize(allPostMetadata, jsonOptions);
+File.WriteAllText(indexPath, indexJson);
+Console.WriteLine($"Wrote posts index: {indexPath} ({allPostMetadata.Count} posts, {skippedDrafts} drafts skipped, {skippedFuture} future posts skipped)");
+
+// Generate RSS feed with full post content
+var feedPath = Path.Combine(outputDir, "feed.xml");
+var rssXml = RssGenerator.Generate(
+    title: "Observer Magazine",
+    description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
+    siteUrl: "https://observermagazine.github.io",
+    posts: allPostMetadata,
+    getPostHtml: slug => postHtmlMap.GetValueOrDefault(slug)
+);
+File.WriteAllText(feedPath, rssXml);
+Console.WriteLine($"Wrote RSS feed: {feedPath}");
+
+Console.WriteLine("Content processing complete.");
+
+// --- Types used by the index ---
+public sealed class PostIndexEntry
+{
+    public string Slug { get; init; } = "";
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string Author { get; init; } = "";
+    public string AuthorName { get; init; } = "";
+    public string? AuthorEmail { get; init; }
+    public string Summary { get; init; } = "";
+    public string[] Tags { get; init; } = [];
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
+    public int ReadingTimeMinutes { get; init; }
+}
+
+
+-------------------------------------------------------------------------------
+FILE: tools/ObserverMagazine.ContentProcessor/RssGenerator.cs
+-------------------------------------------------------------------------------
+using System.Xml.Linq;
+
+namespace ObserverMagazine.ContentProcessor;
+
+public static class RssGenerator
+{
+    private static readonly XNamespace ContentNs = "http://purl.org/rss/1.0/modules/content/";
+
+    public static string Generate(
+        string title, string description, string siteUrl,
+        IReadOnlyList<PostIndexEntry> posts,
+        Func<string, string?>? getPostHtml = null)
+    {
+        var items = posts.Select(p =>
+        {
+            var itemElements = new List<object>
+            {
+                new XElement("title", p.Title),
+                new XElement("link", $"{siteUrl}/blog/{p.Slug}"),
+                new XElement("description", p.Summary),
+                new XElement("pubDate", p.Date.ToString("R")),
+                new XElement("guid", $"{siteUrl}/blog/{p.Slug}")
+            };
+
+            // Include author email if available (RSS spec: email (name))
+            if (!string.IsNullOrEmpty(p.AuthorEmail))
+            {
+                itemElements.Add(new XElement("author", $"{p.AuthorEmail} ({p.AuthorName})"));
+            }
+            else if (!string.IsNullOrEmpty(p.AuthorName))
+            {
+                // dc:creator could be used here, but for simplicity just skip <author>
+                // when no email is available (RSS spec requires email in <author>)
+            }
+
+            // Include full HTML content if available
+            var html = getPostHtml?.Invoke(p.Slug);
+            if (!string.IsNullOrEmpty(html))
+            {
+                itemElements.Add(new XElement(ContentNs + "encoded", new XCData(html)));
+            }
+
+            if (p.Tags.Length > 0)
+            {
+                itemElements.AddRange(p.Tags.Select(t => new XElement("category", t)));
+            }
+
+            return new XElement("item", itemElements);
+        });
+
+        var rss = new XDocument(
+            new XDeclaration("1.0", "utf-8", null),
+            new XElement("rss",
+                new XAttribute("version", "2.0"),
+                new XAttribute(XNamespace.Xmlns + "content", ContentNs),
+                new XElement("channel",
+                    new XElement("title", title),
+                    new XElement("link", siteUrl),
+                    new XElement("description", description),
+                    new XElement("language", "en-us"),
+                    new XElement("lastBuildDate", DateTime.UtcNow.ToString("R")),
+                    items
+                )
+            )
+        );
+
+        return rss.Declaration + Environment.NewLine + rss;
+    }
+}
+
+
+-------------------------------------------------------------------------------
 FILE: tools/requirements-audio.txt
 -------------------------------------------------------------------------------
 # KittenTTS 0.8.1 — Apache 2.0 license
@@ -9338,9 +9549,9 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 107
+Total Files Exported: 110
   Blog posts (front matter only): 34
-  Full content files: 73
+  Full content files: 74
   Binary files skipped: 2
 Output File: docs/llm/dump.txt
 ===============================================================================
