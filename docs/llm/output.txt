@@ -1,19 +1,19 @@
 kushal@fedora:~/src/dotnet/network-monitor/src/NetworkMonitor.Console$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m8.700s
-user	0m13.438s
-sys	0m1.092s
+real	0m8.020s
+user	0m12.595s
+sys	0m1.033s
 Restore complete (0.5s)
 
-Build succeeded in 0.6s
+Build succeeded in 0.7s
 
-real	0m0.790s
-user	0m0.821s
-sys	0m0.172s
+real	0m0.848s
+user	0m0.880s
+sys	0m0.152s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-03-31 22:50:00 UTC
+Publish before:    2026-03-31 22:56:28 UTC
 Found 3 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -92,28 +92,28 @@ Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (
 Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
 Content processing complete.
 Restore complete (0.5s)
-  ObserverMagazine.Integration.Tests net10.0 succeeded (0.5s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
+  ObserverMagazine.Integration.Tests net10.0 succeeded (0.3s) → tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.17]   Discovering: ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.35]   Discovered:  ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.51]   Starting:    ObserverMagazine.Integration.Tests
-[xUnit.net 00:00:00.77]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
-  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.3s)
-  ObserverMagazine.Web net10.0 browser-wasm succeeded (3.7s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
-  ObserverMagazine.Web.Tests net10.0 succeeded (0.5s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
+[xUnit.net 00:00:00.13]   Discovering: ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.30]   Discovered:  ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.46]   Starting:    ObserverMagazine.Integration.Tests
+[xUnit.net 00:00:00.74]   Finished:    ObserverMagazine.Integration.Tests (ID = 'a11f17fc47145796b425f2f6072a7236e3de3115aec6d32144ce1d1b834d5009')
+  ObserverMagazine.Integration.Tests test net10.0 succeeded (1.4s)
+  ObserverMagazine.Web net10.0 browser-wasm succeeded (1.7s) → src/ObserverMagazine.Web/bin/Debug/net10.0/wwwroot
+  ObserverMagazine.Web.Tests net10.0 succeeded (0.3s) → tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.4)
-[xUnit.net 00:00:00.14]   Discovering: ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.31]   Discovered:  ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.15]   Discovering: ObserverMagazine.Web.Tests
+[xUnit.net 00:00:00.32]   Discovered:  ObserverMagazine.Web.Tests
 [xUnit.net 00:00:00.47]   Starting:    ObserverMagazine.Web.Tests
-[xUnit.net 00:00:00.97]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
-  ObserverMagazine.Web.Tests test net10.0 succeeded (1.5s)
+[xUnit.net 00:00:00.94]   Finished:    ObserverMagazine.Web.Tests (ID = '3bfa85c2f37e8d5c8068cb834c3ae337cb6e3533a98dd06391782e4f8f42ef98')
+  ObserverMagazine.Web.Tests test net10.0 succeeded (1.4s)
 
-Test summary: total: 81, failed: 0, succeeded: 81, skipped: 0, duration: 5.3s
-Build succeeded in 6.5s
+Test summary: total: 81, failed: 0, succeeded: 81, skipped: 0, duration: 3.3s
+Build succeeded in 4.3s
 
-real	0m6.614s
-user	0m3.589s
-sys	0m0.478s
+real	0m4.452s
+user	0m3.283s
+sys	0m0.457s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -153,9 +153,9 @@ Project 'ObserverMagazine.ContentProcessor' has the following package references
 
 (A) : Auto-referenced package.
 
-real	0m1.638s
-user	0m1.638s
-sys	0m0.349s
+real	0m1.610s
+user	0m1.612s
+sys	0m0.330s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -168,16 +168,16 @@ The given project `ObserverMagazine.Integration.Tests` has no updates given the 
 The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
 The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-real	0m2.711s
-user	0m2.228s
-sys	0m0.475s
+real	0m1.851s
+user	0m1.859s
+sys	0m0.347s
 Export complete: docs/llm/dump.txt
   Total files: 111
   Blog posts (front matter only): 34
   Full content files: 75
   Binary files skipped: 2
 
-real	0m0.102s
-user	0m0.052s
-sys	0m0.041s
+real	0m0.112s
+user	0m0.044s
+sys	0m0.052s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 

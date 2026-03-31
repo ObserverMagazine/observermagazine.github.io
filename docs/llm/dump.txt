@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-03-31 22:50:11 UTC
+DATE: 2026-03-31 22:56:36 UTC
 ===============================================================================
 
 ===============================================================================
@@ -1192,7 +1192,7 @@ jobs:
 
       - name: Restore audio cache
         id: audio-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .audio-cache
           key: audio-v1-${{ hashFiles('content/blog/**/*.md') }}
@@ -1223,14 +1223,14 @@ jobs:
 
       - name: Cache HuggingFace model
         if: steps.audio-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/huggingface
           key: hf-kitten-tts-nano-0.8
 
       - name: Cache pip packages
         if: steps.audio-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: pip-audio-${{ hashFiles('tools/requirements-audio.txt') }}
@@ -1274,7 +1274,7 @@ jobs:
           cp publish/wwwroot/index.html publish/wwwroot/404.html
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
@@ -1283,7 +1283,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
 
 -------------------------------------------------------------------------------
@@ -1333,7 +1333,7 @@ jobs:
           cp publish/wwwroot/index.html publish/wwwroot/404.html
 
       - name: Upload preview site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site-preview
           path: publish/wwwroot
