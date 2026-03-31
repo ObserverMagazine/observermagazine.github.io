@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: Tue Mar 31 05:25:02 PM EDT 2026
+DATE: Tue Mar 31 05:26:13 PM EDT 2026
 ===============================================================================
 
 -------------------------------------------------------------------------------
@@ -305,7 +305,7 @@ FILE: Directory.Packages.props
     <TestSdkVersion>18.3.0</TestSdkVersion>
     <MarkdigVersion>1.1.2</MarkdigVersion>
     <YamlDotNetVersion>16.3.0</YamlDotNetVersion>
-    <BunitVersion>2.6.2</BunitVersion>
+    <BunitVersion>2.7.2</BunitVersion>
     <LibManVersion>3.0.71</LibManVersion>
   </PropertyGroup>
 
