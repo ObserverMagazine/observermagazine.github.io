@@ -38555,3 +38555,279 @@ No other files need to change. The `BlogPost.razor`, `BlogTtsPlayer.razor.css`, 
 
 87
 77
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FrontMatterParser.cs
+
+Expression is always false according to nullable reference types' annotations
+Redundancies in Code
+Expression is always 'true' or 'false' according to nullable reference types' annotations
+
+'??' left operand is never null according to nullable reference types' annotations
+Redundancies in Code
+'??' condition is never null according to nullable reference types' annotations
+
+Auto-property accessor 'Id.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Image.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Series.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Tags.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Summary.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Email.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Author.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Draft.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Updated.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Featured.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+ContentProcessorTests.cs
+
+'??' left operand is never null according to nullable reference types' annotations
+Redundancies in Code
+'??' condition is never null according to nullable reference types' annotations
+
+Auto-property accessor 'Series.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Draft.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Updated.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Date.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Author.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Featured.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Tags.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Image.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Summary.set' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+tools/ObserverMagazine.ContentProcessor/Program.cs
+
+Auto-property accessor 'Updated.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'ReadingTimeMinutes.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Featured.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Series.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Image.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Author.get' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+BlogTtsPlayer.razor
+
+The expression looks like a discard pattern but actually assigns a local variable '_'
+Potential Code Quality Issues
+Suspicious use of variable with discard-like name
+
+Avoid using 'async' lambda when delegate type returns 'void': any exceptions unhandled by the lambda might lead to the process crash
+Potential Code Quality Issues
+Avoid using 'async' lambda when delegate type returns 'void'
+
+The value passed to the method is never used because it is overwritten in the method body before being read
+Redundancies in Code
+Assignment is not used
+
+Qualifier is redundant
+Redundancies in Code
+Redundant name qualifier
+
+Qualifier is redundant
+Redundancies in Code
+Redundant name qualifier
+ShowcaseDetail.razor
+
+The parameter 'count' has the same default value
+Redundancies in Code
+Redundant argument with default value
+
+Property 'Logger' is never used
+Redundancies in Symbol Declarations
+Type member is never used (private accessibility)
+
+Property 'Analytics' is never used
+Redundancies in Symbol Declarations
+Type member is never used (private accessibility)
+Showcase.razor
+
+The parameter 'count' has the same default value
+Redundancies in Code
+Redundant argument with default value
+
+The parameter 'count' has the same default value
+Redundancies in Code
+Redundant argument with default value
+AuthorCard.razor
+
+Redundant 'switch' expression arm
+Redundancies in Code
+Redundant 'switch' expression arms
+
+Using directive is not required by the code and can be safely removed
+Redundancies in Code
+Redundant using directive
+BlogPostMetadata.cs
+
+Auto-property accessor 'Series.init' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+
+Auto-property accessor 'Updated.init' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+App.razor
+
+CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is obsolete: 'NotFound is deprecated. Use NotFoundPage instead.'
+Compiler Warnings
+Use of obsolete symbol
+ShowcaseTests.cs
+
+The parameter 'count' has the same default value
+Redundancies in Code
+Redundant argument with default value
+NavMenu.razor
+
+Qualifier is redundant
+Redundancies in Code
+Redundant name qualifier
+AnalyticsService.cs
+
+Using directive is not required by the code and can be safely removed
+Redundancies in Code
+Redundant using directive
+TelemetryService.cs
+
+Using directive is not required by the code and can be safely removed
+Redundancies in Code
+Redundant using directive
+BlogService.cs
+
+Using directive is not required by the code and can be safely removed
+Redundancies in Code
+Redundant using directive
+MasterDetailTests.cs
+
+Using directive is not required by the code and can be safely removed
+Redundancies in Code
+Redundant using directive
+AuthorProfile.cs
+
+Auto-property accessor 'Avatar.init' is never used
+Potential Code Quality Issues
+Auto-property accessor is never used (non-private accessibility)
+BlogPost.razor
+
+Property 'Nav' is never used
+Redundancies in Symbol Declarations
+Type member is never used (private accessibility)
+src/ObserverMagazine.Web/Program.cs
+
+Parameter 'sp' is never used
+Redundancies in Symbol Declarations
+Unused parameter (private accessibility)
+
+© 2020–2026 Qodana
+
+    Terms Of Use
+

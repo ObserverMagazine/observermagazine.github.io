@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-01 12:29:16 UTC
+DATE: 2026-04-01 22:49:52 UTC
 ===============================================================================
 
 ===============================================================================
@@ -1754,15 +1754,15 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
 @implements IDisposable
 @inject IAnalyticsService Analytics
 @inject ILogger<BlogTtsPlayer> Logger
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
-@if (!hidden)
+@if (!_hidden)
 {
     <div class="tts-player">
         <span class="tts-icon" aria-hidden="true">🔊</span>
         <span class="tts-label">Listen to this post</span>
 
-        @if (useFallbackControls)
+        @if (_useFallbackControls)
         {
             @* Fallback: custom play/pause + seek when native controls don't render *@
             <audio id="tts-audio-@Slug"
@@ -1774,13 +1774,13 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
             </audio>
             <div class="tts-fallback">
                 <button class="tts-fallback-btn" @onclick="ToggleFallbackPlay">
-                    @(fallbackPlaying ? "⏸ Pause" : "▶ Play")
+                    @(_fallbackPlaying ? "⏸ Pause" : "▶ Play")
                 </button>
                 <input type="range" class="tts-fallback-seek"
-                       min="0" max="@fallbackDuration" step="1"
-                       value="@fallbackCurrentTime"
+                       min="0" max="@_fallbackDuration" step="1"
+                       value="@_fallbackCurrentTime"
                        @oninput="OnSeek" />
-                <span class="tts-fallback-time">@FormatTime(fallbackCurrentTime)</span>
+                <span class="tts-fallback-time">@FormatTime(_fallbackCurrentTime)</span>
             </div>
         }
         else
@@ -1803,12 +1803,12 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
             <label class="tts-speed-label" for="tts-speed-@Slug">Speed</label>
             <select id="tts-speed-@Slug"
                     class="tts-speed-select"
-                    value="@currentRate.ToString("0.##")"
+                    value="@_currentRate.ToString("0.##")"
                     @onchange="OnSpeedChange">
                 @foreach (var rate in PlaybackRates)
                 {
                     <option value="@rate.ToString("0.##")"
-                            selected="@(Math.Abs(rate - currentRate) < 0.01)">
+                            selected="@(Math.Abs(rate - _currentRate) < 0.01)">
                         @(rate.ToString("0.##"))x
                     </option>
                 }
@@ -1827,12 +1827,12 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     [Parameter, EditorRequired]
     public string Slug { get; set; } = string.Empty;
 
-    private bool hidden;
-    private bool useFallbackControls;
-    private bool fallbackPlaying;
-    private int fallbackCurrentTime;
-    private int fallbackDuration = 1; // avoid div-by-zero on range
-    private double currentRate = 1.0;
+    private bool _hidden;
+    private bool _useFallbackControls;
+    private bool _fallbackPlaying;
+    private int _fallbackCurrentTime;
+    private int _fallbackDuration = 1; // avoid div-by-zero on range
+    private double _currentRate = 1.0;
 
     private System.Threading.Timer? _pollTimer;
 
@@ -1846,43 +1846,43 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
             try
             {
                 // Check if the audio source is available at all
-                var canPlay = await JS.InvokeAsync<bool>("observerAudio.checkAvailability",
+                var canPlay = await Js.InvokeAsync<bool>("observerAudio.checkAvailability",
                     $"tts-audio-{Slug}");
                 if (!canPlay)
                 {
-                    hidden = true;
+                    _hidden = true;
                     StateHasChanged();
                     return;
                 }
 
                 // Restore saved playback rate from localStorage
-                var savedRate = await JS.InvokeAsync<double>("observerAudio.getSavedPlaybackRate");
+                var savedRate = await Js.InvokeAsync<double>("observerAudio.getSavedPlaybackRate");
                 if (savedRate > 0)
                 {
-                    currentRate = savedRate;
-                    await JS.InvokeVoidAsync("observerAudio.setPlaybackRate",
-                        $"tts-audio-{Slug}", currentRate);
+                    _currentRate = savedRate;
+                    await Js.InvokeVoidAsync("observerAudio.setPlaybackRate",
+                        $"tts-audio-{Slug}", _currentRate);
                 }
 
                 // Check if native controls rendered properly (height > 0).
                 // Chrome Android clips the controls to 0px height in some CSS scenarios.
-                var controlsRendered = await JS.InvokeAsync<bool>("observerAudio.checkControlsRendered",
+                var controlsRendered = await Js.InvokeAsync<bool>("observerAudio.checkControlsRendered",
                     $"tts-audio-{Slug}");
                 if (!controlsRendered)
                 {
                     Logger.LogInformation("Native audio controls not rendered for {Slug}, using fallback", Slug);
-                    useFallbackControls = true;
+                    _useFallbackControls = true;
                     StateHasChanged();
 
                     // After switching to fallback, get duration
                     await Task.Delay(100); // let DOM update
-                    var dur = await JS.InvokeAsync<double>("observerAudio.getDuration", $"tts-audio-{Slug}");
+                    var dur = await Js.InvokeAsync<double>("observerAudio.getDuration", $"tts-audio-{Slug}");
                     if (dur > 0)
-                        fallbackDuration = (int)Math.Ceiling(dur);
+                        _fallbackDuration = (int)Math.Ceiling(dur);
 
                     // Re-apply playback rate after fallback switch (new audio element may have reset)
-                    await JS.InvokeVoidAsync("observerAudio.setPlaybackRate",
-                        $"tts-audio-{Slug}", currentRate);
+                    await Js.InvokeVoidAsync("observerAudio.setPlaybackRate",
+                        $"tts-audio-{Slug}", _currentRate);
 
                     StateHasChanged();
                 }
@@ -1896,10 +1896,10 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
 
     protected override void OnParametersSet()
     {
-        hidden = false;
-        useFallbackControls = false;
-        fallbackPlaying = false;
-        fallbackCurrentTime = 0;
+        _hidden = false;
+        _useFallbackControls = false;
+        _fallbackPlaying = false;
+        _fallbackCurrentTime = 0;
     }
 
     // --- Speed control ---
@@ -1909,11 +1909,11 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
         if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float,
             System.Globalization.CultureInfo.InvariantCulture, out var rate) && rate >= 0.5 && rate <= 3.0)
         {
-            currentRate = rate;
+            _currentRate = rate;
             try
             {
-                await JS.InvokeVoidAsync("observerAudio.setPlaybackRate", $"tts-audio-{Slug}", rate);
-                await JS.InvokeVoidAsync("observerAudio.savePlaybackRate", rate);
+                await Js.InvokeVoidAsync("observerAudio.setPlaybackRate", $"tts-audio-{Slug}", rate);
+                await Js.InvokeVoidAsync("observerAudio.savePlaybackRate", rate);
                 Logger.LogInformation("TTS speed changed to {Rate}x for {Slug}", rate, Slug);
                 await Analytics.TrackInteractionAsync("TTS.SpeedChange", $"{Slug}:{rate}x");
             }
@@ -1930,17 +1930,17 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     {
         try
         {
-            if (fallbackPlaying)
+            if (_fallbackPlaying)
             {
-                await JS.InvokeVoidAsync("observerAudio.pause", $"tts-audio-{Slug}");
-                fallbackPlaying = false;
+                await Js.InvokeVoidAsync("observerAudio.pause", $"tts-audio-{Slug}");
+                _fallbackPlaying = false;
                 StopPolling();
                 await OnPause();
             }
             else
             {
-                await JS.InvokeVoidAsync("observerAudio.play", $"tts-audio-{Slug}");
-                fallbackPlaying = true;
+                await Js.InvokeVoidAsync("observerAudio.play", $"tts-audio-{Slug}");
+                _fallbackPlaying = true;
                 StartPolling();
                 await OnPlay();
             }
@@ -1955,10 +1955,10 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
     {
         if (double.TryParse(e.Value?.ToString(), out var time))
         {
-            fallbackCurrentTime = (int)time;
+            _fallbackCurrentTime = (int)time;
             try
             {
-                await JS.InvokeVoidAsync("observerAudio.setCurrentTime", $"tts-audio-{Slug}", time);
+                await Js.InvokeVoidAsync("observerAudio.setCurrentTime", $"tts-audio-{Slug}", time);
             }
             catch (Exception ex)
             {
@@ -1974,14 +1974,14 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor
         {
             try
             {
-                var time = await JS.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
-                var ended = await JS.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
+                var time = await Js.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
+                var ended = await Js.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
                 await InvokeAsync(() =>
                 {
-                    fallbackCurrentTime = (int)time;
+                    _fallbackCurrentTime = (int)time;
                     if (ended)
                     {
-                        fallbackPlaying = false;
+                        _fallbackPlaying = false;
                         StopPolling();
                         _ = OnEnded();
                     }
@@ -2153,18 +2153,18 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 @inject HttpClient Http
 @inject ILogger<MasterDetail> Logger
 @inject IAnalyticsService Analytics
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 @* ---- Confirmation dialog ---- *@
-@if (confirmAction is not null)
+@if (_confirmAction is not null)
 {
     <div class="confirm-overlay" @onclick="CancelConfirm">
         <div class="confirm-dialog" @onclick:stopPropagation="true">
-            <h4>@confirmTitle</h4>
-            <p>@confirmMessage</p>
+            <h4>@_confirmTitle</h4>
+            <p>@_confirmMessage</p>
             <div class="form-actions">
                 <button class="btn btn-outline btn-sm" @onclick="CancelConfirm">Cancel</button>
-                <button class="btn btn-danger btn-sm" @onclick="ExecuteConfirm">@confirmButton</button>
+                <button class="btn btn-danger btn-sm" @onclick="ExecuteConfirm">@_confirmButton</button>
             </div>
         </div>
     </div>
@@ -2177,16 +2177,16 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
             <h3>Products</h3>
             <button class="btn btn-primary btn-sm" @onclick="StartAdd" title="Add a new product">+ Add</button>
         </div>
-        @if (products is null)
+        @if (_products is null)
         {
             <p class="md-loading"><em>Loading...</em></p>
         }
         else
         {
             <ul>
-                @foreach (var p in products)
+                @foreach (var p in _products)
                 {
-                    <li class="@(selected?.Id == p.Id ? "md-selected" : "")"
+                    <li class="@(_selected?.Id == p.Id ? "md-selected" : "")"
                         @onclick="() => SelectProduct(p)">
                         <span class="md-item-name">@p.Name</span>
                         <span class="md-item-price">@p.Price.ToString("C")</span>
@@ -2197,44 +2197,44 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
                 <button class="btn btn-outline btn-sm" @onclick="ConfirmReset" title="Reset to default data">
                     Reset to Defaults
                 </button>
-                <span class="md-count">@products.Count items</span>
+                <span class="md-count">@_products.Count items</span>
             </div>
         }
     </div>
 
     @* ---- Detail pane ---- *@
     <div class="md-detail">
-        @if (viewMode == ViewMode.Idle)
+        @if (_viewMode == ViewMode.Idle)
         {
             <div class="md-empty">
                 <p>Select an item from the list, or click <strong>+ Add</strong> to create one.</p>
             </div>
         }
-        else if (viewMode == ViewMode.Viewing && selected is not null)
+        else if (_viewMode == ViewMode.Viewing && _selected is not null)
         {
             <div class="md-content">
-                <h3>@selected.Name</h3>
+                <h3>@_selected.Name</h3>
                 <dl>
                     <dt>Category</dt>
-                    <dd>@selected.Category</dd>
+                    <dd>@_selected.Category</dd>
 
                     <dt>Price</dt>
-                    <dd>@selected.Price.ToString("C")</dd>
+                    <dd>@_selected.Price.ToString("C")</dd>
 
                     <dt>In Stock</dt>
-                    <dd>@selected.Stock units</dd>
+                    <dd>@_selected.Stock units</dd>
 
                     <dt>Rating</dt>
                     <dd>
-                        @for (int i = 0; i < (int)Math.Round(selected.Rating); i++)
+                        @for (int i = 0; i < (int)Math.Round(_selected.Rating); i++)
                         {
                             <span class="md-star">★</span>
                         }
-                        (@selected.Rating.ToString("F1"))
+                        (@_selected.Rating.ToString("F1"))
                     </dd>
 
                     <dt>Description</dt>
-                    <dd>@selected.Description</dd>
+                    <dd>@_selected.Description</dd>
                 </dl>
 
                 <div class="form-actions" style="margin-top: 1.5rem;">
@@ -2243,15 +2243,15 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
                 </div>
             </div>
         }
-        else if (viewMode is ViewMode.Editing or ViewMode.Adding)
+        else if (_viewMode is ViewMode.Editing or ViewMode.Adding)
         {
             <div class="md-content">
-                <h3>@(viewMode == ViewMode.Adding ? "New Product" : $"Editing: {selected?.Name}")</h3>
+                <h3>@(_viewMode == ViewMode.Adding ? "New Product" : $"Editing: {_selected?.Name}")</h3>
 
                 <div class="form-group">
                     <label for="edit-name">Name</label>
-                    <input id="edit-name" @bind="editName" @bind:event="oninput" placeholder="Product name" />
-                    @if (showValidation && string.IsNullOrWhiteSpace(editName))
+                    <input id="edit-name" @bind="_editName" @bind:event="oninput" placeholder="Product name" />
+                    @if (_showValidation && string.IsNullOrWhiteSpace(_editName))
                     {
                         <div class="form-validation">Name is required.</div>
                     }
@@ -2259,27 +2259,27 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 
                 <div class="form-group">
                     <label for="edit-category">Category</label>
-                    <input id="edit-category" @bind="editCategory" @bind:event="oninput" placeholder="e.g. Electronics" />
+                    <input id="edit-category" @bind="_editCategory" @bind:event="oninput" placeholder="e.g. Electronics" />
                 </div>
 
                 <div class="form-group">
                     <label for="edit-price">Price</label>
-                    <input id="edit-price" type="number" step="0.01" min="0" @bind="editPrice" />
+                    <input id="edit-price" type="number" step="0.01" min="0" @bind="_editPrice" />
                 </div>
 
                 <div class="form-group">
                     <label for="edit-stock">Stock</label>
-                    <input id="edit-stock" type="number" min="0" @bind="editStock" />
+                    <input id="edit-stock" type="number" min="0" @bind="_editStock" />
                 </div>
 
                 <div class="form-group">
                     <label for="edit-rating">Rating (0–5)</label>
-                    <input id="edit-rating" type="number" step="0.1" min="0" max="5" @bind="editRating" />
+                    <input id="edit-rating" type="number" step="0.1" min="0" max="5" @bind="_editRating" />
                 </div>
 
                 <div class="form-group">
                     <label for="edit-desc">Description</label>
-                    <textarea id="edit-desc" @bind="editDescription" @bind:event="oninput"
+                    <textarea id="edit-desc" @bind="_editDescription" @bind:event="oninput"
                               placeholder="Describe the product"></textarea>
                 </div>
 
@@ -2297,24 +2297,24 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 
     private enum ViewMode { Idle, Viewing, Editing, Adding }
 
-    private List<Product>? products;
-    private Product? selected;
-    private ViewMode viewMode = ViewMode.Idle;
+    private List<Product>? _products;
+    private Product? _selected;
+    private ViewMode _viewMode = ViewMode.Idle;
 
     // Edit form fields
-    private string editName = "";
-    private string editCategory = "";
-    private decimal editPrice;
-    private int editStock;
-    private double editRating;
-    private string editDescription = "";
-    private bool showValidation;
+    private string _editName = "";
+    private string _editCategory = "";
+    private decimal _editPrice;
+    private int _editStock;
+    private double _editRating;
+    private string _editDescription = "";
+    private bool _showValidation;
 
     // Confirmation dialog
-    private string confirmTitle = "";
-    private string confirmMessage = "";
-    private string confirmButton = "";
-    private Func<Task>? confirmAction;
+    private string _confirmTitle = "";
+    private string _confirmMessage = "";
+    private string _confirmButton = "";
+    private Func<Task>? _confirmAction;
 
     protected override async Task OnInitializedAsync()
     {
@@ -2327,12 +2327,12 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
         try
         {
             // Try localStorage first
-            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            var saved = await Js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
             if (!string.IsNullOrEmpty(saved))
             {
-                products = System.Text.Json.JsonSerializer.Deserialize<List<Product>>(saved,
+                _products = System.Text.Json.JsonSerializer.Deserialize<List<Product>>(saved,
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                Logger.LogInformation("Loaded {Count} products from local storage", products?.Count ?? 0);
+                Logger.LogInformation("Loaded {Count} products from local storage", _products?.Count ?? 0);
             }
         }
         catch (Exception ex)
@@ -2340,31 +2340,31 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
             Logger.LogDebug(ex, "Could not read from local storage");
         }
 
-        if (products is null || products.Count == 0)
+        if (_products is null || _products.Count == 0)
         {
             try
             {
                 var loaded = await Http.GetFromJsonAsync<Product[]>("sample-data/products.json");
-                products = loaded?.ToList() ?? [];
-                Logger.LogInformation("Loaded {Count} products from JSON", products.Count);
+                _products = loaded?.ToList() ?? [];
+                Logger.LogInformation("Loaded {Count} products from JSON", _products.Count);
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Failed to load products");
-                products = [];
+                _products = [];
             }
         }
     }
 
     private async Task SaveProducts()
     {
-        if (products is null) return;
+        if (_products is null) return;
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(products,
+            var json = System.Text.Json.JsonSerializer.Serialize(_products,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
-            Logger.LogInformation("Saved {Count} products to local storage", products.Count);
+            await Js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+            Logger.LogInformation("Saved {Count} products to local storage", _products.Count);
         }
         catch (Exception ex)
         {
@@ -2374,9 +2374,9 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 
     private async Task SelectProduct(Product product)
     {
-        if (viewMode is ViewMode.Editing or ViewMode.Adding) return;
-        selected = product;
-        viewMode = ViewMode.Viewing;
+        if (_viewMode is ViewMode.Editing or ViewMode.Adding) return;
+        _selected = product;
+        _viewMode = ViewMode.Viewing;
         Logger.LogInformation("Selected product: {Name}", product.Name);
         await Analytics.TrackInteractionAsync("ProductSelect", product.Name);
     }
@@ -2385,146 +2385,146 @@ FILE: src/ObserverMagazine.Web/Components/MasterDetail.razor
 
     private void StartAdd()
     {
-        selected = null;
-        editName = "";
-        editCategory = "";
-        editPrice = 0;
-        editStock = 0;
-        editRating = 0;
-        editDescription = "";
-        showValidation = false;
-        viewMode = ViewMode.Adding;
+        _selected = null;
+        _editName = "";
+        _editCategory = "";
+        _editPrice = 0;
+        _editStock = 0;
+        _editRating = 0;
+        _editDescription = "";
+        _showValidation = false;
+        _viewMode = ViewMode.Adding;
     }
 
     private void StartEdit()
     {
-        if (selected is null) return;
-        editName = selected.Name;
-        editCategory = selected.Category;
-        editPrice = selected.Price;
-        editStock = selected.Stock;
-        editRating = selected.Rating;
-        editDescription = selected.Description;
-        showValidation = false;
-        viewMode = ViewMode.Editing;
+        if (_selected is null) return;
+        _editName = _selected.Name;
+        _editCategory = _selected.Category;
+        _editPrice = _selected.Price;
+        _editStock = _selected.Stock;
+        _editRating = _selected.Rating;
+        _editDescription = _selected.Description;
+        _showValidation = false;
+        _viewMode = ViewMode.Editing;
     }
 
     private async Task SaveEdit()
     {
-        showValidation = true;
-        if (string.IsNullOrWhiteSpace(editName)) return;
+        _showValidation = true;
+        if (string.IsNullOrWhiteSpace(_editName)) return;
 
-        if (viewMode == ViewMode.Adding)
+        if (_viewMode == ViewMode.Adding)
         {
             var newProduct = new Product
             {
                 Id = Guid.NewGuid(),
-                Name = editName.Trim(),
-                Category = editCategory.Trim(),
-                Price = editPrice,
-                Stock = editStock,
-                Rating = Math.Clamp(editRating, 0, 5),
-                Description = editDescription.Trim()
+                Name = _editName.Trim(),
+                Category = _editCategory.Trim(),
+                Price = _editPrice,
+                Stock = _editStock,
+                Rating = Math.Clamp(_editRating, 0, 5),
+                Description = _editDescription.Trim()
             };
-            products!.Add(newProduct);
-            selected = newProduct;
+            _products!.Add(newProduct);
+            _selected = newProduct;
             Logger.LogInformation("Added product: {Name}", newProduct.Name);
             await Analytics.TrackInteractionAsync("ProductAdd", newProduct.Name);
         }
-        else if (viewMode == ViewMode.Editing && selected is not null)
+        else if (_viewMode == ViewMode.Editing && _selected is not null)
         {
-            var idx = products!.FindIndex(p => p.Id == selected.Id);
+            var idx = _products!.FindIndex(p => p.Id == _selected.Id);
             if (idx >= 0)
             {
-                var updated = selected with
+                var updated = _selected with
                 {
-                    Name = editName.Trim(),
-                    Category = editCategory.Trim(),
-                    Price = editPrice,
-                    Stock = editStock,
-                    Rating = Math.Clamp(editRating, 0, 5),
-                    Description = editDescription.Trim()
+                    Name = _editName.Trim(),
+                    Category = _editCategory.Trim(),
+                    Price = _editPrice,
+                    Stock = _editStock,
+                    Rating = Math.Clamp(_editRating, 0, 5),
+                    Description = _editDescription.Trim()
                 };
-                products[idx] = updated;
-                selected = updated;
+                _products[idx] = updated;
+                _selected = updated;
                 Logger.LogInformation("Updated product: {Name}", updated.Name);
                 await Analytics.TrackInteractionAsync("ProductUpdate", updated.Name);
             }
         }
 
         await SaveProducts();
-        viewMode = ViewMode.Viewing;
-        showValidation = false;
+        _viewMode = ViewMode.Viewing;
+        _showValidation = false;
     }
 
     private void CancelEdit()
     {
-        viewMode = selected is not null ? ViewMode.Viewing : ViewMode.Idle;
-        showValidation = false;
+        _viewMode = _selected is not null ? ViewMode.Viewing : ViewMode.Idle;
+        _showValidation = false;
     }
 
     private void ConfirmDelete()
     {
-        if (selected is null) return;
-        confirmTitle = "Delete Product";
-        confirmMessage = $"Are you sure you want to delete \"{selected.Name}\"? This cannot be undone.";
-        confirmButton = "Delete";
-        confirmAction = ExecuteDelete;
+        if (_selected is null) return;
+        _confirmTitle = "Delete Product";
+        _confirmMessage = $"Are you sure you want to delete \"{_selected.Name}\"? This cannot be undone.";
+        _confirmButton = "Delete";
+        _confirmAction = ExecuteDelete;
     }
 
     private async Task ExecuteDelete()
     {
-        if (selected is not null && products is not null)
+        if (_selected is not null && _products is not null)
         {
-            var name = selected.Name;
-            products.RemoveAll(p => p.Id == selected.Id);
-            selected = null;
-            viewMode = ViewMode.Idle;
+            var name = _selected.Name;
+            _products.RemoveAll(p => p.Id == _selected.Id);
+            _selected = null;
+            _viewMode = ViewMode.Idle;
             await SaveProducts();
             Logger.LogInformation("Deleted product: {Name}", name);
             await Analytics.TrackInteractionAsync("ProductDelete", name);
         }
-        confirmAction = null;
+        _confirmAction = null;
     }
 
     private void ConfirmReset()
     {
-        confirmTitle = "Reset to Defaults";
-        confirmMessage = "This will discard all your changes and restore the original product data. Continue?";
-        confirmButton = "Reset";
-        confirmAction = ExecuteReset;
+        _confirmTitle = "Reset to Defaults";
+        _confirmMessage = "This will discard all your changes and restore the original product data. Continue?";
+        _confirmButton = "Reset";
+        _confirmAction = ExecuteReset;
     }
 
     private async Task ExecuteReset()
     {
         try
         {
-            await JS.InvokeVoidAsync("localStorage.removeItem", StorageKey);
+            await Js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
         }
         catch (Exception ex)
         {
             Logger.LogDebug(ex, "Could not clear local storage");
         }
 
-        products = null;
-        selected = null;
-        viewMode = ViewMode.Idle;
+        _products = null;
+        _selected = null;
+        _viewMode = ViewMode.Idle;
         await LoadProducts();
         Logger.LogInformation("Reset products to defaults");
         await Analytics.TrackInteractionAsync("ProductReset", "");
-        confirmAction = null;
+        _confirmAction = null;
     }
 
     private void CancelConfirm()
     {
-        confirmAction = null;
+        _confirmAction = null;
     }
 
     private async Task ExecuteConfirm()
     {
-        if (confirmAction is not null)
+        if (_confirmAction is not null)
         {
-            await confirmAction();
+            await _confirmAction();
         }
     }
 }
@@ -2683,13 +2683,13 @@ FILE: src/ObserverMagazine.Web/Components/Reactions.razor
 -------------------------------------------------------------------------------
 @inject IAnalyticsService Analytics
 
-@if (reactions is not null)
+@if (_reactions is not null)
 {
     <div class="reactions-bar">
-        @foreach (var (emoji, type) in reactionTypes)
+        @foreach (var (emoji, type) in ReactionTypes)
         {
-            var count = reactions.GetValueOrDefault(type, 0);
-            <button class="reaction-btn @(userReacted == type ? "reacted" : "")"
+            var count = _reactions.GetValueOrDefault(type, 0);
+            <button class="reaction-btn @(_userReacted == type ? "reacted" : "")"
                     @onclick="() => React(type)"
                     title="@type">
                 <span class="reaction-emoji">@emoji</span>
@@ -2705,7 +2705,7 @@ FILE: src/ObserverMagazine.Web/Components/Reactions.razor
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    private static readonly (string Emoji, string Type)[] reactionTypes =
+    private static readonly (string Emoji, string Type)[] ReactionTypes =
     [
         ("👍", "like"),
         ("❤️", "love"),
@@ -2713,26 +2713,26 @@ FILE: src/ObserverMagazine.Web/Components/Reactions.razor
         ("🤔", "thinking")
     ];
 
-    private Dictionary<string, int>? reactions;
-    private string? userReacted;
+    private Dictionary<string, int>? _reactions;
+    private string? _userReacted;
 
     protected override async Task OnParametersSetAsync()
     {
         if (string.IsNullOrEmpty(Slug)) return;
 
-        reactions = await Analytics.GetReactionsAsync(Slug);
+        _reactions = await Analytics.GetReactionsAsync(Slug);
         // If backend returned null, reactions stays null and the UI is hidden
     }
 
     private async Task React(string type)
     {
-        if (reactions is null || userReacted == type) return;
+        if (_reactions is null || _userReacted == type) return;
 
-        userReacted = type;
+        _userReacted = type;
         await Analytics.AddReactionAsync(Slug, type);
 
         // Optimistic update
-        reactions[type] = reactions.GetValueOrDefault(type, 0) + 1;
+        _reactions[type] = _reactions.GetValueOrDefault(type, 0) + 1;
         await Analytics.TrackInteractionAsync("Reaction", $"{Slug}: {type}");
     }
 }
@@ -2783,7 +2783,7 @@ FILE: src/ObserverMagazine.Web/Components/ResponsiveTable.razor
 @inject ILogger<ResponsiveTable> Logger
 @inject IAnalyticsService Analytics
 
-@if (products is null)
+@if (_products is null)
 {
     <p><em>Loading data...</em></p>
 }
@@ -2792,7 +2792,7 @@ else
     <div class="rt-controls">
         <input type="text"
                placeholder="Filter by name..."
-               @bind="filterText"
+               @bind="_filterText"
                @bind:event="oninput"
                class="rt-filter-input" />
     </div>
@@ -2837,27 +2837,27 @@ else
     </div>
 
     <p class="rt-info">
-        Showing @FilteredAndSorted.Count() of @products.Length items
+        Showing @FilteredAndSorted.Count() of @_products.Length items
     </p>
 }
 
 @code {
-    private Product[]? products;
-    private string filterText = "";
-    private string sortColumn = "Name";
-    private bool sortAscending = true;
+    private Product[]? _products;
+    private string _filterText = "";
+    private string _sortColumn = "Name";
+    private bool _sortAscending = true;
 
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("Loading product data for responsive table");
         try
         {
-            products = await Http.GetFromJsonAsync<Product[]>("sample-data/products.json");
+            _products = await Http.GetFromJsonAsync<Product[]>("sample-data/products.json");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load products");
-            products = [];
+            _products = [];
         }
     }
 
@@ -2865,19 +2865,19 @@ else
     {
         get
         {
-            if (products is null) return [];
+            if (_products is null) return [];
 
-            var filtered = string.IsNullOrWhiteSpace(filterText)
-                ? products.AsEnumerable()
-                : products.Where(p =>
-                    p.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+            var filtered = string.IsNullOrWhiteSpace(_filterText)
+                ? _products.AsEnumerable()
+                : _products.Where(p =>
+                    p.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
 
-            return sortColumn switch
+            return _sortColumn switch
             {
-                "Name" => sortAscending ? filtered.OrderBy(p => p.Name) : filtered.OrderByDescending(p => p.Name),
-                "Category" => sortAscending ? filtered.OrderBy(p => p.Category) : filtered.OrderByDescending(p => p.Category),
-                "Price" => sortAscending ? filtered.OrderBy(p => p.Price) : filtered.OrderByDescending(p => p.Price),
-                "Stock" => sortAscending ? filtered.OrderBy(p => p.Stock) : filtered.OrderByDescending(p => p.Stock),
+                "Name" => _sortAscending ? filtered.OrderBy(p => p.Name) : filtered.OrderByDescending(p => p.Name),
+                "Category" => _sortAscending ? filtered.OrderBy(p => p.Category) : filtered.OrderByDescending(p => p.Category),
+                "Price" => _sortAscending ? filtered.OrderBy(p => p.Price) : filtered.OrderByDescending(p => p.Price),
+                "Stock" => _sortAscending ? filtered.OrderBy(p => p.Stock) : filtered.OrderByDescending(p => p.Stock),
                 _ => filtered
             };
         }
@@ -2885,23 +2885,23 @@ else
 
     private async Task Sort(string column)
     {
-        if (sortColumn == column)
+        if (_sortColumn == column)
         {
-            sortAscending = !sortAscending;
+            _sortAscending = !_sortAscending;
         }
         else
         {
-            sortColumn = column;
-            sortAscending = true;
+            _sortColumn = column;
+            _sortAscending = true;
         }
-        Logger.LogInformation("Sorted by {Column} {Direction}", column, sortAscending ? "asc" : "desc");
-        await Analytics.TrackInteractionAsync("TableSort", $"{column} {(sortAscending ? "asc" : "desc")}");
+        Logger.LogInformation("Sorted by {Column} {Direction}", column, _sortAscending ? "asc" : "desc");
+        await Analytics.TrackInteractionAsync("TableSort", $"{column} {(_sortAscending ? "asc" : "desc")}");
     }
 
     private string SortIndicator(string column)
     {
-        if (sortColumn != column) return "";
-        return sortAscending ? "▲" : "▼";
+        if (_sortColumn != column) return "";
+        return _sortAscending ? "▲" : "▼";
     }
 }
 
@@ -3095,7 +3095,7 @@ FILE: src/ObserverMagazine.Web/Layout/MainLayout.razor.css
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
 -------------------------------------------------------------------------------
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @inject NavigationManager Nav
 @implements IDisposable
 
@@ -3104,12 +3104,12 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
         ☰
     </button>
 
-    @if (isOpen)
+    @if (_isOpen)
     {
         <div class="nav-overlay" @onclick="CloseMenu"></div>
     }
 
-    <ul class="nav-links @(isOpen ? "open" : "")">
+    <ul class="nav-links @(_isOpen ? "open" : "")">
         <li><NavLink href="" Match="NavLinkMatch.All">Home</NavLink></li>
         <li><NavLink href="blog">Blog</NavLink></li>
         <li><NavLink href="showcase">Showcase</NavLink></li>
@@ -3135,7 +3135,7 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
         </li>
         <li>
             <select class="theme-select"
-                    value="@currentTheme"
+                    value="@_currentTheme"
                     @onchange="OnThemeChanged"
                     aria-label="Choose theme">
                 <option value="system">System</option>
@@ -3151,23 +3151,23 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
 </nav>
 
 @code {
-    private bool isOpen;
-    private string currentTheme = "system";
+    private bool _isOpen;
+    private string _currentTheme = "system";
 
     protected override void OnInitialized()
     {
         Nav.LocationChanged += OnLocationChanged;
     }
 
-    private void ToggleMenu() => isOpen = !isOpen;
+    private void ToggleMenu() => _isOpen = !_isOpen;
 
-    private void CloseMenu() => isOpen = false;
+    private void CloseMenu() => _isOpen = false;
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
-        if (isOpen)
+        if (_isOpen)
         {
-            isOpen = false;
+            _isOpen = false;
             InvokeAsync(StateHasChanged);
         }
     }
@@ -3176,15 +3176,15 @@ FILE: src/ObserverMagazine.Web/Layout/NavMenu.razor
     {
         if (firstRender)
         {
-            currentTheme = await JS.InvokeAsync<string>("observerTheme.get");
+            _currentTheme = await Js.InvokeAsync<string>("observerTheme.get");
             StateHasChanged();
         }
     }
 
     private async Task OnThemeChanged(ChangeEventArgs e)
     {
-        currentTheme = e.Value?.ToString() ?? "system";
-        await JS.InvokeVoidAsync("observerTheme.set", currentTheme);
+        _currentTheme = e.Value?.ToString() ?? "system";
+        await Js.InvokeVoidAsync("observerTheme.set", _currentTheme);
     }
 
     public void Dispose()
@@ -3500,15 +3500,15 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor
 @inject ILogger<BlogPost> Logger
 @inject NavigationManager Nav
 @inject IAnalyticsService Analytics
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
-<PageTitle>@(metadata?.Title ?? "Post") — Observer Magazine</PageTitle>
+<PageTitle>@(_metadata?.Title ?? "Post") — Observer Magazine</PageTitle>
 
-@if (loading)
+@if (_loading)
 {
     <p><em>Loading...</em></p>
 }
-else if (metadata is null)
+else if (_metadata is null)
 {
     <h1>Post Not Found</h1>
     <p>Sorry, we couldn't find that post. <a href="blog">Back to Blog</a></p>
@@ -3517,32 +3517,32 @@ else
 {
     <article class="blog-post">
         <header>
-            <h1>@metadata.Title</h1>
+            <h1>@_metadata.Title</h1>
             <div class="blog-meta">
-                <time datetime="@metadata.Date.ToString("yyyy-MM-dd")">
-                    @metadata.Date.ToString("MMMM d, yyyy")
+                <time datetime="@_metadata.Date.ToString("yyyy-MM-dd")">
+                    @_metadata.Date.ToString("MMMM d, yyyy")
                 </time>
-                @if (metadata.Updated.HasValue)
+                @if (_metadata.Updated.HasValue)
                 {
-                    <span> · Updated @metadata.Updated.Value.ToString("MMMM d, yyyy")</span>
+                    <span> · Updated @_metadata.Updated.Value.ToString("MMMM d, yyyy")</span>
                 }
-                @if (!string.IsNullOrEmpty(metadata.AuthorName))
+                @if (!string.IsNullOrEmpty(_metadata.AuthorName))
                 {
-                    <span> · @metadata.AuthorName</span>
+                    <span> · @_metadata.AuthorName</span>
                 }
-                @if (metadata.ReadingTimeMinutes > 0)
+                @if (_metadata.ReadingTimeMinutes > 0)
                 {
-                    <span> · @metadata.ReadingTimeMinutes min read</span>
+                    <span> · @_metadata.ReadingTimeMinutes min read</span>
                 }
-                @if (viewCount.HasValue)
+                @if (_viewCount.HasValue)
                 {
-                    <span> · @viewCount views</span>
+                    <span> · @_viewCount views</span>
                 }
             </div>
-            @if (metadata.Tags is { Length: > 0 })
+            @if (_metadata.Tags is { Length: > 0 })
             {
                 <div class="tag-list">
-                    @foreach (var tag in metadata.Tags)
+                    @foreach (var tag in _metadata.Tags)
                     {
                         <a class="tag" href="blog/tag/@Uri.EscapeDataString(tag)">@tag</a>
                     }
@@ -3553,12 +3553,12 @@ else
         <BlogTtsPlayer Slug="@Slug" />
 
         <div class="blog-content">
-            @((MarkupString)htmlContent)
+            @((MarkupString)_htmlContent)
         </div>
 
         <Reactions Slug="@Slug" />
 
-        <AuthorCard Author="authorProfile" />
+        <AuthorCard Author="_authorProfile" />
 
         <footer class="blog-post-footer">
             <a href="blog">&larr; Back to Blog</a>
@@ -3569,55 +3569,55 @@ else
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    private BlogPostMetadata? metadata;
-    private string htmlContent = "";
-    private bool loading = true;
-    private AuthorProfile? authorProfile;
-    private int? viewCount;
+    private BlogPostMetadata? _metadata;
+    private string _htmlContent = "";
+    private bool _loading = true;
+    private AuthorProfile? _authorProfile;
+    private int? _viewCount;
 
     protected override async Task OnParametersSetAsync()
     {
-        loading = true;
+        _loading = true;
         Logger.LogInformation("Loading blog post: {Slug}", Slug);
 
         try
         {
-            metadata = await BlogService.GetPostMetadataAsync(Slug);
-            if (metadata is not null)
+            _metadata = await BlogService.GetPostMetadataAsync(Slug);
+            if (_metadata is not null)
             {
                 var rawHtml = await BlogService.GetPostHtmlAsync(Slug);
-                htmlContent = PostProcessHtml(rawHtml);
+                _htmlContent = PostProcessHtml(rawHtml);
 
-                if (!string.IsNullOrEmpty(metadata.Author))
+                if (!string.IsNullOrEmpty(_metadata.Author))
                 {
-                    authorProfile = await BlogService.GetAuthorAsync(metadata.Author);
+                    _authorProfile = await BlogService.GetAuthorAsync(_metadata.Author);
                 }
 
-                await Analytics.TrackPageViewAsync("BlogPost", $"{metadata.Title} ({Slug})");
+                await Analytics.TrackPageViewAsync("BlogPost", $"{_metadata.Title} ({Slug})");
                 await Analytics.IncrementViewAsync(Slug);
-                viewCount = await Analytics.GetViewCountAsync(Slug);
+                _viewCount = await Analytics.GetViewCountAsync(Slug);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load post {Slug}", Slug);
-            metadata = null;
+            _metadata = null;
         }
         finally
         {
-            loading = false;
+            _loading = false;
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Trigger syntax highlighting and scroll-detection after content renders
-        if (!loading && metadata is not null)
+        if (!_loading && _metadata is not null)
         {
             try
             {
-                await JS.InvokeVoidAsync("observerHighlight.highlightAll");
-                await JS.InvokeVoidAsync("observerCodeScroll.init");
+                await Js.InvokeVoidAsync("observerHighlight.highlightAll");
+                await Js.InvokeVoidAsync("observerCodeScroll.init");
             }
             catch (Exception ex)
             {
@@ -3994,18 +3994,18 @@ FILE: src/ObserverMagazine.Web/Pages/Blog.razor
     </div>
 }
 
-@if (posts is null)
+@if (_posts is null)
 {
     <p><em>Loading posts...</em></p>
 }
-else if (filteredPosts.Length == 0)
+else if (_filteredPosts.Length == 0)
 {
     <p>No posts found. <a href="blog">View all posts</a></p>
 }
 else
 {
     <div class="blog-list">
-        @foreach (var post in filteredPosts)
+        @foreach (var post in _filteredPosts)
         {
             <article class="blog-card">
                 @if (post.Featured)
@@ -4048,21 +4048,21 @@ else
 @code {
     [Parameter] public string? Tag { get; set; }
 
-    private BlogPostMetadata[]? posts;
-    private BlogPostMetadata[] filteredPosts = [];
+    private BlogPostMetadata[]? _posts;
+    private BlogPostMetadata[] _filteredPosts = [];
 
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("Loading blog index");
         try
         {
-            posts = await BlogService.GetPostsAsync();
-            await Analytics.TrackPageViewAsync("Blog", $"{posts?.Length ?? 0} posts");
+            _posts = await BlogService.GetPostsAsync();
+            await Analytics.TrackPageViewAsync("Blog", $"{_posts?.Length ?? 0} posts");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load blog index");
-            posts = [];
+            _posts = [];
         }
         ApplyFilter();
     }
@@ -4074,15 +4074,15 @@ else
 
     private void ApplyFilter()
     {
-        if (posts is null)
+        if (_posts is null)
         {
-            filteredPosts = [];
+            _filteredPosts = [];
             return;
         }
 
-        filteredPosts = string.IsNullOrEmpty(Tag)
-            ? posts
-            : posts.Where(p =>
+        _filteredPosts = string.IsNullOrEmpty(Tag)
+            ? _posts
+            : _posts.Where(p =>
                 p.Tags.Any(t => string.Equals(t, Tag, StringComparison.OrdinalIgnoreCase)))
               .ToArray();
     }
@@ -4171,12 +4171,12 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor
     </div>
 </section>
 
-@if (featuredPosts is { Length: > 0 })
+@if (_featuredPosts is { Length: > 0 })
 {
     <section>
         <h2>Featured</h2>
         <div class="blog-list">
-            @foreach (var post in featuredPosts)
+            @foreach (var post in _featuredPosts)
             {
                 <article class="blog-card">
                     <span class="featured-badge">Featured</span>
@@ -4234,7 +4234,7 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor
 </section>
 
 @code {
-    private BlogPostMetadata[]? featuredPosts;
+    private BlogPostMetadata[]? _featuredPosts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -4243,11 +4243,11 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor
         try
         {
             var allPosts = await BlogService.GetPostsAsync();
-            featuredPosts = allPosts.Where(p => p.Featured).Take(3).ToArray();
+            _featuredPosts = allPosts.Where(p => p.Featured).Take(3).ToArray();
         }
         catch
         {
-            featuredPosts = [];
+            _featuredPosts = [];
         }
     }
 }
@@ -4311,22 +4311,22 @@ FILE: src/ObserverMagazine.Web/Pages/ShowcaseDetail.razor
 -------------------------------------------------------------------------------
 @page "/showcase/new"
 @page "/showcase/{ProductId:guid}"
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @inject ILogger<ShowcaseDetail> Logger
 @inject NavigationManager Nav
 @inject IAnalyticsService Analytics
 
-<PageTitle>@(isNew ? "New Product" : (editing ? "Edit Product" : product?.Name ?? "Product")) — Showcase</PageTitle>
+<PageTitle>@(IsNew ? "New Product" : (_editing ? "Edit Product" : _product?.Name ?? "Product")) — Showcase</PageTitle>
 
 <div class="sd-header">
     <button class="btn btn-outline btn-sm" @onclick="BackToList">← Back to Catalog</button>
 </div>
 
-@if (loading)
+@if (_loading)
 {
     <p><em>Loading...</em></p>
 }
-else if (product is null && !isNew)
+else if (_product is null && !IsNew)
 {
     <h2>Product Not Found</h2>
     <p>The product you're looking for doesn't exist. <a href="showcase">Back to Catalog</a></p>
@@ -4334,38 +4334,38 @@ else if (product is null && !isNew)
 else
 {
     <div class="sd-card">
-        @if (!editing && !isNew)
+        @if (!_editing && !IsNew)
         {
             @* ---- View mode ---- *@
-            <h2>@product!.Name</h2>
-            <div class="sd-badge sd-badge-@product.Status.ToLowerInvariant().Replace(" ", "-")">@product.Status</div>
+            <h2>@_product!.Name</h2>
+            <div class="sd-badge sd-badge-@_product.Status.ToLowerInvariant().Replace(" ", "-")">@_product.Status</div>
 
             <dl class="sd-details">
-                <dt>SKU</dt><dd>@product.Sku</dd>
-                <dt>Brand</dt><dd>@product.Brand</dd>
-                <dt>Category</dt><dd>@product.Category</dd>
+                <dt>SKU</dt><dd>@_product.Sku</dd>
+                <dt>Brand</dt><dd>@_product.Brand</dd>
+                <dt>Category</dt><dd>@_product.Category</dd>
                 <dt>Price</dt>
                 <dd>
-                    @product.Price.ToString("C")
-                    @if (product.CompareAtPrice.HasValue)
+                    @_product.Price.ToString("C")
+                    @if (_product.CompareAtPrice.HasValue)
                     {
-                        <s class="sd-compare-price">@product.CompareAtPrice.Value.ToString("C")</s>
+                        <s class="sd-compare-price">@_product.CompareAtPrice.Value.ToString("C")</s>
                     }
                 </dd>
-                <dt>In Stock</dt><dd>@product.Stock units</dd>
+                <dt>In Stock</dt><dd>@_product.Stock units</dd>
                 <dt>Rating</dt>
                 <dd>
-                    @for (int i = 0; i < (int)Math.Round(product.Rating); i++)
+                    @for (int i = 0; i < (int)Math.Round(_product.Rating); i++)
                     {
                         <span class="sd-star">★</span>
                     }
-                    (@product.Rating.ToString("F1") — @product.ReviewCount.ToString("N0") reviews)
+                    (@_product.Rating.ToString("F1") — @_product.ReviewCount.ToString("N0") reviews)
                 </dd>
-                <dt>Color</dt><dd>@product.Color</dd>
-                <dt>Weight</dt><dd>@product.WeightKg.ToString("F2") kg</dd>
-                <dt>Warranty</dt><dd>@(product.WarrantyMonths > 0 ? $"{product.WarrantyMonths} months" : "None")</dd>
-                <dt>Date Added</dt><dd>@product.DateAdded.ToString("yyyy-MM-dd")</dd>
-                <dt>Description</dt><dd>@product.Description</dd>
+                <dt>Color</dt><dd>@_product.Color</dd>
+                <dt>Weight</dt><dd>@_product.WeightKg.ToString("F2") kg</dd>
+                <dt>Warranty</dt><dd>@(_product.WarrantyMonths > 0 ? $"{_product.WarrantyMonths} months" : "None")</dd>
+                <dt>Date Added</dt><dd>@_product.DateAdded.ToString("yyyy-MM-dd")</dd>
+                <dt>Description</dt><dd>@_product.Description</dd>
             </dl>
 
             <div class="form-actions" style="margin-top:1.5rem;">
@@ -4376,12 +4376,12 @@ else
         else
         {
             @* ---- Edit / Create mode ---- *@
-            <h2>@(isNew ? "New Product" : $"Editing: {product!.Name}")</h2>
+            <h2>@(IsNew ? "New Product" : $"Editing: {_product!.Name}")</h2>
 
             <div class="form-group">
                 <label for="f-name">Name</label>
-                <input id="f-name" @bind="editName" @bind:event="oninput" />
-                @if (showVal && string.IsNullOrWhiteSpace(editName))
+                <input id="f-name" @bind="_editName" @bind:event="oninput" />
+                @if (_showVal && string.IsNullOrWhiteSpace(_editName))
                 {
                     <div class="form-validation">Name is required.</div>
                 }
@@ -4389,17 +4389,17 @@ else
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-sku">SKU</label>
-                    <input id="f-sku" @bind="editSku" @bind:event="oninput" />
+                    <input id="f-sku" @bind="_editSku" @bind:event="oninput" />
                 </div>
                 <div class="form-group">
                     <label for="f-brand">Brand</label>
-                    <input id="f-brand" @bind="editBrand" @bind:event="oninput" />
+                    <input id="f-brand" @bind="_editBrand" @bind:event="oninput" />
                 </div>
             </div>
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-cat">Category</label>
-                    <select id="f-cat" @bind="editCategory">
+                    <select id="f-cat" @bind="_editCategory">
                         <option value="Electronics">Electronics</option>
                         <option value="Furniture">Furniture</option>
                         <option value="Clothing">Clothing</option>
@@ -4411,7 +4411,7 @@ else
                 </div>
                 <div class="form-group">
                     <label for="f-status">Status</label>
-                    <select id="f-status" @bind="editStatus">
+                    <select id="f-status" @bind="_editStatus">
                         <option value="Active">Active</option>
                         <option value="Draft">Draft</option>
                         <option value="Archived">Archived</option>
@@ -4422,46 +4422,46 @@ else
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-price">Price</label>
-                    <input id="f-price" type="number" step="0.01" min="0" @bind="editPrice" />
+                    <input id="f-price" type="number" step="0.01" min="0" @bind="_editPrice" />
                 </div>
                 <div class="form-group">
                     <label for="f-compare">Compare-at Price</label>
-                    <input id="f-compare" type="number" step="0.01" min="0" @bind="editComparePrice" />
+                    <input id="f-compare" type="number" step="0.01" min="0" @bind="_editComparePrice" />
                 </div>
             </div>
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-stock">Stock</label>
-                    <input id="f-stock" type="number" min="0" @bind="editStock" />
+                    <input id="f-stock" type="number" min="0" @bind="_editStock" />
                 </div>
                 <div class="form-group">
                     <label for="f-color">Color</label>
-                    <input id="f-color" @bind="editColor" @bind:event="oninput" />
+                    <input id="f-color" @bind="_editColor" @bind:event="oninput" />
                 </div>
             </div>
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-rating">Rating (0–5)</label>
-                    <input id="f-rating" type="number" step="0.1" min="0" max="5" @bind="editRating" />
+                    <input id="f-rating" type="number" step="0.1" min="0" max="5" @bind="_editRating" />
                 </div>
                 <div class="form-group">
                     <label for="f-reviews">Review Count</label>
-                    <input id="f-reviews" type="number" min="0" @bind="editReviewCount" />
+                    <input id="f-reviews" type="number" min="0" @bind="_editReviewCount" />
                 </div>
             </div>
             <div class="sd-form-row">
                 <div class="form-group">
                     <label for="f-weight">Weight (kg)</label>
-                    <input id="f-weight" type="number" step="0.01" min="0" @bind="editWeight" />
+                    <input id="f-weight" type="number" step="0.01" min="0" @bind="_editWeight" />
                 </div>
                 <div class="form-group">
                     <label for="f-warranty">Warranty (months)</label>
-                    <input id="f-warranty" type="number" min="0" @bind="editWarranty" />
+                    <input id="f-warranty" type="number" min="0" @bind="_editWarranty" />
                 </div>
             </div>
             <div class="form-group">
                 <label for="f-desc">Description</label>
-                <textarea id="f-desc" @bind="editDescription" @bind:event="oninput"></textarea>
+                <textarea id="f-desc" @bind="_editDescription" @bind:event="oninput"></textarea>
             </div>
 
             <div class="form-actions">
@@ -4473,14 +4473,14 @@ else
 }
 
 @* ---- Delete confirm ---- *@
-@if (showDeleteConfirm)
+@if (_showDeleteConfirm)
 {
-    <div class="sd-overlay" @onclick="() => showDeleteConfirm = false">
+    <div class="sd-overlay" @onclick="() => _showDeleteConfirm = false">
         <div class="sd-dialog" @onclick:stopPropagation="true">
             <h4>Delete Product</h4>
-            <p>Are you sure you want to delete <strong>@product?.Name</strong>? This cannot be undone.</p>
+            <p>Are you sure you want to delete <strong>@_product?.Name</strong>? This cannot be undone.</p>
             <div class="form-actions">
-                <button class="btn btn-outline btn-sm" @onclick="() => showDeleteConfirm = false">Cancel</button>
+                <button class="btn btn-outline btn-sm" @onclick="() => _showDeleteConfirm = false">Cancel</button>
                 <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
             </div>
         </div>
@@ -4493,61 +4493,61 @@ else
 
     [Parameter] public Guid? ProductId { get; set; }
 
-    private bool isNew => ProductId is null;
-    private bool loading = true;
-    private bool editing;
-    private bool showVal;
-    private bool showDeleteConfirm;
+    private bool IsNew => ProductId is null;
+    private bool _loading = true;
+    private bool _editing;
+    private bool _showVal;
+    private bool _showDeleteConfirm;
 
-    private List<CatalogProduct> allProducts = [];
-    private CatalogProduct? product;
+    private List<CatalogProduct> _allProducts = [];
+    private CatalogProduct? _product;
 
     // Edit fields
-    private string editName = "", editSku = "", editBrand = "", editCategory = "Electronics",
-        editStatus = "Active", editColor = "", editDescription = "";
-    private decimal editPrice, editComparePrice;
-    private int editStock, editReviewCount, editWarranty;
-    private double editRating, editWeight;
+    private string _editName = "", _editSku = "", _editBrand = "", _editCategory = "Electronics",
+        _editStatus = "Active", _editColor = "", _editDescription = "";
+    private decimal _editPrice, _editComparePrice;
+    private int _editStock, _editReviewCount, _editWarranty;
+    private double _editRating, _editWeight;
 
     protected override async Task OnParametersSetAsync()
     {
-        loading = true;
+        _loading = true;
         await LoadAll();
 
-        if (isNew)
+        if (IsNew)
         {
-            product = null;
-            editing = true;
+            _product = null;
+            _editing = true;
             ResetFormFields();
         }
         else
         {
-            product = allProducts.FirstOrDefault(p => p.Id == ProductId);
-            editing = false;
+            _product = _allProducts.FirstOrDefault(p => p.Id == ProductId);
+            _editing = false;
         }
 
-        loading = false;
+        _loading = false;
     }
 
     private async Task LoadAll()
     {
         try
         {
-            var saved = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            var saved = await Js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
             if (!string.IsNullOrEmpty(saved))
             {
                 var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(saved,
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (deserialized is { Count: > 0 })
                 {
-                    allProducts = deserialized;
+                    _allProducts = deserialized;
                     return;
                 }
             }
         }
         catch { /* best effort */ }
 
-        allProducts = ProductDataGenerator.Generate(2000);
+        _allProducts = ProductDataGenerator.Generate(2000);
         await SaveAll();
     }
 
@@ -4555,120 +4555,120 @@ else
     {
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(allProducts,
+            var json = System.Text.Json.JsonSerializer.Serialize(_allProducts,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+            await Js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
         }
         catch { /* best effort */ }
     }
 
     private void StartEdit()
     {
-        if (product is null) return;
-        editName = product.Name;
-        editSku = product.Sku;
-        editBrand = product.Brand;
-        editCategory = product.Category;
-        editStatus = product.Status;
-        editPrice = product.Price;
-        editComparePrice = product.CompareAtPrice ?? 0;
-        editStock = product.Stock;
-        editRating = product.Rating;
-        editReviewCount = product.ReviewCount;
-        editWeight = product.WeightKg;
-        editColor = product.Color;
-        editWarranty = product.WarrantyMonths;
-        editDescription = product.Description;
-        showVal = false;
-        editing = true;
+        if (_product is null) return;
+        _editName = _product.Name;
+        _editSku = _product.Sku;
+        _editBrand = _product.Brand;
+        _editCategory = _product.Category;
+        _editStatus = _product.Status;
+        _editPrice = _product.Price;
+        _editComparePrice = _product.CompareAtPrice ?? 0;
+        _editStock = _product.Stock;
+        _editRating = _product.Rating;
+        _editReviewCount = _product.ReviewCount;
+        _editWeight = _product.WeightKg;
+        _editColor = _product.Color;
+        _editWarranty = _product.WarrantyMonths;
+        _editDescription = _product.Description;
+        _showVal = false;
+        _editing = true;
     }
 
     private void ResetFormFields()
     {
-        editName = ""; editSku = ""; editBrand = ""; editCategory = "Electronics";
-        editStatus = "Active"; editColor = ""; editDescription = "";
-        editPrice = 0; editComparePrice = 0; editStock = 0; editReviewCount = 0;
-        editRating = 0; editWeight = 0; editWarranty = 0;
-        showVal = false;
+        _editName = ""; _editSku = ""; _editBrand = ""; _editCategory = "Electronics";
+        _editStatus = "Active"; _editColor = ""; _editDescription = "";
+        _editPrice = 0; _editComparePrice = 0; _editStock = 0; _editReviewCount = 0;
+        _editRating = 0; _editWeight = 0; _editWarranty = 0;
+        _showVal = false;
     }
 
     private async Task Save()
     {
-        showVal = true;
-        if (string.IsNullOrWhiteSpace(editName)) return;
+        _showVal = true;
+        if (string.IsNullOrWhiteSpace(_editName)) return;
 
-        if (isNew)
+        if (IsNew)
         {
             var newP = new CatalogProduct
             {
                 Id = Guid.NewGuid(),
-                Sku = editSku.Trim(),
-                Name = editName.Trim(),
-                Brand = editBrand.Trim(),
-                Category = editCategory,
-                Price = editPrice,
-                CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
-                Stock = editStock,
-                Rating = Math.Clamp(editRating, 0, 5),
-                ReviewCount = editReviewCount,
-                WeightKg = editWeight,
-                Color = editColor.Trim(),
-                WarrantyMonths = editWarranty,
+                Sku = _editSku.Trim(),
+                Name = _editName.Trim(),
+                Brand = _editBrand.Trim(),
+                Category = _editCategory,
+                Price = _editPrice,
+                CompareAtPrice = _editComparePrice > 0 ? _editComparePrice : null,
+                Stock = _editStock,
+                Rating = Math.Clamp(_editRating, 0, 5),
+                ReviewCount = _editReviewCount,
+                WeightKg = _editWeight,
+                Color = _editColor.Trim(),
+                WarrantyMonths = _editWarranty,
                 DateAdded = DateTime.UtcNow,
-                Status = editStatus,
-                Description = editDescription.Trim()
+                Status = _editStatus,
+                Description = _editDescription.Trim()
             };
-            allProducts.Add(newP);
+            _allProducts.Add(newP);
             await SaveAll();
             Nav.NavigateTo($"showcase/{newP.Id}");
         }
-        else if (product is not null)
+        else if (_product is not null)
         {
-            var idx = allProducts.FindIndex(p => p.Id == product.Id);
+            var idx = _allProducts.FindIndex(p => p.Id == _product.Id);
             if (idx >= 0)
             {
-                allProducts[idx] = new CatalogProduct
+                _allProducts[idx] = new CatalogProduct
                 {
-                    Id = product.Id,
-                    Sku = editSku.Trim(),
-                    Name = editName.Trim(),
-                    Brand = editBrand.Trim(),
-                    Category = editCategory,
-                    Price = editPrice,
-                    CompareAtPrice = editComparePrice > 0 ? editComparePrice : null,
-                    Stock = editStock,
-                    Rating = Math.Clamp(editRating, 0, 5),
-                    ReviewCount = editReviewCount,
-                    WeightKg = editWeight,
-                    Color = editColor.Trim(),
-                    WarrantyMonths = editWarranty,
-                    DateAdded = product.DateAdded,
-                    Status = editStatus,
-                    Description = editDescription.Trim()
+                    Id = _product.Id,
+                    Sku = _editSku.Trim(),
+                    Name = _editName.Trim(),
+                    Brand = _editBrand.Trim(),
+                    Category = _editCategory,
+                    Price = _editPrice,
+                    CompareAtPrice = _editComparePrice > 0 ? _editComparePrice : null,
+                    Stock = _editStock,
+                    Rating = Math.Clamp(_editRating, 0, 5),
+                    ReviewCount = _editReviewCount,
+                    WeightKg = _editWeight,
+                    Color = _editColor.Trim(),
+                    WarrantyMonths = _editWarranty,
+                    DateAdded = _product.DateAdded,
+                    Status = _editStatus,
+                    Description = _editDescription.Trim()
                 };
-                product = allProducts[idx];
+                _product = _allProducts[idx];
             }
             await SaveAll();
-            editing = false;
-            showVal = false;
+            _editing = false;
+            _showVal = false;
         }
     }
 
     private void CancelEdit()
     {
-        if (isNew)
+        if (IsNew)
             Nav.NavigateTo("showcase");
         else
-            editing = false;
+            _editing = false;
     }
 
-    private void ConfirmDeleteProduct() => showDeleteConfirm = true;
+    private void ConfirmDeleteProduct() => _showDeleteConfirm = true;
 
     private async Task ExecuteDelete()
     {
-        if (product is not null)
+        if (_product is not null)
         {
-            allProducts.RemoveAll(p => p.Id == product.Id);
+            _allProducts.RemoveAll(p => p.Id == _product.Id);
             await SaveAll();
         }
         Nav.NavigateTo("showcase");
@@ -4775,7 +4775,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 @page "/showcase"
 @inject ILogger<Showcase> Logger
 @inject IAnalyticsService Analytics
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @inject NavigationManager Nav
 @implements IDisposable
 
@@ -4793,19 +4793,19 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     <div class="sc-toolbar-left">
         <button class="btn btn-primary btn-sm" @onclick="NavigateToNew">+ New Product</button>
         <button class="btn btn-outline btn-sm" @onclick="ResetData">Reset Data</button>
-        <span class="sc-count">@filteredProducts.Count of @allProducts.Count items</span>
+        <span class="sc-count">@_filteredProducts.Count of @_allProducts.Count items</span>
     </div>
     <div class="sc-toolbar-right">
         <button class="btn btn-outline btn-sm" @onclick="ToggleFilters">
-            @(showFilters ? "Hide Filters" : "Show Filters")
+            @(_showFilters ? "Hide Filters" : "Show Filters")
         </button>
         <div class="sc-col-toggle">
             <button class="btn btn-outline btn-sm" @onclick="ToggleColumnPicker">Columns ▾</button>
-            @if (showColumnPicker)
+            @if (_showColumnPicker)
             {
-                <div class="sc-col-backdrop" @onclick="() => showColumnPicker = false"></div>
+                <div class="sc-col-backdrop" @onclick="() => _showColumnPicker = false"></div>
                 <div class="sc-col-dropdown" @onclick:stopPropagation="true">
-                    @foreach (var col in columns)
+                    @foreach (var col in _columns)
                     {
                         <label class="sc-col-option">
                             <input type="checkbox" checked="@col.Visible"
@@ -4822,7 +4822,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         </div>
         <div class="sc-page-size">
             <label>Per page:</label>
-            <select value="@pageSize" @onchange="OnPageSizeChanged">
+            <select value="@_pageSize" @onchange="OnPageSizeChanged">
                 <option value="10">10</option>
                 <option value="20">20</option>
                 <option value="50">50</option>
@@ -4833,7 +4833,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 </div>
 
 @* ---- Filter panel (collapsible, works on desktop + mobile) ---- *@
-@if (showFilters)
+@if (_showFilters)
 {
     <div class="sc-filter-panel">
         <div class="sc-filter-panel-header">
@@ -4843,7 +4843,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             </button>
         </div>
         <div class="sc-filter-grid">
-            @foreach (var col in columns.Where(c => c.Visible))
+            @foreach (var col in _columns.Where(c => c.Visible))
             {
                 @if (col.FilterKind == FilterKind.Text)
                 {
@@ -4897,15 +4897,15 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     <table class="sc-table">
         <thead>
             <tr>
-                @foreach (var col in columns.Where(c => c.Visible))
+                @foreach (var col in _columns.Where(c => c.Visible))
                 {
                     <th class="@(col.Numeric ? "sc-num" : string.Empty) sc-sortable"
                         style="@ColStyle(col)"
                         @onclick="() => SortBy(col)">
                         @col.Header
-                        @if (sortColumn == col.Key)
+                        @if (_sortColumn == col.Key)
                         {
-                            <span class="sc-sort-arrow">@(sortAsc ? "▲" : "▼")</span>
+                            <span class="sc-sort-arrow">@(_sortAsc ? "▲" : "▼")</span>
                         }
                     </th>
                 }
@@ -4913,18 +4913,18 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             </tr>
         </thead>
         <tbody>
-            @if (pagedProducts.Count == 0)
+            @if (_pagedProducts.Count == 0)
             {
                 <tr>
-                    <td colspan="@(columns.Count(c => c.Visible) + 1)" class="sc-empty">
+                    <td colspan="@(_columns.Count(c => c.Visible) + 1)" class="sc-empty">
                         No products match your filters.
                     </td>
                 </tr>
             }
-            @foreach (var p in pagedProducts)
+            @foreach (var p in _pagedProducts)
             {
                 <tr @onclick="() => NavigateToDetail(p.Id)" class="sc-clickable-row">
-                    @foreach (var col in columns.Where(c => c.Visible))
+                    @foreach (var col in _columns.Where(c => c.Visible))
                     {
                         <td class="@(col.Numeric ? "sc-num" : string.Empty)"
                             data-label="@col.Header">
@@ -4943,20 +4943,20 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
 @* ---- Pagination ---- *@
 <div class="sc-pagination">
-    <button class="btn btn-outline btn-sm" @onclick="FirstPage" disabled="@(currentPage <= 1)">« First</button>
-    <button class="btn btn-outline btn-sm" @onclick="PrevPage" disabled="@(currentPage <= 1)">‹ Prev</button>
-    <span class="sc-page-info">Page @currentPage of @totalPages</span>
-    <button class="btn btn-outline btn-sm" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Next ›</button>
-    <button class="btn btn-outline btn-sm" @onclick="LastPage" disabled="@(currentPage >= totalPages)">Last »</button>
+    <button class="btn btn-outline btn-sm" @onclick="FirstPage" disabled="@(_currentPage <= 1)">« First</button>
+    <button class="btn btn-outline btn-sm" @onclick="PrevPage" disabled="@(_currentPage <= 1)">‹ Prev</button>
+    <span class="sc-page-info">Page @_currentPage of @_totalPages</span>
+    <button class="btn btn-outline btn-sm" @onclick="NextPage" disabled="@(_currentPage >= _totalPages)">Next ›</button>
+    <button class="btn btn-outline btn-sm" @onclick="LastPage" disabled="@(_currentPage >= _totalPages)">Last »</button>
 </div>
 
 @* ---- Delete confirmation overlay ---- *@
-@if (deleteTarget is not null)
+@if (_deleteTarget is not null)
 {
     <div class="sc-overlay" @onclick="CancelDelete">
         <div class="sc-dialog" @onclick:stopPropagation="true">
             <h4>Delete product?</h4>
-            <p>Are you sure you want to delete <strong>@deleteTarget.Name</strong> (@deleteTarget.Sku)?</p>
+            <p>Are you sure you want to delete <strong>@_deleteTarget.Name</strong> (@_deleteTarget.Sku)?</p>
             <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
                 <button class="btn btn-outline btn-sm" @onclick="CancelDelete">Cancel</button>
                 <button class="btn btn-danger btn-sm" @onclick="ExecuteDelete">Delete</button>
@@ -4969,24 +4969,24 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private const string StorageKey = "observer-catalog-products";
     private const string PrefsKey = "observer-showcase-prefs";
 
-    private List<CatalogProduct> allProducts = [];
-    private List<CatalogProduct> filteredProducts = [];
-    private List<CatalogProduct> pagedProducts = [];
+    private List<CatalogProduct> _allProducts = [];
+    private List<CatalogProduct> _filteredProducts = [];
+    private List<CatalogProduct> _pagedProducts = [];
 
-    private int pageSize = 20;
-    private int currentPage = 1;
-    private int totalPages = 1;
-    private string sortColumn = "Name";
-    private bool sortAsc = true;
-    private bool showColumnPicker;
-    private bool showFilters = true;
-    private CatalogProduct? deleteTarget;
+    private int _pageSize = 20;
+    private int _currentPage = 1;
+    private int _totalPages = 1;
+    private string _sortColumn = "Name";
+    private bool _sortAsc = true;
+    private bool _showColumnPicker;
+    private bool _showFilters = true;
+    private CatalogProduct? _deleteTarget;
 
     // --- Column definitions ---
-    private List<ColumnDef> columns = [];
+    private List<ColumnDef> _columns = [];
 
     // Track default visibility for "Restore Defaults"
-    private Dictionary<string, bool> defaultVisibility = new();
+    private Dictionary<string, bool> _defaultVisibility = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -4999,7 +4999,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     private void InitColumns()
     {
-        columns =
+        _columns =
         [
             new("Sku", "SKU", p => p.Sku, false, FilterKind.Text) { MinWidth = "90px" },
             new("Name", "Name", p => p.Name, false, FilterKind.Text) { MinWidth = "160px" },
@@ -5033,7 +5033,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         ];
 
         // Save defaults
-        defaultVisibility = columns.ToDictionary(c => c.Key, c => c.Visible);
+        _defaultVisibility = _columns.ToDictionary(c => c.Key, c => c.Visible);
     }
 
     // --- Product persistence ---
@@ -5042,14 +5042,14 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     {
         try
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+            var json = await Js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
             if (!string.IsNullOrEmpty(json))
             {
                 var loaded = System.Text.Json.JsonSerializer.Deserialize<List<CatalogProduct>>(json,
                     new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
                 if (loaded is { Count: > 0 })
                 {
-                    allProducts = loaded;
+                    _allProducts = loaded;
                     return;
                 }
             }
@@ -5059,7 +5059,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
             Logger.LogWarning(ex, "Could not load catalog from local storage");
         }
 
-        allProducts = ProductDataGenerator.Generate(2000);
+        _allProducts = ProductDataGenerator.Generate(2000);
         await SaveProducts();
     }
 
@@ -5067,9 +5067,9 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     {
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(allProducts,
+            var json = System.Text.Json.JsonSerializer.Serialize(_allProducts,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            await JS.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+            await Js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
         }
         catch (Exception ex)
         {
@@ -5083,21 +5083,21 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     {
         try
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+            var json = await Js.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
             if (string.IsNullOrEmpty(json)) return;
 
             var prefs = System.Text.Json.JsonSerializer.Deserialize<ShowcasePrefs>(json,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
             if (prefs is null) return;
 
-            if (prefs.PageSize is > 0) pageSize = prefs.PageSize.Value;
-            if (!string.IsNullOrEmpty(prefs.SortColumn)) sortColumn = prefs.SortColumn;
-            if (prefs.SortAsc is not null) sortAsc = prefs.SortAsc.Value;
-            if (prefs.ShowFilters is not null) showFilters = prefs.ShowFilters.Value;
+            if (prefs.PageSize is > 0) _pageSize = prefs.PageSize.Value;
+            if (!string.IsNullOrEmpty(prefs.SortColumn)) _sortColumn = prefs.SortColumn;
+            if (prefs.SortAsc is not null) _sortAsc = prefs.SortAsc.Value;
+            if (prefs.ShowFilters is not null) _showFilters = prefs.ShowFilters.Value;
 
             if (prefs.ColumnVisibility is not null)
             {
-                foreach (var col in columns)
+                foreach (var col in _columns)
                 {
                     if (prefs.ColumnVisibility.TryGetValue(col.Key, out var vis))
                         col.Visible = vis;
@@ -5106,7 +5106,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
             if (prefs.Filters is not null)
             {
-                foreach (var col in columns)
+                foreach (var col in _columns)
                 {
                     if (prefs.Filters.TryGetValue(col.Key, out var f))
                     {
@@ -5129,12 +5129,12 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         {
             var prefs = new ShowcasePrefs
             {
-                PageSize = pageSize,
-                SortColumn = sortColumn,
-                SortAsc = sortAsc,
-                ShowFilters = showFilters,
-                ColumnVisibility = columns.ToDictionary(c => c.Key, c => c.Visible),
-                Filters = columns
+                PageSize = _pageSize,
+                SortColumn = _sortColumn,
+                SortAsc = _sortAsc,
+                ShowFilters = _showFilters,
+                ColumnVisibility = _columns.ToDictionary(c => c.Key, c => c.Visible),
+                Filters = _columns
                     .Where(c => !string.IsNullOrEmpty(c.FilterText) || !string.IsNullOrEmpty(c.FilterMin) || !string.IsNullOrEmpty(c.FilterMax))
                     .ToDictionary(c => c.Key, c => new FilterState
                     {
@@ -5146,7 +5146,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
             var json = System.Text.Json.JsonSerializer.Serialize(prefs,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-            await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+            await Js.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
         }
         catch (Exception ex)
         {
@@ -5158,9 +5158,9 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     private void ApplyFilterAndSort()
     {
-        IEnumerable<CatalogProduct> result = allProducts;
+        IEnumerable<CatalogProduct> result = _allProducts;
 
-        foreach (var col in columns)
+        foreach (var col in _columns)
         {
             if (col.FilterKind == FilterKind.Text && !string.IsNullOrWhiteSpace(col.FilterText))
             {
@@ -5218,32 +5218,32 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
         }
 
         // Sort
-        result = sortColumn switch
+        result = _sortColumn switch
         {
-            "Sku" => sortAsc ? result.OrderBy(p => p.Sku) : result.OrderByDescending(p => p.Sku),
-            "Name" => sortAsc ? result.OrderBy(p => p.Name) : result.OrderByDescending(p => p.Name),
-            "Brand" => sortAsc ? result.OrderBy(p => p.Brand) : result.OrderByDescending(p => p.Brand),
-            "Category" => sortAsc ? result.OrderBy(p => p.Category) : result.OrderByDescending(p => p.Category),
-            "Price" => sortAsc ? result.OrderBy(p => p.Price) : result.OrderByDescending(p => p.Price),
-            "Stock" => sortAsc ? result.OrderBy(p => p.Stock) : result.OrderByDescending(p => p.Stock),
-            "Rating" => sortAsc ? result.OrderBy(p => p.Rating) : result.OrderByDescending(p => p.Rating),
-            "ReviewCount" => sortAsc ? result.OrderBy(p => p.ReviewCount) : result.OrderByDescending(p => p.ReviewCount),
-            "WeightKg" => sortAsc ? result.OrderBy(p => p.WeightKg) : result.OrderByDescending(p => p.WeightKg),
-            "Color" => sortAsc ? result.OrderBy(p => p.Color) : result.OrderByDescending(p => p.Color),
-            "WarrantyMonths" => sortAsc ? result.OrderBy(p => p.WarrantyMonths) : result.OrderByDescending(p => p.WarrantyMonths),
-            "DateAdded" => sortAsc ? result.OrderBy(p => p.DateAdded) : result.OrderByDescending(p => p.DateAdded),
-            "Status" => sortAsc ? result.OrderBy(p => p.Status) : result.OrderByDescending(p => p.Status),
+            "Sku" => _sortAsc ? result.OrderBy(p => p.Sku) : result.OrderByDescending(p => p.Sku),
+            "Name" => _sortAsc ? result.OrderBy(p => p.Name) : result.OrderByDescending(p => p.Name),
+            "Brand" => _sortAsc ? result.OrderBy(p => p.Brand) : result.OrderByDescending(p => p.Brand),
+            "Category" => _sortAsc ? result.OrderBy(p => p.Category) : result.OrderByDescending(p => p.Category),
+            "Price" => _sortAsc ? result.OrderBy(p => p.Price) : result.OrderByDescending(p => p.Price),
+            "Stock" => _sortAsc ? result.OrderBy(p => p.Stock) : result.OrderByDescending(p => p.Stock),
+            "Rating" => _sortAsc ? result.OrderBy(p => p.Rating) : result.OrderByDescending(p => p.Rating),
+            "ReviewCount" => _sortAsc ? result.OrderBy(p => p.ReviewCount) : result.OrderByDescending(p => p.ReviewCount),
+            "WeightKg" => _sortAsc ? result.OrderBy(p => p.WeightKg) : result.OrderByDescending(p => p.WeightKg),
+            "Color" => _sortAsc ? result.OrderBy(p => p.Color) : result.OrderByDescending(p => p.Color),
+            "WarrantyMonths" => _sortAsc ? result.OrderBy(p => p.WarrantyMonths) : result.OrderByDescending(p => p.WarrantyMonths),
+            "DateAdded" => _sortAsc ? result.OrderBy(p => p.DateAdded) : result.OrderByDescending(p => p.DateAdded),
+            "Status" => _sortAsc ? result.OrderBy(p => p.Status) : result.OrderByDescending(p => p.Status),
             _ => result
         };
 
-        filteredProducts = result.ToList();
-        totalPages = Math.Max(1, (int)Math.Ceiling(filteredProducts.Count / (double)pageSize));
-        if (currentPage > totalPages) currentPage = totalPages;
-        if (currentPage < 1) currentPage = 1;
+        _filteredProducts = result.ToList();
+        _totalPages = Math.Max(1, (int)Math.Ceiling(_filteredProducts.Count / (double)_pageSize));
+        if (_currentPage > _totalPages) _currentPage = _totalPages;
+        if (_currentPage < 1) _currentPage = 1;
 
-        pagedProducts = filteredProducts
-            .Skip((currentPage - 1) * pageSize)
-            .Take(pageSize)
+        _pagedProducts = _filteredProducts
+            .Skip((_currentPage - 1) * _pageSize)
+            .Take(_pageSize)
             .ToList();
     }
 
@@ -5251,14 +5251,14 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     private async Task SortBy(ColumnDef col)
     {
-        if (sortColumn == col.Key)
-            sortAsc = !sortAsc;
+        if (_sortColumn == col.Key)
+            _sortAsc = !_sortAsc;
         else
         {
-            sortColumn = col.Key;
-            sortAsc = true;
+            _sortColumn = col.Key;
+            _sortAsc = true;
         }
-        currentPage = 1;
+        _currentPage = 1;
         ApplyFilterAndSort();
         await SavePrefs();
     }
@@ -5266,7 +5266,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private async Task OnFilterTextChanged(ColumnDef col, string value)
     {
         col.FilterText = value;
-        currentPage = 1;
+        _currentPage = 1;
         ApplyFilterAndSort();
         await SavePrefs();
     }
@@ -5274,7 +5274,7 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private async Task OnFilterMinChanged(ColumnDef col, string value)
     {
         col.FilterMin = value;
-        currentPage = 1;
+        _currentPage = 1;
         ApplyFilterAndSort();
         await SavePrefs();
     }
@@ -5282,20 +5282,20 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private async Task OnFilterMaxChanged(ColumnDef col, string value)
     {
         col.FilterMax = value;
-        currentPage = 1;
+        _currentPage = 1;
         ApplyFilterAndSort();
         await SavePrefs();
     }
 
     private async Task ClearFilters()
     {
-        foreach (var col in columns)
+        foreach (var col in _columns)
         {
             col.FilterText = string.Empty;
             col.FilterMin = string.Empty;
             col.FilterMax = string.Empty;
         }
-        currentPage = 1;
+        _currentPage = 1;
         ApplyFilterAndSort();
         await SavePrefs();
     }
@@ -5304,25 +5304,25 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     {
         if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
         {
-            pageSize = size;
-            currentPage = 1;
+            _pageSize = size;
+            _currentPage = 1;
             ApplyFilterAndSort();
             await SavePrefs();
         }
     }
 
-    private void FirstPage() { currentPage = 1; ApplyFilterAndSort(); }
-    private void PrevPage() { if (currentPage > 1) { currentPage--; ApplyFilterAndSort(); } }
-    private void NextPage() { if (currentPage < totalPages) { currentPage++; ApplyFilterAndSort(); } }
-    private void LastPage() { currentPage = totalPages; ApplyFilterAndSort(); }
+    private void FirstPage() { _currentPage = 1; ApplyFilterAndSort(); }
+    private void PrevPage() { if (_currentPage > 1) { _currentPage--; ApplyFilterAndSort(); } }
+    private void NextPage() { if (_currentPage < _totalPages) { _currentPage++; ApplyFilterAndSort(); } }
+    private void LastPage() { _currentPage = _totalPages; ApplyFilterAndSort(); }
 
     private async Task ToggleFilters()
     {
-        showFilters = !showFilters;
+        _showFilters = !_showFilters;
         await SavePrefs();
     }
 
-    private void ToggleColumnPicker() => showColumnPicker = !showColumnPicker;
+    private void ToggleColumnPicker() => _showColumnPicker = !_showColumnPicker;
 
     private async Task ToggleColumn(ColumnDef col, bool visible)
     {
@@ -5332,19 +5332,19 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     private async Task RestoreColumnDefaults()
     {
-        foreach (var col in columns)
+        foreach (var col in _columns)
         {
-            if (defaultVisibility.TryGetValue(col.Key, out var vis))
+            if (_defaultVisibility.TryGetValue(col.Key, out var vis))
                 col.Visible = vis;
             col.FilterText = string.Empty;
             col.FilterMin = string.Empty;
             col.FilterMax = string.Empty;
         }
-        sortColumn = "Name";
-        sortAsc = true;
-        pageSize = 20;
-        currentPage = 1;
-        showColumnPicker = false;
+        _sortColumn = "Name";
+        _sortAsc = true;
+        _pageSize = 20;
+        _currentPage = 1;
+        _showColumnPicker = false;
         ApplyFilterAndSort();
         await SavePrefs();
     }
@@ -5352,15 +5352,15 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
     private void NavigateToDetail(Guid id) => Nav.NavigateTo($"showcase/{id}");
     private void NavigateToNew() => Nav.NavigateTo("showcase/new");
 
-    private void ConfirmDelete(CatalogProduct p) => deleteTarget = p;
-    private void CancelDelete() => deleteTarget = null;
+    private void ConfirmDelete(CatalogProduct p) => _deleteTarget = p;
+    private void CancelDelete() => _deleteTarget = null;
 
     private async Task ExecuteDelete()
     {
-        if (deleteTarget is not null)
+        if (_deleteTarget is not null)
         {
-            allProducts.RemoveAll(p => p.Id == deleteTarget.Id);
-            deleteTarget = null;
+            _allProducts.RemoveAll(p => p.Id == _deleteTarget.Id);
+            _deleteTarget = null;
             ApplyFilterAndSort();
             await SaveProducts();
         }
@@ -5368,11 +5368,11 @@ FILE: src/ObserverMagazine.Web/Pages/Showcase.razor
 
     private async Task ResetData()
     {
-        try { await JS.InvokeVoidAsync("localStorage.removeItem", StorageKey); }
+        try { await Js.InvokeVoidAsync("localStorage.removeItem", StorageKey); }
         catch { /* best effort */ }
 
-        allProducts = ProductDataGenerator.Generate(2000);
-        currentPage = 1;
+        _allProducts = ProductDataGenerator.Generate(2000);
+        _currentPage = 1;
         await ClearFilters();
         await SaveProducts();
     }
@@ -5774,38 +5774,38 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     private const string BackendBaseUrl = "https://my-api.2w7sp317.workers.dev";
     private static readonly TimeSpan HealthCacheDuration = TimeSpan.FromMinutes(5);
 
-    private bool backendAvailable;
-    private DateTime lastHealthCheck = DateTime.MinValue;
+    private bool _backendAvailable;
+    private DateTime _lastHealthCheck = DateTime.MinValue;
 
-    public bool IsBackendAvailable => backendAvailable;
+    public bool IsBackendAvailable => _backendAvailable;
 
     public async Task CheckHealthAsync()
     {
         // Cache health check result for 5 minutes
-        if (DateTime.UtcNow - lastHealthCheck < HealthCacheDuration)
+        if (DateTime.UtcNow - _lastHealthCheck < HealthCacheDuration)
             return;
 
         try
         {
             var response = await http.GetAsync($"{BackendBaseUrl}/api/health");
-            backendAvailable = response.IsSuccessStatusCode;
-            logger.LogInformation("Backend health check: {Status}", backendAvailable ? "available" : "unavailable");
+            _backendAvailable = response.IsSuccessStatusCode;
+            logger.LogInformation("Backend health check: {Status}", _backendAvailable ? "available" : "unavailable");
         }
         catch (Exception ex)
         {
-            backendAvailable = false;
+            _backendAvailable = false;
             logger.LogDebug(ex, "Backend health check failed — running without backend");
         }
         finally
         {
-            lastHealthCheck = DateTime.UtcNow;
+            _lastHealthCheck = DateTime.UtcNow;
         }
     }
 
     public async Task TrackPageViewAsync(string pageName, string? detail = null)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return;
+        if (!_backendAvailable) return;
 
         var content = detail is not null
             ? $"[PageView] {pageName} — {detail}"
@@ -5817,7 +5817,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     public async Task TrackInteractionAsync(string action, string? detail = null)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return;
+        if (!_backendAvailable) return;
 
         var content = detail is not null
             ? $"[Interaction] {action} — {detail}"
@@ -5829,7 +5829,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     public async Task IncrementViewAsync(string slug)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return;
+        if (!_backendAvailable) return;
 
         try
         {
@@ -5844,7 +5844,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     public async Task<int?> GetViewCountAsync(string slug)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return null;
+        if (!_backendAvailable) return null;
 
         try
         {
@@ -5861,7 +5861,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     public async Task AddReactionAsync(string slug, string reactionType)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return;
+        if (!_backendAvailable) return;
 
         try
         {
@@ -5877,7 +5877,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
     public async Task<Dictionary<string, int>?> GetReactionsAsync(string slug)
     {
         await EnsureHealthChecked();
-        if (!backendAvailable) return null;
+        if (!_backendAvailable) return null;
 
         try
         {
@@ -5892,7 +5892,7 @@ public sealed class AnalyticsService(HttpClient http, ILogger<AnalyticsService> 
 
     private async Task EnsureHealthChecked()
     {
-        if (lastHealthCheck == DateTime.MinValue)
+        if (_lastHealthCheck == DateTime.MinValue)
             await CheckHealthAsync();
     }
 
@@ -5929,28 +5929,28 @@ namespace ObserverMagazine.Web.Services;
 
 public sealed class BlogService(HttpClient http, ILogger<BlogService> logger) : IBlogService
 {
-    private BlogPostMetadata[]? cachedIndex;
-    private AuthorProfile[]? cachedAuthors;
+    private BlogPostMetadata[]? _cachedIndex;
+    private AuthorProfile[]? _cachedAuthors;
 
     public async Task<BlogPostMetadata[]> GetPostsAsync()
     {
-        if (cachedIndex is not null) return cachedIndex;
+        if (_cachedIndex is not null) return _cachedIndex;
 
         logger.LogInformation("Fetching blog posts index");
         try
         {
             var posts = await http.GetFromJsonAsync<BlogPostMetadata[]>("blog-data/posts-index.json");
-            cachedIndex = posts?
+            _cachedIndex = posts?
                 .OrderByDescending(p => p.Date)
                 .ToArray() ?? [];
-            logger.LogInformation("Loaded {Count} blog posts", cachedIndex.Length);
-            return cachedIndex;
+            logger.LogInformation("Loaded {Count} blog posts", _cachedIndex.Length);
+            return _cachedIndex;
         }
         catch (HttpRequestException ex)
         {
             logger.LogWarning(ex, "Blog index not found — content processor may not have run");
-            cachedIndex = [];
-            return cachedIndex;
+            _cachedIndex = [];
+            return _cachedIndex;
         }
     }
 
@@ -5977,21 +5977,21 @@ public sealed class BlogService(HttpClient http, ILogger<BlogService> logger) : 
 
     public async Task<AuthorProfile[]> GetAllAuthorsAsync()
     {
-        if (cachedAuthors is not null) return cachedAuthors;
+        if (_cachedAuthors is not null) return _cachedAuthors;
 
         logger.LogInformation("Fetching authors index");
         try
         {
             var authors = await http.GetFromJsonAsync<AuthorProfile[]>("blog-data/authors.json");
-            cachedAuthors = authors ?? [];
-            logger.LogInformation("Loaded {Count} author profiles", cachedAuthors.Length);
-            return cachedAuthors;
+            _cachedAuthors = authors ?? [];
+            logger.LogInformation("Loaded {Count} author profiles", _cachedAuthors.Length);
+            return _cachedAuthors;
         }
         catch (HttpRequestException ex)
         {
             logger.LogWarning(ex, "Authors index not found");
-            cachedAuthors = [];
-            return cachedAuthors;
+            _cachedAuthors = [];
+            return _cachedAuthors;
         }
     }
 
@@ -6208,8 +6208,8 @@ namespace ObserverMagazine.Web.Services;
 /// </summary>
 public sealed class TelemetryService(ILogger<TelemetryService> logger)
 {
-    private readonly Dictionary<string, long> counters = new();
-    private readonly object lockObj = new();
+    private readonly Dictionary<string, long> _counters = new();
+    private readonly object _lockObj = new();
 
     public void TrackEvent(string eventName, IDictionary<string, string>? properties = null)
     {
@@ -6221,19 +6221,19 @@ public sealed class TelemetryService(ILogger<TelemetryService> logger)
 
     public void IncrementCounter(string counterName, long value = 1)
     {
-        lock (lockObj)
+        lock (_lockObj)
         {
-            counters.TryGetValue(counterName, out var current);
-            counters[counterName] = current + value;
+            _counters.TryGetValue(counterName, out var current);
+            _counters[counterName] = current + value;
         }
         logger.LogDebug("[Telemetry] Counter: {CounterName} += {Value}", counterName, value);
     }
 
     public long GetCounter(string counterName)
     {
-        lock (lockObj)
+        lock (_lockObj)
         {
-            return counters.GetValueOrDefault(counterName, 0);
+            return _counters.GetValueOrDefault(counterName, 0);
         }
     }
 
@@ -6583,7 +6583,7 @@ html {
 }
 
 body {
-    font-family: var(--font-sans), sans-serif;
+    font-family: var(--font-sans);
     background: var(--color-bg);
     color: var(--color-text);
     line-height: 1.6;
@@ -6598,7 +6598,8 @@ a:hover { text-decoration: underline; }
 img { max-width: 100%; height: auto; }
 
 code {
-    font-family: var(--font-mono), monospace; }
+    font-family: var(--font-mono);
+}
 pre { min-width: 0; }
 
 .container {
@@ -7895,7 +7896,7 @@ namespace ObserverMagazine.Web.Tests.Components;
 
 public class MasterDetailTests : IDisposable
 {
-    private readonly BunitContext ctx = new();
+    private readonly BunitContext _ctx = new();
 
     private const string SampleProductsJson = """
         [
@@ -7908,21 +7909,21 @@ public class MasterDetailTests : IDisposable
     {
         var fakeHandler = new MasterDetailFakeHttpHandler(SampleProductsJson);
         var httpClient = new HttpClient(fakeHandler) { BaseAddress = new Uri("https://test.local/") };
-        ctx.Services.AddSingleton(httpClient);
-        ctx.Services.AddSingleton<IAnalyticsService>(new NoOpAnalyticsService());
+        _ctx.Services.AddSingleton(httpClient);
+        _ctx.Services.AddSingleton<IAnalyticsService>(new NoOpAnalyticsService());
 
         // bUnit provides JSInterop mocking automatically.
         // Set up the localStorage calls the component makes.
-        ctx.JSInterop.SetupVoid("localStorage.setItem", _ => true);
-        ctx.JSInterop.SetupVoid("localStorage.removeItem", _ => true);
-        ctx.JSInterop.Setup<string?>("localStorage.getItem", _ => true).SetResult(null);
+        _ctx.JSInterop.SetupVoid("localStorage.setItem", _ => true);
+        _ctx.JSInterop.SetupVoid("localStorage.removeItem", _ => true);
+        _ctx.JSInterop.Setup<string?>("localStorage.getItem", _ => true).SetResult(null);
     }
 
     [Fact]
     public void MasterDetail_RendersProductList()
     {
         SetupServices();
-        var cut = ctx.Render<MasterDetail>();
+        var cut = _ctx.Render<MasterDetail>();
 
         // Wait for async load
         cut.WaitForState(() => cut.Markup.Contains("Widget A"));
@@ -7935,7 +7936,7 @@ public class MasterDetailTests : IDisposable
     public void MasterDetail_ShowsEmptyDetailOnLoad()
     {
         SetupServices();
-        var cut = ctx.Render<MasterDetail>();
+        var cut = _ctx.Render<MasterDetail>();
 
         cut.WaitForState(() => cut.Markup.Contains("Widget A"));
 
@@ -7946,7 +7947,7 @@ public class MasterDetailTests : IDisposable
     public void MasterDetail_SelectProductShowsDetail()
     {
         SetupServices();
-        var cut = ctx.Render<MasterDetail>();
+        var cut = _ctx.Render<MasterDetail>();
 
         cut.WaitForState(() => cut.Markup.Contains("Widget A"));
 
@@ -7962,7 +7963,7 @@ public class MasterDetailTests : IDisposable
     public void MasterDetail_AddButtonShowsForm()
     {
         SetupServices();
-        var cut = ctx.Render<MasterDetail>();
+        var cut = _ctx.Render<MasterDetail>();
 
         cut.WaitForState(() => cut.Markup.Contains("Widget A"));
 
@@ -7978,23 +7979,23 @@ public class MasterDetailTests : IDisposable
     public void MasterDetail_HasResetButton()
     {
         SetupServices();
-        var cut = ctx.Render<MasterDetail>();
+        var cut = _ctx.Render<MasterDetail>();
 
         cut.WaitForState(() => cut.Markup.Contains("Widget A"));
 
         Assert.Contains("Reset to Defaults", cut.Markup);
     }
 
-    public void Dispose() => ctx.Dispose();
+    public void Dispose() => _ctx.Dispose();
 }
 
 internal sealed class MasterDetailFakeHttpHandler : HttpMessageHandler
 {
-    private readonly HttpResponseMessage response;
+    private readonly HttpResponseMessage _response;
 
     public MasterDetailFakeHttpHandler(string json)
     {
-        response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        _response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
         {
             Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
         };
@@ -8003,7 +8004,7 @@ internal sealed class MasterDetailFakeHttpHandler : HttpMessageHandler
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(response);
+        return Task.FromResult(_response);
     }
 }
 
@@ -8022,7 +8023,7 @@ namespace ObserverMagazine.Web.Tests.Components;
 
 public class ResponsiveTableTests : IDisposable
 {
-    private readonly BunitContext ctx = new();
+    private readonly BunitContext _ctx = new();
 
     private const string SampleProductsJson = """
         [
@@ -8035,8 +8036,8 @@ public class ResponsiveTableTests : IDisposable
     {
         var fakeHandler = new ComponentFakeHttpHandler(SampleProductsJson);
         var httpClient = new HttpClient(fakeHandler) { BaseAddress = new Uri("https://test.local/") };
-        ctx.Services.AddSingleton(httpClient);
-        ctx.Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
+        _ctx.Services.AddSingleton(httpClient);
+        _ctx.Services.AddSingleton<IAnalyticsService, NoOpAnalyticsService>();
     }
 
     [Fact]
@@ -8044,7 +8045,7 @@ public class ResponsiveTableTests : IDisposable
     {
         SetupServices();
 
-        var cut = ctx.Render<ResponsiveTable>();
+        var cut = _ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         Assert.Contains("Widget A", cut.Markup);
@@ -8056,7 +8057,7 @@ public class ResponsiveTableTests : IDisposable
     {
         SetupServices();
 
-        var cut = ctx.Render<ResponsiveTable>();
+        var cut = _ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         var filterInput = cut.Find(".rt-filter-input");
@@ -8071,7 +8072,7 @@ public class ResponsiveTableTests : IDisposable
     {
         SetupServices();
 
-        var cut = ctx.Render<ResponsiveTable>();
+        var cut = _ctx.Render<ResponsiveTable>();
         cut.WaitForElement(".rt-data-table");
 
         var priceHeader = cut.FindAll("th.rt-sortable")[2];
@@ -8080,16 +8081,16 @@ public class ResponsiveTableTests : IDisposable
         Assert.Contains("▲", cut.Markup);
     }
 
-    public void Dispose() => ctx.Dispose();
+    public void Dispose() => _ctx.Dispose();
 }
 
 internal sealed class ComponentFakeHttpHandler : HttpMessageHandler
 {
-    private readonly HttpResponseMessage response;
+    private readonly HttpResponseMessage _response;
 
     public ComponentFakeHttpHandler(string json)
     {
-        response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        _response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
         {
             Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
         };
@@ -8098,7 +8099,7 @@ internal sealed class ComponentFakeHttpHandler : HttpMessageHandler
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(response);
+        return Task.FromResult(_response);
     }
 }
 
@@ -8918,11 +8919,11 @@ public class BlogServiceTests
 /// </summary>
 internal sealed class FakeHttpHandler : HttpMessageHandler
 {
-    private readonly HttpResponseMessage response;
+    private readonly HttpResponseMessage _response;
 
     public FakeHttpHandler(string content, string mediaType)
     {
-        response = new HttpResponseMessage(HttpStatusCode.OK)
+        _response = new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(content, System.Text.Encoding.UTF8, mediaType)
         };
@@ -8930,13 +8931,13 @@ internal sealed class FakeHttpHandler : HttpMessageHandler
 
     public FakeHttpHandler(HttpStatusCode statusCode)
     {
-        response = new HttpResponseMessage(statusCode);
+        _response = new HttpResponseMessage(statusCode);
     }
 
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        return Task.FromResult(response);
+        return Task.FromResult(_response);
     }
 }
 
