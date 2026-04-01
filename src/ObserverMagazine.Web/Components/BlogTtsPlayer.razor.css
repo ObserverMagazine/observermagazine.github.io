@@ -30,18 +30,36 @@
     background: var(--color-primary);
     color: var(--color-primary-fg);
     border: none;
-    border-radius: 50%;
-    width: 1.75rem;
-    height: 1.75rem;
+    border-radius: var(--radius);
+    padding: 0.25rem 0.6rem;
     font-size: 0.8rem;
     cursor: pointer;
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .tts-fallback-seek {
     flex: 1;
     accent-color: var(--color-primary);
     min-width: 0;
+}
+
+.tts-fallback-time {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tts-icon {
+    flex-shrink: 0;
+}
+
+.tts-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .tts-speed {
@@ -67,6 +85,7 @@
     font-size: 0.8rem;
     color: var(--color-muted);
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .tts-speed-select:focus {
@@ -74,7 +93,7 @@
     outline-offset: -1px;
 }
 
-@media (max-width: 30em) {
+@media (max-width: 40em) {
     .tts-player {
         flex-direction: column;
         align-items: stretch;

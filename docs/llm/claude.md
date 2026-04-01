@@ -36526,3 +36526,1175 @@ so we do as much as we can in c sharp dotnet web assembly
 instead of javascript where possible 
 remember, the outer shell of the page should NEVER EVER have side scroll or jank
 but the code blocks can side scroll if necessary to show all the code 
+
+I've read the full dump.txt. The root cause of the mobile breakage is that `<pre>` code blocks and `<table>` elements push wider than the viewport, which cascades and breaks everything else visually. Here's my comprehensive fix across the affected files.
+
+---
+
+## 1. `src/ObserverMagazine.Web/Pages/BlogPost.razor.css` — Major overhaul
+
+This is the biggest change: code block scroll wrappers, fade gradients, table wrappers, and mobile fixes.## 2. `src/ObserverMagazine.Web/Pages/BlogPost.razor` — Full file
+
+The key changes: `PostProcessHtml` wraps every `<pre>` and `<table>` in scroll containers (pure C#, no JS), and `OnAfterRenderAsync` calls the new scroll-detection JS.
+
+```razor
+@page "/blog/{Slug}"
+@inject IBlogService BlogService
+@inject ILogger<BlogPost> Logger
+@inject NavigationManager Nav
+@inject IAnalyticsService Analytics
+@inject IJSRuntime JS
+
+<PageTitle>@(metadata?.Title ?? "Post") — Observer Magazine</PageTitle>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (metadata is null)
+{
+    <h1>Post Not Found</h1>
+    <p>Sorry, we couldn't find that post. <a href="blog">Back to Blog</a></p>
+}
+else
+{
+    <article class="blog-post">
+        <header>
+            <h1>@metadata.Title</h1>
+            <div class="blog-meta">
+                <time datetime="@metadata.Date.ToString("yyyy-MM-dd")">
+                    @metadata.Date.ToString("MMMM d, yyyy")
+                </time>
+                @if (metadata.Updated.HasValue)
+                {
+                    <span> · Updated @metadata.Updated.Value.ToString("MMMM d, yyyy")</span>
+                }
+                @if (!string.IsNullOrEmpty(metadata.AuthorName))
+                {
+                    <span> · @metadata.AuthorName</span>
+                }
+                @if (metadata.ReadingTimeMinutes > 0)
+                {
+                    <span> · @metadata.ReadingTimeMinutes min read</span>
+                }
+                @if (viewCount.HasValue)
+                {
+                    <span> · @viewCount views</span>
+                }
+            </div>
+            @if (metadata.Tags is { Length: > 0 })
+            {
+                <div class="tag-list">
+                    @foreach (var tag in metadata.Tags)
+                    {
+                        <a class="tag" href="blog/tag/@Uri.EscapeDataString(tag)">@tag</a>
+                    }
+                </div>
+            }
+        </header>
+
+        <BlogTtsPlayer Slug="@Slug" />
+
+        <div class="blog-content">
+            @((MarkupString)htmlContent)
+        </div>
+
+        <Reactions Slug="@Slug" />
+
+        <AuthorCard Author="authorProfile" />
+
+        <footer class="blog-post-footer">
+            <a href="blog">&larr; Back to Blog</a>
+        </footer>
+    </article>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private BlogPostMetadata? metadata;
+    private string htmlContent = "";
+    private bool loading = true;
+    private AuthorProfile? authorProfile;
+    private int? viewCount;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        Logger.LogInformation("Loading blog post: {Slug}", Slug);
+
+        try
+        {
+            metadata = await BlogService.GetPostMetadataAsync(Slug);
+            if (metadata is not null)
+            {
+                var rawHtml = await BlogService.GetPostHtmlAsync(Slug);
+                htmlContent = PostProcessHtml(rawHtml);
+
+                if (!string.IsNullOrEmpty(metadata.Author))
+                {
+                    authorProfile = await BlogService.GetAuthorAsync(metadata.Author);
+                }
+
+                await Analytics.TrackPageViewAsync("BlogPost", $"{metadata.Title} ({Slug})");
+                await Analytics.IncrementViewAsync(Slug);
+                viewCount = await Analytics.GetViewCountAsync(Slug);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load post {Slug}", Slug);
+            metadata = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Trigger syntax highlighting and scroll-detection after content renders
+        if (!loading && metadata is not null)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("observerHighlight.highlightAll");
+                await JS.InvokeVoidAsync("observerCodeScroll.init");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug(ex, "Post-render enhancement failed for {Slug}", Slug);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Post-processes Markdig HTML to wrap code blocks and tables with
+    /// mobile-friendly scroll containers. Runs entirely in C# — the DOM
+    /// transformation itself needs no JavaScript.
+    /// </summary>
+    private static string PostProcessHtml(string html)
+    {
+        // Wrap every <pre> with a scroll container that provides a
+        // right-edge fade gradient and a "scroll →" hint label.
+        // Safe because Markdig escapes < inside code as &lt; and
+        // <pre> is the only HTML tag starting with those four chars.
+        html = html.Replace(
+            "<pre",
+            "<div class=\"code-block-wrap\"><span class=\"code-scroll-hint\" aria-hidden=\"true\">scroll \u2192</span><pre");
+        html = html.Replace(
+            "</pre>",
+            "</pre></div>");
+
+        // Wrap every <table> so it scrolls horizontally on narrow
+        // viewports without pushing the outer page wider.
+        html = html.Replace(
+            "<table",
+            "<div class=\"table-scroll-wrap\"><table");
+        html = html.Replace(
+            "</table>",
+            "</table></div>");
+
+        return html;
+    }
+}
+```
+
+---
+
+## 3. `src/ObserverMagazine.Web/wwwroot/css/app.css` — Two targeted changes
+
+In the reset section, add an `html` rule and fix `body`. Here is the **full file** (only the reset section changed — everything else is identical):
+
+```css
+/* ===========================================================================
+   app.css — Global design tokens, reset, and shared utilities ONLY.
+   Component-specific styles live in their .razor.css files.
+   =========================================================================== */
+
+/* ========== DESIGN TOKENS (Light — default) ========== */
+:root,
+[data-theme="light"] {
+    --color-bg: #ffffff;
+    --color-text: #1a1a2e;
+    --color-muted: #6b7280;
+    --color-primary: #2563eb;
+    --color-primary-fg: #ffffff;
+    --color-accent: #3b82f6;
+    --color-surface: #f3f4f6;
+    --color-border: #e5e7eb;
+    --color-card-bg: #ffffff;
+    --color-header-bg: #2563eb;
+    --color-header-fg: #ffffff;
+    --color-footer-bg: #f3f4f6;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
+    --radius: 0.375rem;
+    --max-width: 60rem;
+
+    /* Inline code */
+    --color-inline-code-bg: #eff1f5;
+    --color-inline-code-fg: #1a1a2e;
+    --color-inline-code-border: #dde0e6;
+
+    /* Syntax highlighting tokens (bg #f3f4f6) — contrast verified vs bg */
+    --hl-bg: #f3f4f6;
+    --hl-fg: #1a1a2e;       /* ~15:1 */
+    --hl-keyword: #6f42c1;  /* ~6.2:1  purple  */
+    --hl-string: #0a3069;   /* ~12.5:1 dark blue */
+    --hl-comment: #636c76;  /* ~4.7:1  gray — WCAG AA */
+    --hl-number: #cf7700;   /* ~4.5:1  amber */
+    --hl-function: #0550ae; /* ~7.1:1  blue */
+    --hl-title: #c11e3a;    /* ~5.5:1  red */
+    --hl-type: #0b6e6e;     /* ~5.3:1  teal */
+    --hl-literal: #cf7700;  /* ~4.5:1  amber */
+    --hl-attr: #4f46e5;     /* ~5.8:1  indigo */
+    --hl-built-in: #0b6e6e; /* ~5.3:1  teal */
+    --hl-tag: #0550ae;
+    --hl-selector: #6f42c1;
+    --hl-property: #4f46e5;
+    --hl-punctuation: #1a1a2e;
+
+    /* Terminal box — always dark-tinted */
+    --terminal-bg: #1e1e2e;
+    --terminal-fg: #cdd6f4;
+    --terminal-prompt: #a6e3a1;
+    --terminal-ok: #a6e3a1;
+    --terminal-out: #cdd6f4;
+    --terminal-dot-red: #f38ba8;
+    --terminal-dot-amber: #f9e2af;
+    --terminal-dot-green: #a6e3a1;
+    --terminal-header-bg: #313244;
+    --terminal-title-fg: #bac2de;
+}
+
+/* ---- Dark ---- */
+[data-theme="dark"] {
+    --color-bg: #0f172a;
+    --color-text: #e2e8f0;
+    --color-muted: #94a3b8;
+    --color-primary: #60a5fa;
+    --color-primary-fg: #0f172a;
+    --color-accent: #3b82f6;
+    --color-surface: #1e293b;
+    --color-border: #334155;
+    --color-card-bg: #1e293b;
+    --color-header-bg: #1e293b;
+    --color-header-fg: #e2e8f0;
+    --color-footer-bg: #1e293b;
+
+    --color-inline-code-bg: #1c2433;
+    --color-inline-code-fg: #e2e8f0;
+    --color-inline-code-border: #2d3a4d;
+
+    /* Syntax tokens (bg #1e293b) */
+    --hl-bg: #1e293b;
+    --hl-fg: #e2e8f0;       /* ~11:1 */
+    --hl-keyword: #c084fc;  /* ~5.8:1  purple */
+    --hl-string: #7ee7a8;   /* ~7.9:1  green */
+    --hl-comment: #8b949e;  /* ~4.8:1  gray — WCAG AA */
+    --hl-number: #fbbf24;   /* ~9.5:1  amber */
+    --hl-function: #6cb6ff; /* ~6.5:1  blue */
+    --hl-title: #f87171;    /* ~5.5:1  red */
+    --hl-type: #22d3ee;     /* ~8.6:1  cyan */
+    --hl-literal: #fbbf24;  /* ~9.5:1  amber */
+    --hl-attr: #a5b4fc;     /* ~6.4:1  indigo */
+    --hl-built-in: #22d3ee; /* ~8.6:1  cyan */
+    --hl-tag: #6cb6ff;
+    --hl-selector: #c084fc;
+    --hl-property: #a5b4fc;
+    --hl-punctuation: #e2e8f0;
+
+    --terminal-bg: #11111b;
+    --terminal-fg: #cdd6f4;
+    --terminal-prompt: #a6e3a1;
+    --terminal-ok: #a6e3a1;
+    --terminal-out: #cdd6f4;
+    --terminal-dot-red: #f38ba8;
+    --terminal-dot-amber: #f9e2af;
+    --terminal-dot-green: #a6e3a1;
+    --terminal-header-bg: #1e1e2e;
+    --terminal-title-fg: #bac2de;
+}
+
+/* ---- Sepia ---- */
+[data-theme="sepia"] {
+    --color-bg: #f4ecd8;
+    --color-text: #433422;
+    --color-muted: #7a6652;
+    --color-primary: #8b4513;
+    --color-primary-fg: #ffffff;
+    --color-accent: #a0522d;
+    --color-surface: #ede0c8;
+    --color-border: #d4c4a8;
+    --color-card-bg: #f4ecd8;
+    --color-header-bg: #6b3410;
+    --color-header-fg: #f4ecd8;
+    --color-footer-bg: #ede0c8;
+
+    --color-inline-code-bg: #e8dbc3;
+    --color-inline-code-fg: #433422;
+    --color-inline-code-border: #cdbfa5;
+
+    --hl-bg: #ede0c8;
+    --hl-fg: #433422;
+    --hl-keyword: #7a3510;
+    --hl-string: #2e6e32;
+    --hl-comment: #8a7a66;
+    --hl-number: #b05800;
+    --hl-function: #6b3410;
+    --hl-title: #a01c1c;
+    --hl-type: #006050;
+    --hl-literal: #b05800;
+    --hl-attr: #4a148c;
+    --hl-built-in: #006050;
+    --hl-tag: #6b3410;
+    --hl-selector: #7a3510;
+    --hl-property: #4a148c;
+    --hl-punctuation: #433422;
+
+    --terminal-bg: #2a2013;
+    --terminal-fg: #d4c4a8;
+    --terminal-prompt: #6b8e23;
+    --terminal-ok: #6b8e23;
+    --terminal-out: #d4c4a8;
+    --terminal-dot-red: #cd5c5c;
+    --terminal-dot-amber: #daa520;
+    --terminal-dot-green: #6b8e23;
+    --terminal-header-bg: #3a2d1a;
+    --terminal-title-fg: #b8a88a;
+}
+
+/* ---- Solarized Light ---- */
+[data-theme="solarized-light"] {
+    --color-bg: #fdf6e3;
+    --color-text: #657b83;
+    --color-muted: #93a1a1;
+    --color-primary: #268bd2;
+    --color-primary-fg: #fdf6e3;
+    --color-accent: #2aa198;
+    --color-surface: #eee8d5;
+    --color-border: #d6cdb5;
+    --color-card-bg: #fdf6e3;
+    --color-header-bg: #073642;
+    --color-header-fg: #eee8d5;
+    --color-footer-bg: #eee8d5;
+
+    --color-inline-code-bg: #e8e1cc;
+    --color-inline-code-fg: #586e75;
+    --color-inline-code-border: #d0c8b0;
+
+    --hl-bg: #eee8d5;
+    --hl-fg: #657b83;
+    --hl-keyword: #859900;
+    --hl-string: #2aa198;
+    --hl-comment: #93a1a1;
+    --hl-number: #d33682;
+    --hl-function: #268bd2;
+    --hl-title: #cb4b16;
+    --hl-type: #b58900;
+    --hl-literal: #d33682;
+    --hl-attr: #6c71c4;
+    --hl-built-in: #b58900;
+    --hl-tag: #268bd2;
+    --hl-selector: #859900;
+    --hl-property: #6c71c4;
+    --hl-punctuation: #657b83;
+
+    --terminal-bg: #002b36;
+    --terminal-fg: #839496;
+    --terminal-prompt: #859900;
+    --terminal-ok: #859900;
+    --terminal-out: #839496;
+    --terminal-dot-red: #dc322f;
+    --terminal-dot-amber: #b58900;
+    --terminal-dot-green: #859900;
+    --terminal-header-bg: #073642;
+    --terminal-title-fg: #93a1a1;
+}
+
+/* ---- Solarized Dark ---- */
+[data-theme="solarized-dark"] {
+    --color-bg: #002b36;
+    --color-text: #839496;
+    --color-muted: #586e75;
+    --color-primary: #268bd2;
+    --color-primary-fg: #002b36;
+    --color-accent: #2aa198;
+    --color-surface: #073642;
+    --color-border: #2a4a53;
+    --color-card-bg: #073642;
+    --color-header-bg: #073642;
+    --color-header-fg: #93a1a1;
+    --color-footer-bg: #073642;
+
+    --color-inline-code-bg: #0a3440;
+    --color-inline-code-fg: #93a1a1;
+    --color-inline-code-border: #1f4852;
+
+    --hl-bg: #073642;
+    --hl-fg: #839496;
+    --hl-keyword: #859900;
+    --hl-string: #2aa198;
+    --hl-comment: #586e75;
+    --hl-number: #d33682;
+    --hl-function: #268bd2;
+    --hl-title: #cb4b16;
+    --hl-type: #b58900;
+    --hl-literal: #d33682;
+    --hl-attr: #6c71c4;
+    --hl-built-in: #b58900;
+    --hl-tag: #268bd2;
+    --hl-selector: #859900;
+    --hl-property: #6c71c4;
+    --hl-punctuation: #839496;
+
+    --terminal-bg: #00212b;
+    --terminal-fg: #839496;
+    --terminal-prompt: #859900;
+    --terminal-ok: #859900;
+    --terminal-out: #839496;
+    --terminal-dot-red: #dc322f;
+    --terminal-dot-amber: #b58900;
+    --terminal-dot-green: #859900;
+    --terminal-header-bg: #002b36;
+    --terminal-title-fg: #93a1a1;
+}
+
+/* ---- High Contrast ---- */
+[data-theme="high-contrast"] {
+    --color-bg: #000000;
+    --color-text: #ffffff;
+    --color-muted: #cccccc;
+    --color-primary: #ffff00;
+    --color-primary-fg: #000000;
+    --color-accent: #00ffff;
+    --color-surface: #1a1a1a;
+    --color-border: #666666;
+    --color-card-bg: #111111;
+    --color-header-bg: #1a1a1a;
+    --color-header-fg: #ffffff;
+    --color-footer-bg: #1a1a1a;
+
+    --color-inline-code-bg: #1a1a1a;
+    --color-inline-code-fg: #ffffff;
+    --color-inline-code-border: #555555;
+
+    --hl-bg: #1a1a1a;
+    --hl-fg: #ffffff;
+    --hl-keyword: #ffff00;
+    --hl-string: #00ff00;
+    --hl-comment: #888888;
+    --hl-number: #ff6600;
+    --hl-function: #00ffff;
+    --hl-title: #ff4444;
+    --hl-type: #44ffff;
+    --hl-literal: #ff6600;
+    --hl-attr: #ffff00;
+    --hl-built-in: #44ffff;
+    --hl-tag: #00ffff;
+    --hl-selector: #ffff00;
+    --hl-property: #ffff00;
+    --hl-punctuation: #ffffff;
+
+    --terminal-bg: #000000;
+    --terminal-fg: #ffffff;
+    --terminal-prompt: #00ff00;
+    --terminal-ok: #00ff00;
+    --terminal-out: #ffffff;
+    --terminal-dot-red: #ff0000;
+    --terminal-dot-amber: #ffff00;
+    --terminal-dot-green: #00ff00;
+    --terminal-header-bg: #111111;
+    --terminal-title-fg: #cccccc;
+}
+
+/* ========== RESET ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    overflow-x: hidden;
+    overflow-x: clip;   /* modern browsers: clips without creating a scroll container */
+}
+
+body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; height: auto; }
+
+code { font-family: var(--font-mono); }
+pre { min-width: 0; }
+
+.container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1rem;
+    overflow-wrap: break-word;
+}
+
+/* ========== BUTTONS (shared utility) ========== */
+.btn {
+    display: inline-block;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+.btn:hover { opacity: 0.88; text-decoration: none; }
+.btn-primary { background: var(--color-primary); color: var(--color-primary-fg); }
+.btn-secondary { background: var(--color-accent); color: #fff; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-outline {
+    background: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+}
+.btn-sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* ========== SHARED BLOG / TAG STYLES (used in Blog, BlogPost, Home) ========== */
+.blog-meta { color: var(--color-muted); font-size: 0.875rem; margin-bottom: 0.75rem; }
+
+.tag-list { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+.tag {
+    display: inline-block;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+}
+a.tag:hover {
+    background: var(--color-primary);
+    color: var(--color-primary-fg);
+    border-color: var(--color-primary);
+    text-decoration: none;
+}
+
+.featured-badge {
+    display: inline-block;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+}
+
+/* ========== FORMS (shared across MasterDetail, Showcase, ShowcaseDetail) ========== */
+.form-group { margin-bottom: 1rem; }
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: var(--color-muted);
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text);
+    overflow-wrap: break-word;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.form-group textarea {
+    resize: vertical;
+    min-height: 5rem;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+.form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.form-validation { color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
+
+/* ========== LOADING ========== */
+.loading { text-align: center; padding: 2rem; color: var(--color-muted); }
+```
+
+---
+
+## 4. `src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css` — Full file
+
+Fixed the fallback play/pause button (was a tiny circle that clipped the text "⏸ Pause"):
+
+```css
+.tts-player {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.tts-player audio {
+    height: 2rem;
+    flex: 1;
+    min-width: 7.5rem;
+    accent-color: var(--color-primary);
+}
+
+.tts-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 7.5rem;
+}
+
+.tts-fallback-btn {
+    background: var(--color-primary);
+    color: var(--color-primary-fg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.tts-fallback-seek {
+    flex: 1;
+    accent-color: var(--color-primary);
+    min-width: 0;
+}
+
+.tts-fallback-time {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tts-icon {
+    flex-shrink: 0;
+}
+
+.tts-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tts-speed {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+}
+
+.tts-speed-select {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.3rem;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.tts-direct-link {
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.tts-speed-select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+@media (max-width: 40em) {
+    .tts-player {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .tts-player audio { width: 100%; }
+    .tts-fallback { width: 100%; }
+    .tts-speed { align-self: flex-start; }
+    .tts-direct-link { align-self: flex-start; }
+}
+```
+
+---
+
+## 5. `src/ObserverMagazine.Web/wwwroot/index.html` — Add scroll-detection JS
+
+Add this script block **immediately after** the existing `window.observerHighlight = { ... }` script block (and before the `<!-- Audio helper -->` comment):
+
+```html
+    <!-- Code-block scroll detection for fade gradient + hint label.
+         Called from BlogPost.razor's OnAfterRenderAsync via JS interop.
+         Adds/removes CSS classes; all visual work stays in CSS. -->
+    <script>
+    window.observerCodeScroll = {
+        init: function () {
+            document.querySelectorAll('.code-block-wrap').forEach(function (wrap) {
+                if (wrap.dataset.scrollInit) return;
+                wrap.dataset.scrollInit = 'true';
+
+                var pre = wrap.querySelector('pre');
+                if (!pre) return;
+
+                function update() {
+                    var overflows = pre.scrollWidth > pre.clientWidth + 2;
+                    var atEnd = pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 4;
+                    var scrolled = pre.scrollLeft > 8;
+
+                    wrap.classList.toggle('no-overflow', !overflows);
+                    wrap.classList.toggle('scrolled', scrolled);
+                    wrap.classList.toggle('scrolled-end', atEnd);
+                }
+
+                pre.addEventListener('scroll', update, { passive: true });
+                update();
+
+                // Re-check after web fonts load (can shift widths)
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(update);
+                }
+            });
+        }
+    };
+    </script>
+```
+
+---
+
+## What changed and why
+
+**Root cause**: `<pre>` code blocks with `white-space: pre` expanded wider than the viewport. Because nothing clipped or contained that overflow, every parent element up to `<html>` stretched, breaking the entire mobile layout — the title, tags, TTS player, and body all looked "broken" because the page was now wider than the screen.
+
+**Fixes applied (layered defense)**:
+
+1. **`html { overflow-x: clip }`** in app.css — the nuclear safety net. Even if something deep in the DOM tries to expand, the page itself never scrolls horizontally. `clip` (with `hidden` fallback) prevents page-level jank without interfering with child scrollbars the way `hidden` on a scroll container can.
+
+2. **`word-break: normal`** on `body` — the old `word-break: break-word` is non-standard and can interfere with `white-space: pre` inheritance. `overflow-wrap: break-word` (already present) is the standard way to handle long words.
+
+3. **`PostProcessHtml` in C#** — wraps every `<pre>` with a `.code-block-wrap` div and every `<table>` with a `.table-scroll-wrap` div. This is pure C# string replacement — safe because Markdig escapes `<` inside code as `&lt;`, and `<pre>` / `<table>` don't nest.
+
+4. **Code block CSS** — the `<pre>` has `overflow-x: auto; max-width: 100%` so it scrolls internally. The wrapper provides the right-edge fade gradient (via `::after`) and the "scroll →" hint label (via the `<span>` inserted by C#).
+
+5. **Minimal JS** (`observerCodeScroll.init`) — called from `OnAfterRenderAsync`, it checks each code block for overflow and toggles CSS classes (`no-overflow`, `scrolled`, `scrolled-end`). All visual logic stays in CSS; the JS only measures DOM dimensions that C#/Blazor cannot access. About 25 lines total.
+
+6. **Table wrapper CSS** — `overflow-x: auto` on `.table-scroll-wrap` lets wide tables scroll without widening the page.
+
+7. **Title uses `clamp()`** — `font-size: clamp(1.4rem, 4.5vw, 2rem)` scales gracefully from phone to desktop without breakpoints.
+
+8. **TTS fallback button** — changed from a 1.75rem circle (which clipped "⏸ Pause" text) to a pill-shaped button with proper padding.
+
+/* BlogPost.razor.css — Blog post layout + ::deep for MarkupString content */
+
+.blog-post header { margin-bottom: 2rem; }
+
+.blog-post h1 {
+    font-size: clamp(1.4rem, 4.5vw, 2rem);
+    line-height: 1.25;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.blog-post-footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ========== BLOG CONTENT (MarkupString — requires ::deep) ========== */
+
+.blog-content {
+    line-height: 1.8;
+    overflow-wrap: break-word;
+    word-break: normal;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.blog-content ::deep h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep h4 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep p {
+    margin-bottom: 1rem;
+    overflow-wrap: break-word;
+}
+
+/* =================================================================
+   CODE BLOCK SCROLL WRAPPER
+   Inserted by C# PostProcessHtml — wraps every <pre> with a
+   container that provides a right-edge fade gradient and a
+   "scroll →" hint label. The outer page NEVER scrolls horizontally;
+   only the <pre> inside scrolls.
+   ================================================================= */
+
+.blog-content ::deep .code-block-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+    max-width: 100%;
+}
+
+/* Right-edge fade gradient — signals more content to the right */
+.blog-content ::deep .code-block-wrap::after {
+    content: '';
+    position: absolute;
+    top: 1px;                /* inside the <pre> border */
+    right: 1px;
+    bottom: 1px;
+    width: 2.5rem;
+    background: linear-gradient(to right, transparent, var(--hl-bg, #f3f4f6));
+    border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Hide gradient when content does not overflow or user scrolled to the end */
+.blog-content ::deep .code-block-wrap.no-overflow::after,
+.blog-content ::deep .code-block-wrap.scrolled-end::after {
+    opacity: 0;
+}
+
+/* "scroll →" hint label — disappears once the user scrolls or if no overflow */
+.blog-content ::deep .code-scroll-hint {
+    position: absolute;
+    bottom: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.7rem;
+    font-family: var(--font-sans);
+    color: var(--color-muted);
+    background: var(--hl-bg, #f3f4f6);
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.3s ease;
+}
+
+.blog-content ::deep .code-block-wrap.scrolled .code-scroll-hint,
+.blog-content ::deep .code-block-wrap.no-overflow .code-scroll-hint {
+    opacity: 0;
+}
+
+/* ---- Code blocks ---- */
+.blog-content ::deep pre {
+    background: var(--hl-bg);
+    color: var(--hl-fg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.15rem 1.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    max-width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    tab-size: 4;
+    -moz-tab-size: 4;
+    margin-bottom: 1.25rem;
+    white-space: pre;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* When inside the scroll wrapper the wrapper owns the bottom margin */
+.blog-content ::deep .code-block-wrap pre {
+    margin-bottom: 0;
+}
+
+.blog-content ::deep pre code {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    word-break: normal;
+    white-space: pre;
+    overflow-wrap: normal;
+}
+
+/* ---- Inline code ---- */
+.blog-content ::deep code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--color-inline-code-bg, var(--color-surface));
+    color: var(--color-inline-code-fg, var(--color-text));
+    border: 1px solid var(--color-inline-code-border, var(--color-border));
+    border-radius: 4px;
+    padding: 0.15em 0.4em;
+    word-break: break-all;
+    white-space: normal;
+}
+
+/* Reset inline styles inside pre (must come after the inline code rule) */
+.blog-content ::deep pre code {
+    word-break: normal;
+    white-space: pre;
+}
+
+/* ---- Lists ---- */
+.blog-content ::deep ul,
+.blog-content ::deep ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.blog-content ::deep li { overflow-wrap: break-word; }
+
+.blog-content ::deep img { max-width: 100%; height: auto; }
+
+/* ---- Blockquote ---- */
+.blog-content ::deep blockquote {
+    border-left: 3px solid var(--color-primary);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    color: var(--color-muted);
+    background: var(--color-surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    overflow-wrap: break-word;
+}
+
+.blog-content ::deep hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 2rem 0;
+}
+
+/* =================================================================
+   TABLE SCROLL WRAPPER
+   Inserted by C# PostProcessHtml — wraps every <table> so it
+   scrolls horizontally on narrow screens without widening the page.
+   ================================================================= */
+
+.blog-content ::deep .table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    max-width: 100%;
+}
+
+/* ---- Tables ---- */
+.blog-content ::deep table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+/* Wrapper owns the margin */
+.blog-content ::deep .table-scroll-wrap table {
+    margin-bottom: 0;
+}
+
+.blog-content ::deep th,
+.blog-content ::deep td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.blog-content ::deep th {
+    background: var(--color-surface);
+    font-weight: 600;
+}
+
+/* ---- Definition lists ---- */
+.blog-content ::deep dl { margin-bottom: 1rem; }
+.blog-content ::deep dt { font-weight: 600; margin-top: 0.5rem; }
+.blog-content ::deep dd {
+    margin-left: 1.5rem;
+    margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+}
+
+/* ========== SYNTAX HIGHLIGHTING TOKENS ========== */
+
+.blog-content ::deep .hl-keyword  { color: var(--hl-keyword); }
+.blog-content ::deep .hl-string   { color: var(--hl-string); }
+.blog-content ::deep .hl-comment  { color: var(--hl-comment); font-style: italic; }
+.blog-content ::deep .hl-number   { color: var(--hl-number); }
+.blog-content ::deep .hl-function { color: var(--hl-function); }
+.blog-content ::deep .hl-type     { color: var(--hl-type); }
+.blog-content ::deep .hl-literal  { color: var(--hl-literal); }
+.blog-content ::deep .hl-attr     { color: var(--hl-attr); }
+.blog-content ::deep .hl-built-in { color: var(--hl-built-in); }
+.blog-content ::deep .hl-title    { color: var(--hl-title); }
+.blog-content ::deep .hl-tag      { color: var(--hl-tag); }
+.blog-content ::deep .hl-selector { color: var(--hl-selector); }
+.blog-content ::deep .hl-property { color: var(--hl-property); }
+.blog-content ::deep .hl-punctuation { color: var(--hl-punctuation); }
+
+/* ========== TERMINAL BOX ========== */
+
+.blog-content ::deep .terminal-box {
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    border: 1px solid var(--color-border);
+}
+
+.blog-content ::deep .terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--terminal-header-bg);
+}
+
+.blog-content ::deep .terminal-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    display: inline-block;
+}
+.blog-content ::deep .td-red   { background: var(--terminal-dot-red); }
+.blog-content ::deep .td-amber { background: var(--terminal-dot-amber); }
+.blog-content ::deep .td-green { background: var(--terminal-dot-green); }
+
+.blog-content ::deep .terminal-title {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--terminal-title-fg);
+}
+
+.blog-content ::deep .terminal-body {
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.blog-content ::deep .terminal-prompt { color: var(--terminal-prompt); font-weight: 700; }
+.blog-content ::deep .terminal-out    { color: var(--terminal-out); }
+.blog-content ::deep .terminal-ok     { color: var(--terminal-ok); }
+
+50
+72
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -88,7 +88,8 @@ else
             metadata = await BlogService.GetPostMetadataAsync(Slug);
             if (metadata is not null)
             {
-                htmlContent = await BlogService.GetPostHtmlAsync(Slug);
+                var rawHtml = await BlogService.GetPostHtmlAsync(Slug);
+                htmlContent = PostProcessHtml(rawHtml);
 
                 if (!string.IsNullOrEmpty(metadata.Author))
                 {
@@ -113,17 +114,48 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Trigger syntax highlighting after content is rendered
+        // Trigger syntax highlighting and scroll-detection after content renders
         if (!loading && metadata is not null)
         {
             try
             {
                 await JS.InvokeVoidAsync("observerHighlight.highlightAll");
+                await JS.InvokeVoidAsync("observerCodeScroll.init");
             }
             catch (Exception ex)
             {
-                Logger.LogDebug(ex, "Syntax highlighting failed");
+                Logger.LogDebug(ex, "Post-render enhancement failed for {Slug}", Slug);
             }
         }
+    }
+
+    /// <summary>
+    /// Post-processes Markdig HTML to wrap code blocks and tables with
+    /// mobile-friendly scroll containers. Runs entirely in C# — the DOM
+    /// transformation itself needs no JavaScript.
+    /// </summary>
+    private static string PostProcessHtml(string html)
+    {
+        // Wrap every <pre> with a scroll container that provides a
+        // right-edge fade gradient and a "scroll →" hint label.
+        // Safe because Markdig escapes < inside code as &lt; and
+        // <pre> is the only HTML tag starting with those four chars.
+        html = html.Replace(
+            "<pre",
+            "<div class=\"code-block-wrap\"><span class=\"code-scroll-hint\" aria-hidden=\"true\">scroll \u2192</span><pre");
+        html = html.Replace(
+            "</pre>",
+            "</pre></div>");
+
+        // Wrap every <table> so it scrolls horizontally on narrow
+        // viewports without pushing the outer page wider.
+        html = html.Replace(
+            "<table",
+            "<div class=\"table-scroll-wrap\"><table");
+        html = html.Replace(
+            "</table>",
+            "</table></div>");
+
+        return html;
     }
 }

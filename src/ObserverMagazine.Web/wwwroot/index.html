@@ -375,6 +375,41 @@
     }());
     </script>
 
+    <!-- Code-block scroll detection for fade gradient + hint label.
+         Called from BlogPost.razor's OnAfterRenderAsync via JS interop.
+         Adds/removes CSS classes; all visual work stays in CSS. -->
+    <script>
+    window.observerCodeScroll = {
+        init: function () {
+            document.querySelectorAll('.code-block-wrap').forEach(function (wrap) {
+                if (wrap.dataset.scrollInit) return;
+                wrap.dataset.scrollInit = 'true';
+
+                var pre = wrap.querySelector('pre');
+                if (!pre) return;
+
+                function update() {
+                    var overflows = pre.scrollWidth > pre.clientWidth + 2;
+                    var atEnd = pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 4;
+                    var scrolled = pre.scrollLeft > 8;
+
+                    wrap.classList.toggle('no-overflow', !overflows);
+                    wrap.classList.toggle('scrolled', scrolled);
+                    wrap.classList.toggle('scrolled-end', atEnd);
+                }
+
+                pre.addEventListener('scroll', update, { passive: true });
+                update();
+
+                // Re-check after web fonts load (can shift widths)
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(update);
+                }
+            });
+        }
+    };
+    </script>
+
     <!-- Audio helper for BlogTtsPlayer -->
     <script>
         window.observerAudio = {
