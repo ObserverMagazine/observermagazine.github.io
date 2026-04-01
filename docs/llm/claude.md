@@ -36450,3 +36450,77 @@ Custom syntax highlighter replaces highlight.js. No external dependencies.
 
 100
 65
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+100
+65
+
+The css code is broken now. 
+especially on mobile 
+the desktop mode is mostly ok 
+and the code being inside the border is nice 
+also the blog is completely broken on mobile 
+even on tablet 
+even the title and the tags are broken
+the listen to this post line is also broken
+and obviously the body is broken as well
+do not switch back to pixels 
+fix it properly 
+also the code in the pre blocks is also broken 
+please fix everything thorougly. 
+please do not hallucinate. 
+For code blocks on a blog, 
+**horizontal scroll + right-fade gradient** is the right call. 
+You could also add a small "scroll →" label on the first render 
+and hide it after first scroll with a tiny JS touch. 
+or lets do this with blazor and c sharp if possible
+Clean, honest, widely understood.
+in fact, please review the code 
+so we do as much as we can in c sharp dotnet web assembly 
+instead of javascript where possible 
