@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-01 07:26:51 UTC
+DATE: 2026-04-01 07:50:23 UTC
 ===============================================================================
 
 ===============================================================================
@@ -2069,18 +2069,36 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     background: var(--color-primary);
     color: var(--color-primary-fg);
     border: none;
-    border-radius: 50%;
-    width: 1.75rem;
-    height: 1.75rem;
+    border-radius: var(--radius);
+    padding: 0.25rem 0.6rem;
     font-size: 0.8rem;
     cursor: pointer;
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .tts-fallback-seek {
     flex: 1;
     accent-color: var(--color-primary);
     min-width: 0;
+}
+
+.tts-fallback-time {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.tts-icon {
+    flex-shrink: 0;
+}
+
+.tts-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .tts-speed {
@@ -2106,6 +2124,7 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     font-size: 0.8rem;
     color: var(--color-muted);
     flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .tts-speed-select:focus {
@@ -2113,7 +2132,7 @@ FILE: src/ObserverMagazine.Web/Components/BlogTtsPlayer.razor.css
     outline-offset: -1px;
 }
 
-@media (max-width: 30em) {
+@media (max-width: 40em) {
     .tts-player {
         flex-direction: column;
         align-items: stretch;
@@ -3560,7 +3579,8 @@ else
             metadata = await BlogService.GetPostMetadataAsync(Slug);
             if (metadata is not null)
             {
-                htmlContent = await BlogService.GetPostHtmlAsync(Slug);
+                var rawHtml = await BlogService.GetPostHtmlAsync(Slug);
+                htmlContent = PostProcessHtml(rawHtml);
 
                 if (!string.IsNullOrEmpty(metadata.Author))
                 {
@@ -3585,18 +3605,49 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Trigger syntax highlighting after content is rendered
+        // Trigger syntax highlighting and scroll-detection after content renders
         if (!loading && metadata is not null)
         {
             try
             {
                 await JS.InvokeVoidAsync("observerHighlight.highlightAll");
+                await JS.InvokeVoidAsync("observerCodeScroll.init");
             }
             catch (Exception ex)
             {
-                Logger.LogDebug(ex, "Syntax highlighting failed");
+                Logger.LogDebug(ex, "Post-render enhancement failed for {Slug}", Slug);
             }
         }
+    }
+
+    /// <summary>
+    /// Post-processes Markdig HTML to wrap code blocks and tables with
+    /// mobile-friendly scroll containers. Runs entirely in C# — the DOM
+    /// transformation itself needs no JavaScript.
+    /// </summary>
+    private static string PostProcessHtml(string html)
+    {
+        // Wrap every <pre> with a scroll container that provides a
+        // right-edge fade gradient and a "scroll →" hint label.
+        // Safe because Markdig escapes < inside code as &lt; and
+        // <pre> is the only HTML tag starting with those four chars.
+        html = html.Replace(
+            "<pre",
+            "<div class=\"code-block-wrap\"><span class=\"code-scroll-hint\" aria-hidden=\"true\">scroll \u2192</span><pre");
+        html = html.Replace(
+            "</pre>",
+            "</pre></div>");
+
+        // Wrap every <table> so it scrolls horizontally on narrow
+        // viewports without pushing the outer page wider.
+        html = html.Replace(
+            "<table",
+            "<div class=\"table-scroll-wrap\"><table");
+        html = html.Replace(
+            "</table>",
+            "</table></div>");
+
+        return html;
     }
 }
 
@@ -3609,8 +3660,10 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
 .blog-post header { margin-bottom: 2rem; }
 
 .blog-post h1 {
-    font-size: 2rem;
+    font-size: clamp(1.4rem, 4.5vw, 2rem);
+    line-height: 1.25;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .blog-post-footer {
@@ -3624,8 +3677,9 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
 .blog-content {
     line-height: 1.8;
     overflow-wrap: break-word;
-    word-break: break-word;
+    word-break: normal;
     min-width: 0;
+    max-width: 100%;
 }
 
 .blog-content ::deep h2 {
@@ -3651,6 +3705,63 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     overflow-wrap: break-word;
 }
 
+/* =================================================================
+   CODE BLOCK SCROLL WRAPPER
+   Inserted by C# PostProcessHtml — wraps every <pre> with a
+   container that provides a right-edge fade gradient and a
+   "scroll →" hint label. The outer page NEVER scrolls horizontally;
+   only the <pre> inside scrolls.
+   ================================================================= */
+
+.blog-content ::deep .code-block-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+    max-width: 100%;
+}
+
+/* Right-edge fade gradient — signals more content to the right */
+.blog-content ::deep .code-block-wrap::after {
+    content: '';
+    position: absolute;
+    top: 1px;                /* inside the <pre> border */
+    right: 1px;
+    bottom: 1px;
+    width: 2.5rem;
+    background: linear-gradient(to right, transparent, var(--hl-bg, #f3f4f6));
+    border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Hide gradient when content does not overflow or user scrolled to the end */
+.blog-content ::deep .code-block-wrap.no-overflow::after,
+.blog-content ::deep .code-block-wrap.scrolled-end::after {
+    opacity: 0;
+}
+
+/* "scroll →" hint label — disappears once the user scrolls or if no overflow */
+.blog-content ::deep .code-scroll-hint {
+    position: absolute;
+    bottom: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.7rem;
+    font-family: var(--font-sans);
+    color: var(--color-muted);
+    background: var(--hl-bg, #f3f4f6);
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.3s ease;
+}
+
+.blog-content ::deep .code-block-wrap.scrolled .code-scroll-hint,
+.blog-content ::deep .code-block-wrap.no-overflow .code-scroll-hint {
+    opacity: 0;
+}
+
 /* ---- Code blocks ---- */
 .blog-content ::deep pre {
     background: var(--hl-bg);
@@ -3659,7 +3770,7 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     border-radius: var(--radius);
     padding: 1.15rem 1.25rem;
     overflow-x: auto;
-    width: 100%;
+    -webkit-overflow-scrolling: touch;
     min-width: 0;
     max-width: 100%;
     font-family: var(--font-mono);
@@ -3670,6 +3781,11 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     margin-bottom: 1.25rem;
     white-space: pre;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* When inside the scroll wrapper the wrapper owns the bottom margin */
+.blog-content ::deep .code-block-wrap pre {
+    margin-bottom: 0;
 }
 
 .blog-content ::deep pre code {
@@ -3698,7 +3814,7 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     white-space: normal;
 }
 
-/* Reset inline styles inside pre */
+/* Reset inline styles inside pre (must come after the inline code rule) */
 .blog-content ::deep pre code {
     word-break: normal;
     white-space: pre;
@@ -3732,14 +3848,30 @@ FILE: src/ObserverMagazine.Web/Pages/BlogPost.razor.css
     margin: 2rem 0;
 }
 
+/* =================================================================
+   TABLE SCROLL WRAPPER
+   Inserted by C# PostProcessHtml — wraps every <table> so it
+   scrolls horizontally on narrow screens without widening the page.
+   ================================================================= */
+
+.blog-content ::deep .table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    max-width: 100%;
+}
+
 /* ---- Tables ---- */
 .blog-content ::deep table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
-    margin-bottom: 1rem;
     font-size: 0.95rem;
+}
+
+/* Wrapper owns the margin */
+.blog-content ::deep .table-scroll-wrap table {
+    margin-bottom: 0;
 }
 
 .blog-content ::deep th,
@@ -6438,7 +6570,10 @@ FILE: src/ObserverMagazine.Web/wwwroot/css/app.css
 /* ========== RESET ========== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { overflow-x: hidden; }
+html {
+    overflow-x: hidden;
+    overflow-x: clip;   /* modern browsers: clips without creating a scroll container */
+}
 
 body {
     font-family: var(--font-sans);
@@ -6449,7 +6584,7 @@ body {
     width: 100%;
     max-width: 100vw;
     overflow-wrap: break-word;
-    word-break: break-word;
+    word-break: normal;
 }
 
 a { color: var(--color-primary); text-decoration: none; }
@@ -6957,6 +7092,41 @@ FILE: src/ObserverMagazine.Web/wwwroot/index.html
             }
         };
     }());
+    </script>
+
+    <!-- Code-block scroll detection for fade gradient + hint label.
+         Called from BlogPost.razor's OnAfterRenderAsync via JS interop.
+         Adds/removes CSS classes; all visual work stays in CSS. -->
+    <script>
+    window.observerCodeScroll = {
+        init: function () {
+            document.querySelectorAll('.code-block-wrap').forEach(function (wrap) {
+                if (wrap.dataset.scrollInit) return;
+                wrap.dataset.scrollInit = 'true';
+
+                var pre = wrap.querySelector('pre');
+                if (!pre) return;
+
+                function update() {
+                    var overflows = pre.scrollWidth > pre.clientWidth + 2;
+                    var atEnd = pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 4;
+                    var scrolled = pre.scrollLeft > 8;
+
+                    wrap.classList.toggle('no-overflow', !overflows);
+                    wrap.classList.toggle('scrolled', scrolled);
+                    wrap.classList.toggle('scrolled-end', atEnd);
+                }
+
+                pre.addEventListener('scroll', update, { passive: true });
+                update();
+
+                // Re-check after web fonts load (can shift widths)
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(update);
+                }
+            });
+        }
+    };
     </script>
 
     <!-- Audio helper for BlogTtsPlayer -->
