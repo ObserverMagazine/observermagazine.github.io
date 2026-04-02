@@ -39001,6 +39001,23 @@ Looking at the reports, I'll fix all the issues across the codebase. Let me work
 74
 87
 
+The code you wrote broke my website. 
+Here is the error: 
+
+Failed to load resource: the server responded with a status of 404 ()
+blazor.webassembly.js:1 Debugging hotkey: Shift+Alt+D (when application has focus)
+invoke-js.ts:246 info: App[0]
+      Observer Magazine started at 04/02/2026 01:04:28
+invoke-js.ts:246 info: ObserverMagazine.Web.Services.TelemetryService[0]
+      [Telemetry] Event: AppStarted 
+blazor.webassembly.js:1 crit: Microsoft.AspNetCore.Components.WebAssembly.Rendering.WebAssemblyRenderer[100]
+      Unhandled exception rendering component: The type ObserverMagazine.Web.Pages.NotFoundView does not have a Microsoft.AspNetCore.Components.RouteAttribute applied to it.
+System.InvalidOperationException: The type ObserverMagazine.Web.Pages.NotFoundView does not have a Microsoft.AspNetCore.Components.RouteAttribute applied to it.
+   at Microsoft.AspNetCore.Components.Routing.Router.SetParametersAsync(ParameterView parameters)
+wt	@	blazor.webassembly.js:1
+
+Please fix it properly and write a very detailed blog post explaining what you did wrong and what you did to fix it
+
 If any file needs changing, always return the FULL file so it is easy to copy paste.
 Please do not hallucinate.
 Take some more time up front to save time and effort for the humans.
@@ -39011,6 +39028,19 @@ Write a long, comprehensive blog article for Observer Magazine on the following 
 
 **Topic**: 
 
+post mortem of the not found change you made 
+what you did to break it
+and how you fixed it 
+remember, be very comprehensive 
+explain every single topic in exhaustive detail 
+do not leave any stone unturned 
+if you think it is detailed enough, 
+you are wrong 
+it is not 
+make it even more detailed. 
+don't stop until you can't go anymore 
+make it as detailed as possible
+cite every source 
 
 use this as the publish date and file name date 
 2026-04-15
