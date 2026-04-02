@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-02 00:58:09 UTC
+DATE: 2026-04-02 01:16:21 UTC
 ===============================================================================
 
 ===============================================================================
@@ -46,6 +46,7 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── 2026-04-13-bikram-sambat-nepal-sambat-comprehensive-guide.md
 │       ├── 2026-04-14-happy-new-year.md
 │       ├── 2026-04-14-web-browser-technology-complete-guide.md
+│       ├── 2026-04-15-blazor-not-found-page-postmortem.md
 │       ├── 2027-01-01-happy-new-year-2027.md
 │       └── 2099-01-01-draft-template.md
 ├── Directory.Build.props
@@ -154,7 +155,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 118 files
+28 directories, 119 files
 
 
 -------------------------------------------------------------------------------
@@ -841,6 +842,25 @@ tags:
   - best-practices
   - architecture
   - performance
+---
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-04-15-blazor-not-found-page-postmortem.md  [FRONT MATTER ONLY — body omitted to save context space]
+-------------------------------------------------------------------------------
+---
+title: "Post-Mortem: How We Broke Observer Magazine With a Missing @page Directive and What We Learned About Blazor's NotFoundPage in .NET 10"
+date: 2026-04-15
+author: observer-team
+summary: "A detailed post-mortem of a production-breaking bug in Observer Magazine caused by migrating from the deprecated Router <NotFound> render fragment to the new .NET 10 NotFoundPage parameter — without adding the required @page directive to the target component. Covers the full history of Blazor's 404 handling, the exact error, the root cause, the fix, and every lesson learned."
+tags:
+  - blazor
+  - dotnet
+  - postmortem
+  - routing
+  - aspnet
+  - deep-dive
+  - best-practices
 ---
 
 
@@ -4304,14 +4324,16 @@ FILE: src/ObserverMagazine.Web/Pages/Home.razor.css
 -------------------------------------------------------------------------------
 FILE: src/ObserverMagazine.Web/Pages/NotFoundView.razor
 -------------------------------------------------------------------------------
+@page "/not-found"
+@layout MainLayout
+
 <PageTitle>Not Found — Observer Magazine</PageTitle>
-<LayoutView Layout="typeof(MainLayout)">
-    <div class="container text-center" style="padding: 4rem 1rem;">
-        <h1>404 — Page Not Found</h1>
-        <p>The page you're looking for doesn't exist.</p>
-        <a href="/">Go Home</a>
-    </div>
-</LayoutView>
+
+<div class="container text-center" style="padding: 4rem 1rem;">
+    <h1>404 — Page Not Found</h1>
+    <p>The page you're looking for doesn't exist.</p>
+    <a href="/">Go Home</a>
+</div>
 
 
 -------------------------------------------------------------------------------
@@ -9865,8 +9887,8 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 112
-  Blog posts (front matter only): 34
+Total Files Exported: 113
+  Blog posts (front matter only): 35
   Full content files: 76
   Binary files skipped: 2
 Output File: docs/llm/dump.txt

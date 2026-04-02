@@ -39132,3 +39132,30 @@ Return the complete article as a single markdown artifact. The artifact should c
 After saving the file, I will 
 simply commit this new markdown file and push it 
 for github actions to do its thing. 
+
+Now I have the full picture. The fix is straightforward: `Router.NotFoundPage` in .NET 10 requires the target component to have a `@page` directive (which compiles to a `RouteAttribute`). The current `NotFoundView.razor` is missing it.
+
+Here are the two fixed files, followed by the blog post.
+
+**File 1: `src/ObserverMagazine.Web/Pages/NotFoundView.razor`** — add `@page "/not-found"`:`App.razor` does **not** need to change — it's already correct with `NotFoundPage="typeof(NotFoundView)"`. The only fix is the missing `@page` directive on `NotFoundView.razor`.
+
+Now the blog post:Here's a summary of the fix and the deliverables:
+
+**The Bug:** `NotFoundView.razor` was missing a `@page` directive. The `Router.NotFoundPage` parameter in .NET 10 requires the target component to have a `RouteAttribute` (compiled from `@page`). Without it, the Router throws `InvalidOperationException` during initialization — before any page renders — killing the entire site.
+
+**The Fix:** One file changed — `NotFoundView.razor`. Three lines added/changed:
+1. `@page "/not-found"` — satisfies the `RouteAttribute` requirement
+2. `@layout MainLayout` — replaces the inline `<LayoutView>` wrapper
+3. Removed the `<LayoutView>` wrapper (redundant with `@layout`)
+
+**`App.razor` is unchanged** — it was already correct with `NotFoundPage="typeof(NotFoundView)"`.
+
+**Deliverables:**
+1. **Fixed `NotFoundView.razor`** — first artifact above, copy to `src/ObserverMagazine.Web/Pages/NotFoundView.razor`
+2. **Blog post** — second artifact, copy to `content/blog/2026-04-15-blazor-not-found-page-postmortem.md`
+
+Commit both files and push. The GitHub Actions workflow will handle the rest.
+
+28
+91
+
