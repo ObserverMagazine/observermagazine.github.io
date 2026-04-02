@@ -1,5 +1,3 @@
-@using ObserverMagazine.Web.Models
-
 @if (Author is not null)
 {
     <div class="author-card">
@@ -166,8 +164,8 @@
         "notion" => $"https://notion.so/{handle}",
         "linktree" => $"https://linktr.ee/{handle}",
         "calendly" => $"https://calendly.com/{handle}",
-        "website" or "web" or "homepage" => handle.StartsWith("http") ? handle : $"https://{handle}",
 
+        // Default: "website"/"web"/"homepage" and any unknown platform
         _ => handle.StartsWith("http") ? handle : $"https://{handle}"
     };
 }

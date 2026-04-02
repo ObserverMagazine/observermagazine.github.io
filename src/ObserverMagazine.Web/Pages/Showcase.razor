@@ -285,7 +285,7 @@
             Logger.LogWarning(ex, "Could not load catalog from local storage");
         }
 
-        _allProducts = ProductDataGenerator.Generate(2000);
+        _allProducts = ProductDataGenerator.Generate();
         await SaveProducts();
     }
 
@@ -597,7 +597,7 @@
         try { await Js.InvokeVoidAsync("localStorage.removeItem", StorageKey); }
         catch { /* best effort */ }
 
-        _allProducts = ProductDataGenerator.Generate(2000);
+        _allProducts = ProductDataGenerator.Generate();
         _currentPage = 1;
         await ClearFilters();
         await SaveProducts();

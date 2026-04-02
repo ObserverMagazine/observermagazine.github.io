@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using Microsoft.Extensions.Logging;
 using ObserverMagazine.Web.Models;
 
 namespace ObserverMagazine.Web.Services;

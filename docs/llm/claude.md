@@ -38850,3 +38850,51 @@ CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is 
 </Router>
 ```
 
+Looking at the reports, I'll fix all the issues across the codebase. Let me work through each file systematically.Here's a summary of all changes across the 16 files:
+
+**Build-breaking fix (CS0618 obsolete warning → error):**
+
+1. **`App.razor`** — Replaced deprecated `<NotFound>` render fragment with `NotFoundPage="typeof(NotFoundView)"` parameter (new .NET 10 API).
+2. **`Pages/NotFoundView.razor`** — **New file.** Standalone component for the 404 page, rendered via `LayoutView` so the header/footer still appear.
+
+**Nullable / redundancy fixes:**
+
+3. **`FrontMatterParser.cs`** — Removed redundant `?? new FrontMatter()` (YamlDotNet's `Deserialize<T>` returns non-nullable per its annotations). Removed redundant null check in `ParseAuthor`. Changed `FrontMatter` and `AuthorProfile` property setters to `init` where appropriate (YAML deserializer supports init-only in v16+). `AuthorProfile.Id` keeps `set` since it's assigned post-construction.
+4. **`ContentProcessorTests.cs`** — Removed redundant `?? new TestFrontMatter()`. Changed `TestFrontMatter` setters to `init`.
+
+**Async / discard pattern fixes:**
+
+5. **`BlogTtsPlayer.razor`** — Extracted the async Timer lambda into an explicit `async void PollTimerCallback(object? state)` method, which fixes both the "async lambda on void delegate" warning and the discard-variable-shadowing issue (the lambda parameter `_` was being reassigned instead of using a true discard). Removed redundant `System.Threading.` qualifier on `Timer`.
+
+**Unused injection / member removal:**
+
+6. **`ShowcaseDetail.razor`** — Removed unused `@inject ILogger<ShowcaseDetail> Logger` and `@inject IAnalyticsService Analytics`. Changed `ProductDataGenerator.Generate(2000)` → `Generate()` (2000 is the default).
+7. **`BlogPost.razor`** — Removed unused `@inject NavigationManager Nav`.
+8. **`Program.cs` (Web)** — Changed `sp =>` to `_ =>` in the HttpClient factory registration (unused parameter).
+
+**Redundant using directive removal:**
+
+9. **`AnalyticsService.cs`** — Removed unused `using Microsoft.Extensions.Logging;` (available via implicit usings).
+10. **`TelemetryService.cs`** — Same.
+11. **`BlogService.cs`** — Same.
+12. **`MasterDetailTests.cs`** — Removed unused `using Microsoft.JSInterop;`.
+
+**Redundant qualifier / switch arm fixes:**
+
+13. **`NavMenu.razor`** — Changed `Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs` → `LocationChangedEventArgs` (namespace already imported via `_Imports.razor`).
+14. **`AuthorCard.razor`** — Removed redundant `@using ObserverMagazine.Web.Models` (already in `_Imports.razor`). Removed the `"website" or "web" or "homepage"` switch arm from `GetSocialUrl` since it was identical to the default arm.
+
+**Redundant default argument fixes:**
+
+15. **`Showcase.razor`** — Changed `ProductDataGenerator.Generate(2000)` → `Generate()` in two places.
+16. **`ShowcaseTests.cs`** — Changed `ProductDataGenerator.Generate(2000)` → `Generate()`.
+
+**Not changed (false positives from serialization/reflection):**
+- `BlogPostMetadata.cs`, `AuthorProfile.cs` (Models), `PostIndexEntry` in `Program.cs` (ContentProcessor) — Their "unused" property accessors are consumed by `System.Text.Json` serialization via reflection, which static analysis can't detect. These are expected and harmless.
+
+74
+87
+
+
+
+

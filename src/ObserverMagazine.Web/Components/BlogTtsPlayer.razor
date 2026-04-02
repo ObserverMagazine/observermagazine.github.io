@@ -81,7 +81,7 @@
     private int _fallbackDuration = 1; // avoid div-by-zero on range
     private double _currentRate = 1.0;
 
-    private System.Threading.Timer? _pollTimer;
+    private Timer? _pollTimer;
 
     /// <summary>Available playback speed options.</summary>
     private static readonly double[] PlaybackRates = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -153,7 +153,8 @@
 
     private async Task OnSpeedChange(ChangeEventArgs e)
     {
-        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float,
+        if (double.TryParse(e.Value?.ToString(),
+            System.Globalization.NumberStyles.Float,
             System.Globalization.CultureInfo.InvariantCulture, out var rate) && rate >= 0.5 && rate <= 3.0)
         {
             _currentRate = rate;
@@ -217,29 +218,35 @@
     private void StartPolling()
     {
         StopPolling();
-        _pollTimer = new System.Threading.Timer(async _ =>
+        _pollTimer = new Timer(PollTimerCallback, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
+    }
+
+    /// <summary>
+    /// Timer callback — uses async void because TimerCallback returns void.
+    /// All async work is wrapped in try-catch to prevent unobserved exceptions.
+    /// </summary>
+    private async void PollTimerCallback(object? state)
+    {
+        try
         {
-            try
+            var time = await Js.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
+            var ended = await Js.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
+            await InvokeAsync(() =>
             {
-                var time = await Js.InvokeAsync<double>("observerAudio.getCurrentTime", $"tts-audio-{Slug}");
-                var ended = await Js.InvokeAsync<bool>("observerAudio.hasEnded", $"tts-audio-{Slug}");
-                await InvokeAsync(() =>
+                _fallbackCurrentTime = (int)time;
+                if (ended)
                 {
-                    _fallbackCurrentTime = (int)time;
-                    if (ended)
-                    {
-                        _fallbackPlaying = false;
-                        StopPolling();
-                        _ = OnEnded();
-                    }
-                    StateHasChanged();
-                });
-            }
-            catch
-            {
-                // Component may have been disposed — ignore
-            }
-        }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
+                    _fallbackPlaying = false;
+                    StopPolling();
+                    _ = OnEnded();
+                }
+                StateHasChanged();
+            });
+        }
+        catch
+        {
+            // Component may have been disposed — ignore
+        }
     }
 
     private void StopPolling()

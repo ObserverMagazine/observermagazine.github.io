@@ -1,6 +1,5 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using ObserverMagazine.Web.Components;
 using ObserverMagazine.Web.Services;
 using ObserverMagazine.Web.Tests.Services;

@@ -31,7 +31,7 @@ public static class FrontMatterParser
         var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
 
         var frontMatter = Deserializer.Deserialize<FrontMatter>(yamlBlock);
-        return (frontMatter ?? new FrontMatter(), body);
+        return (frontMatter, body);
     }
 
     /// <summary>
@@ -42,7 +42,6 @@ public static class FrontMatterParser
         try
         {
             var profile = Deserializer.Deserialize<AuthorProfile>(yamlContent);
-            if (profile is null) return null;
             profile.Id = id;
             return profile;
         }
@@ -85,24 +84,24 @@ public static class FrontMatterParser
 
 public sealed class FrontMatter
 {
-    public string Title { get; set; } = "";
-    public DateTime Date { get; set; } = DateTime.MinValue;
-    public DateTime? Updated { get; set; }
-    public string? Author { get; set; }
-    public string? Summary { get; set; }
-    public string[]? Tags { get; set; }
-    public bool Draft { get; set; }
-    public bool Featured { get; set; }
-    public string? Series { get; set; }
-    public string? Image { get; set; }
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string? Author { get; init; }
+    public string? Summary { get; init; }
+    public string[]? Tags { get; init; }
+    public bool Draft { get; init; }
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
 }
 
 public sealed class AuthorProfile
 {
     public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string? Email { get; set; }
-    public string? Bio { get; set; }
-    public string? Avatar { get; set; }
-    public Dictionary<string, string>? Socials { get; set; }
+    public string Name { get; init; } = "";
+    public string? Email { get; init; }
+    public string? Bio { get; init; }
+    public string? Avatar { get; init; }
+    public Dictionary<string, string>? Socials { get; init; }
 }

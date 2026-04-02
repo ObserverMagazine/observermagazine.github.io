@@ -283,7 +283,7 @@ public class ContentProcessorTests
         var yaml = rawContent[3..endIndex].Trim();
         var body = rawContent[(endIndex + 3)..].TrimStart('\r', '\n');
         var fm = deserializer.Deserialize<TestFrontMatter>(yaml);
-        return (fm ?? new TestFrontMatter(), body);
+        return (fm, body);
     }
 
     private static string DeriveSlug(string fileName)
@@ -364,14 +364,14 @@ public class ContentProcessorTests
 
 public sealed class TestFrontMatter
 {
-    public string Title { get; set; } = "";
-    public DateTime Date { get; set; }
-    public DateTime? Updated { get; set; }
-    public string? Author { get; set; }
-    public string? Summary { get; set; }
-    public string[]? Tags { get; set; }
-    public bool Draft { get; set; }
-    public bool Featured { get; set; }
-    public string? Series { get; set; }
-    public string? Image { get; set; }
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string? Author { get; init; }
+    public string? Summary { get; init; }
+    public string[]? Tags { get; init; }
+    public bool Draft { get; init; }
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
 }

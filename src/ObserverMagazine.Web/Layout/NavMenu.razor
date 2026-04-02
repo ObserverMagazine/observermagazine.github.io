@@ -66,7 +66,7 @@
 
     private void CloseMenu() => _isOpen = false;
 
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         if (_isOpen)
         {

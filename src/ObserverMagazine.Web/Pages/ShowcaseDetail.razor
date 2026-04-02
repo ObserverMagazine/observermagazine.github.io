@@ -1,9 +1,7 @@
 @page "/showcase/new"
 @page "/showcase/{ProductId:guid}"
 @inject IJSRuntime Js
-@inject ILogger<ShowcaseDetail> Logger
 @inject NavigationManager Nav
-@inject IAnalyticsService Analytics
 
 <PageTitle>@(IsNew ? "New Product" : (_editing ? "Edit Product" : _product?.Name ?? "Product")) — Showcase</PageTitle>
 
@@ -236,7 +234,7 @@ else
         }
         catch { /* best effort */ }
 
-        _allProducts = ProductDataGenerator.Generate(2000);
+        _allProducts = ProductDataGenerator.Generate();
         await SaveAll();
     }
 
