@@ -38598,7 +38598,10 @@ No other files need to change. The `BlogPost.razor`, `BlogTtsPlayer.razor.css`, 
 
 
 
+08
+78
 
+Please review these reports, fix them if necessary, and please return full files for all files you edit
 
 FrontMatterParser.cs
 
@@ -38827,7 +38830,23 @@ Parameter 'sp' is never used
 Redundancies in Symbol Declarations
 Unused parameter (private accessibility)
 
-© 2020–2026 Qodana
-
-    Terms Of Use
+CS0618: Property 'Microsoft.AspNetCore.Components.Routing.Router.NotFound()' is obsolete: 'NotFound is deprecated. Use NotFoundPage instead.'
+```html /home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/App.razor
+<Router AppAssembly="typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not Found — Observer Magazine</PageTitle>
+        <LayoutView Layout="typeof(MainLayout)">
+            <div class="container text-center" style="padding: 4rem 1rem;">
+                <h1>404 — Page Not Found</h1>
+                <p>The page you're looking for doesn't exist.</p>
+                <a href="/">Go Home</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>
+```
 
