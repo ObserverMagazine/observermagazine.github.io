@@ -39017,6 +39017,18 @@ System.InvalidOperationException: The type ObserverMagazine.Web.Pages.NotFoundVi
 wt	@	blazor.webassembly.js:1
 
 Please fix it properly and write a very detailed blog post explaining what you did wrong and what you did to fix it
+remember, fix it properly, don't go back to using the deprecated code
+fix it properly
+I mean it
+I know you will undo the change we did and go back to do the old code
+don't do that 
+I repeat
+don't do that 
+don't waste my time and my tokens
+you hear me?
+don't waste my time and tokens 
+fix this properly 
+don't use deprecated stuff 
 
 If any file needs changing, always return the FULL file so it is easy to copy paste.
 Please do not hallucinate.
