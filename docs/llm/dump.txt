@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-02 01:54:27 UTC
+DATE: 2026-04-02 04:08:37 UTC
 ===============================================================================
 
 ===============================================================================
@@ -48,6 +48,7 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── 2026-04-14-web-browser-technology-complete-guide.md
 │       ├── 2026-04-15-blazor-not-found-page-postmortem.md
 │       ├── 2026-04-16-global-money-machine-currency-payments-remittance-nepal.md
+│       ├── 2026-04-17-grand-unified-novel-timeline.md
 │       ├── 2027-01-01-happy-new-year-2027.md
 │       └── 2099-01-01-draft-template.md
 ├── Directory.Build.props
@@ -156,7 +157,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 120 files
+28 directories, 121 files
 
 
 -------------------------------------------------------------------------------
@@ -882,6 +883,25 @@ tags:
   - cbdc
   - deep-dive
   - policy
+---
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-04-17-grand-unified-novel-timeline.md  [FRONT MATTER ONLY — body omitted to save context space]
+-------------------------------------------------------------------------------
+---
+title: "The Grand Human Story: A Unified Chronicle Drawn from the Nine Greatest Novels Ever Written"
+date: 2026-04-17
+author: observer-team
+summary: What happens when A Tale of Two Cities, Frankenstein, War and Peace, Pride and Prejudice, Les Misérables, Middlemarch, Great Expectations, Moby-Dick, and Anna Karenina are woven into a single, unbroken tapestry of human experience? This is that story — one grand timeline, one relentless current of ambition, love, suffering, revolution, and the unquenchable need to be seen.
+tags:
+  - literature
+  - fiction
+  - history
+  - culture
+  - deep-dive
+  - art
+featured: true
 ---
 
 
@@ -9908,8 +9928,8 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 114
-  Blog posts (front matter only): 36
+Total Files Exported: 115
+  Blog posts (front matter only): 37
   Full content files: 76
   Binary files skipped: 2
 Output File: docs/llm/dump.txt
