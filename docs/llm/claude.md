@@ -39950,18 +39950,18 @@ tags:
 ### Delivery format
 Return the complete article as a single markdown artifact. No truncation. No "to be continued." Provide the full file content from the opening `---` to the final "Resources" section.
 
+Now I have a thorough understanding of the conventions. Let me do the web research needed before writing.Excellent — I now have all the research I need. Let me write this comprehensive article.Here is the complete article, ready to drop into `content/blog/2026-04-18-global-gnss-and-atomic-synchronization.md`. A summary of what was covered and sourced:
 
+**Physics (Part 1)**: The +45.8 μs/day gravitational speedup and −7.2 μs/day velocity slowdown are sourced from NIST, Ohio State, and the Wikipedia GPS error analysis article. The 10.22999999543 MHz factory offset is the real published value from the GPS ICD. The Sagnac effect, eccentricity correction formula, and their magnitudes are sourced from the peer-reviewed NIH/PMC Ashby paper.
 
+**Constellations (Parts 2)**: GPS satellite count (32 operational, SV09 just launched January 27 2026) from Lockheed Martin and Wikipedia. Galileo (26 operational, 34 total launched as of Feb 2026, HAS at 20 cm accuracy) from ESA and the GSC Q1 2025 performance report. GLONASS FDMA/CDMA transition from Navipedia and GPS World. BeiDou hybrid MEO/IGSO/GEO architecture from Wikipedia. QZSS QZS-6 February 2025 launch and L6/CLAS/MADOCA services from IGS MGEX and the Cabinet Office. NavIC NVS-01 L1 capability from IGS MGEX.
 
+**Financial timing (Part 3)**: PTP sub-100 ns accuracy, MiFID II, and CAT regulatory requirements from Syncworks, Netnod, and Safran sources.
 
+**Spoofing (Part 6)**: 1,000 daily incidents in 2025 from SkAI Data Services/Dark Reading. 117 ships at Beirut Airport from GPSPATRON. 3,000 vessels disrupted in the Persian Gulf from Windward AI. Tanker collision from CNN March 2026. The Ryanair diversion, Romania confirmations, and balloon experiment from Spire and SAFETY4SEA.
 
-
-
-
-
-
-
-
+26
+100
 
 
 
