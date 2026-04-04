@@ -40698,3 +40698,61 @@ A few notes on what this covers:
 
 
 
+00
+09
+
+I created a new repository and put it at https://github.com/kusl/learningbydoing for educational purposes 
+
+first I am on the main branch
+here is my readme file 
+
+This is the base commit. 
+
+This is common for both branches. 
+In the next line, I will write the branch name. 
+main 
+In the line above, I will replace with the name of the current branch 
+in each of my two branches. 
+Because each of those two branches are directly from main, 
+I won't be able to merge one into the other directly without a conflict
+or so I think. 
+Lets find out. 
+
+now I create branch-1 out of main branch 
+
+and now here is my read me file 
+
+This is the base commit. 
+
+This is common for both branches. 
+In the next line, I will write the branch name. 
+branch-1
+In the line above, I will replace with the name of the current branch 
+in each of my two branches. 
+Because each of those two branches are directly from main, 
+I won't be able to merge one into the other directly without a conflict
+or so I think. 
+Lets find out. 
+
+and once again I create branch-2 from my main branch 
+and here is my readme file 
+
+This is the base commit. 
+
+This is common for both branches. 
+In the next line, I will write the branch name. 
+branch-2 
+In the line above, I will replace with the name of the current branch 
+in each of my two branches. 
+Because each of those two branches are directly from main, 
+I won't be able to merge one into the other directly without a conflict
+or so I think. 
+Lets find out. 
+
+now if I try to merge either branch 1 or branch 2 into main it works 
+
+but if I try to merge branch 1 into branch 2 or branch 2 into branch 1, it does not work on github 
+it says 
+ Can’t automatically merge. Don’t worry, you can still create the pull request.  
+
+so I suspect if I were to merge branch 1 into main first, I won't be able to merge branch 2 into main anymore? 
