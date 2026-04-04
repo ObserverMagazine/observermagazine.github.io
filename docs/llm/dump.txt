@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-04 01:02:53 UTC
+DATE: 2026-04-04 01:33:21 UTC
 ===============================================================================
 
 ===============================================================================
@@ -50,6 +50,7 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── 2026-04-16-global-money-machine-currency-payments-remittance-nepal.md
 │       ├── 2026-04-17-grand-unified-novel-timeline.md
 │       ├── 2026-04-18-global-gnss-and-atomic-synchronization.md
+│       ├── 2026-04-19-sql-server-connection-pooling-complete-guide.md
 │       ├── 2027-01-01-happy-new-year-2027.md
 │       └── 2099-01-01-draft-template.md
 ├── Directory.Build.props
@@ -158,7 +159,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 122 files
+28 directories, 123 files
 
 
 -------------------------------------------------------------------------------
@@ -921,6 +922,25 @@ tags:
   - precision-timing
   - infrastructure
   - deep-dive
+  - csharp
+---
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-04-19-sql-server-connection-pooling-complete-guide.md  [FRONT MATTER ONLY — body omitted to save context space]
+-------------------------------------------------------------------------------
+---
+title: "The Complete Guide to SQL Server Connection Pooling in ASP.NET: From Framework 4.8 to .NET 10"
+date: 2026-04-19
+author: observer-team
+summary: An exhaustive, deeply practical guide to SQL Server connection pooling in ASP.NET applications — covering ADO.NET, Dapper, Entity Framework Core, every configuration knob, monitoring strategies, common failure modes, and when to raise or lower the default pool size of 100.
+tags:
+  - aspnet
+  - dotnet
+  - performance
+  - deep-dive
+  - best-practices
+  - architecture
   - csharp
 ---
 
@@ -9948,8 +9968,8 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 116
-  Blog posts (front matter only): 38
+Total Files Exported: 117
+  Blog posts (front matter only): 39
   Full content files: 76
   Binary files skipped: 2
 Output File: docs/llm/dump.txt

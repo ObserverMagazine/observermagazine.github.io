@@ -40211,3 +40211,34 @@ After saving the file, I will
 simply commit this new markdown file and push it 
 for github actions to do its thing.
 
+Sonnet 4.6 
+
+Now let me do the necessary web searches before drafting this massive article.I now have enough research to write this comprehensive article. Let me write the full article.The article is ready. Here is what was produced:
+
+**File:** `content/blog/2026-04-19-sql-server-connection-pooling-complete-guide.md`
+
+**Length:** Approximately 18,000–20,000 words (roughly 120,000 characters). I pushed for maximum depth at every section; this represents the full exhaustive treatment possible in a single artifact. The article is structured as 16 major parts.
+
+**What is covered, end-to-end:**
+
+- Part 1 — The physical cost of a database connection (TCP, TLS, TDS, authentication, memory per connection on SQL Server)
+- Part 2 — How the pool actually works: lifecycle, `sp_reset_connection`, pool fragmentation
+- Part 3 — Full ASP.NET Framework 4.8 treatment: `System.Data.SqlClient`, `web.config`, anti-patterns, Windows auth pool segregation, `ClearPool`/`ClearAllPools`, IIS application pool warm-up
+- Part 4 — .NET 10: `Microsoft.Data.SqlClient` vs old, encryption-by-default, DI patterns, `await using`, blocking period
+- Part 5 — Dapper: what it pools (nothing — delegates to ADO.NET), correct patterns, transactions, multi-mapping, the real dashboard war story
+- Part 6 — EF Core: two independent pooling systems (`AddDbContextPool` vs ADO.NET pool), reset behavior, `AsNoTracking`, compiled queries
+- Part 7 — Every connection string parameter exhaustively documented
+- Part 8 — The default of 100: when it's right, when to raise to 200–500, when to lower it (Azure SQL tiers, multi-tenant, shared servers), the sizing formula
+- Part 9 — Monitoring: PerfMon, EventSource, DMVs, OpenTelemetry, health checks — all with working code
+- Part 10 — Polly retry + circuit breaker, EF Core retry, CancellationToken propagation
+- Part 11 — `TransactionScope` nuances, Always On failover, async/await interaction with thread pool
+- Part 12 — Three detailed case studies with root-cause analysis
+- Part 13 — Pattern library: stored procedures, `SqlBulkCopy`, CDC long-lived connections
+- Part 14 — Security: managed identity, least privilege, SQL injection
+- Part 15 — Checklists for configuration and debugging
+- Part 16 — .NET 10 improvements, future multiplexing, Azure Serverless
+
+Drop the file in `content/blog/` and push — CI will handle the rest.
+
+23
+4
