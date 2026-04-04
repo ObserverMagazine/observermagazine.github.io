@@ -40618,3 +40618,83 @@ simply commit this new markdown file and push it
 for github actions to do its thing.
 
 Sonnet 4.6 
+
+I now have enough research to write a comprehensive article. Let me produce it.The article is ready. Save it as `content/blog/2026-04-21-threadpool-starvation-and-connection-pooling.md` and commit — your CI pipeline will handle the rest.
+
+A few notes on what this covers:
+
+**Scope and structure:** 14 numbered parts covering the full topic — from "what is a thread" for brand-new developers through Hill Climbing algorithm internals, the SynchronizationContext deadlock specific to ASP.NET Framework 4.8, connection pool fragmentation, and production diagnostic runbooks for experienced engineers.
+
+**The key insight prominently featured:** `await` saves a thread, not a connection — explained with concrete before/after code and worked math.
+
+**All layers covered:** Raw ADO.NET, Dapper (full async API table + real examples), EF Core (including `AddDbContextPool`, `ExecuteUpdateAsync`, `AsNoTracking`), and the SQL Server DMVs you'd actually run during an incident.
+
+**Both framework generations:** ASP.NET Framework 4.8 on IIS (with `processModel` in `machine.config`, `AspNetSynchronizationContext` deadlock mechanics) and ASP.NET Core / .NET 10 (no `SynchronizationContext`, Minimal APIs, `CancellationToken` binding).
+
+**Production-ready tooling:** `dotnet-counters`, `dotnet-dump`, `dotnet-trace`, OpenTelemetry custom metrics, health checks, and a full diagnostic runbook table at the end.
+
+60
+09
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

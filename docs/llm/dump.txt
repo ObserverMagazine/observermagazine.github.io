@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-04-04 03:09:52 UTC
+DATE: 2026-04-04 03:25:55 UTC
 ===============================================================================
 
 ===============================================================================
@@ -52,6 +52,7 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── 2026-04-18-global-gnss-and-atomic-synchronization.md
 │       ├── 2026-04-19-sql-server-connection-pooling-complete-guide.md
 │       ├── 2026-04-20-httpclientfactory-typed-clients-deep-dive.md
+│       ├── 2026-04-21-threadpool-starvation-and-connection-pooling.md
 │       ├── 2027-01-01-happy-new-year-2027.md
 │       └── 2099-01-01-draft-template.md
 ├── Directory.Build.props
@@ -160,7 +161,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 124 files
+28 directories, 125 files
 
 
 -------------------------------------------------------------------------------
@@ -962,6 +963,25 @@ tags:
   - best-practices
   - architecture
   - guide
+---
+
+
+-------------------------------------------------------------------------------
+FILE: content/blog/2026-04-21-threadpool-starvation-and-connection-pooling.md  [FRONT MATTER ONLY — body omitted to save context space]
+-------------------------------------------------------------------------------
+---
+title: "Thread Pool Starvation, Injection, and the Other Pool: A Complete Guide to Concurrency in ASP.NET and .NET 10"
+date: 2026-04-21
+author: observer-team
+summary: "Everything you need to know about the .NET Thread Pool's Hill Climbing algorithm, SQL Server connection pooling, and why async/await saves threads but not connections — illustrated with case studies across ASP.NET Framework 4.8, ADO.NET, Dapper, and Entity Framework Core on .NET 10."
+tags:
+  - dotnet
+  - aspnet
+  - deep-dive
+  - performance
+  - best-practices
+  - csharp
+  - architecture
 ---
 
 
@@ -9988,8 +10008,8 @@ num2words>=0.5.14
 
 ===============================================================================
 EXPORT COMPLETED
-Total Files Exported: 118
-  Blog posts (front matter only): 40
+Total Files Exported: 119
+  Blog posts (front matter only): 41
   Full content files: 76
   Binary files skipped: 2
 Output File: docs/llm/dump.txt
