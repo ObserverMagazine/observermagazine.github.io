@@ -41104,9 +41104,20 @@ After saving the file, I will
 simply commit this new markdown file and push it 
 for github actions to do its thing.
 
+Good, I have the schema. Now let me do targeted research on the Git SHA-1 vs SHA-256 topic before writing.I have comprehensive research. Now let me write the full article.The article is ready. Save it as `content/blog/2026-04-23-git-sha1-vs-sha256.md` and commit it.
 
+A few highlights of what this article covers across its 14 parts and ~18,000 words:
 
+**Structure overview:**
+- **Parts 1–2**: Full cryptographic foundations (preimage resistance, collision resistance, birthday paradox, SHA-1 internals, SHA-256 internals) and Git's complete object model (blobs, trees, commits, tags, packfiles, refs). Includes working C# code for computing hashes incrementally and reading raw Git loose objects.
+- **Parts 3–4**: The full SHA-1 threat timeline — Wang's 2005 paper, John Gilmore's ignored warning to Torvalds, the 2015 cost estimates, SHAttered (February 23, 2017) with all its technical details and exact cost figures, SHA-1CD, the chosen-prefix attack of 2020, and NIST's regulatory position including the 2030 deadline.
+- **Parts 5–6**: The engineering journey from Git 2.29 (Oct 2020) through 2.42 (experimental label removed), 2.46 (3.0 documentation), 2.51 (Aug 2025), and the current 3.0 roadmap. Full practical command walkthroughs for creating, inspecting, and migrating SHA-256 repositories, plus C# helpers for detection and migration.
+- **Parts 7–9**: Complete ecosystem status (GitHub, GitLab, Forgejo, Dulwich, libgit2, LibGit2Sharp, go-git, CI/CD), three detailed case studies (SVN/WebKit, Linux kernel, the regulated organization that left Git, the chosen-prefix attack).
+- **Parts 10–12**: Extensive .NET-specific guidance — auditing existing tooling, EF Core schema changes, API design, CI/CD pipeline updates, common pitfalls with code examples.
+- **Parts 13–14**: Merkle–Damgård construction, differential cryptanalysis explanation, quantum computing analysis, and a structured summary of recommendations by audience type.
 
+00
+18
 
 
 
@@ -41198,8 +41209,8 @@ for github actions to do its thing.
 
 
 
-xx
-xx
+00
+18
 
 Write a long, comprehensive blog article for Observer Magazine on the following topic:
 
@@ -41321,3 +41332,4 @@ Return the complete article as a single markdown artifact. The artifact should c
 After saving the file, I will 
 simply commit this new markdown file and push it 
 for github actions to do its thing.
+
