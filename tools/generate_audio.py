@@ -332,7 +332,7 @@ def generate_audio(text: str, output_mp3: str, voice: str = "Bella", model_name:
                 "ffmpeg", "-y",
                 "-i", tmp_wav,
                 "-codec:a", "libmp3lame",
-                "-b:a", "64k",
+                "-b:a", "24k",
                 "-ac", "1",          # mono
                 "-ar", "24000",      # keep original sample rate
                 output_mp3,
