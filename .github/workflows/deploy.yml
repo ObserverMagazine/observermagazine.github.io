@@ -19,6 +19,8 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # xunit.v3 pulls in Microsoft.Testing.Extensions.Telemetry. Opt out in CI.
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
 
 jobs:
   build-and-deploy:
@@ -114,8 +116,12 @@ jobs:
 
       # ── End audio generation ───────────────────────────────────────
 
+      # Microsoft.Testing.Platform mode (opted in via global.json).
+      # `dotnet test <path>` is no longer valid syntax; the target is named with
+      # --solution / --project / --test-modules. MTP fails the run if zero tests
+      # execute, so a silently empty run cannot pass CI.
       - name: Run tests
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test --solution ObserverMagazine.slnx --no-restore
 
       - name: Publish Blazor WASM
         run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
@@ -134,7 +140,7 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: publish/wwwroot
 

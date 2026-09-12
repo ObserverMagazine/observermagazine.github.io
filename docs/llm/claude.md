@@ -41398,3 +41398,444 @@ All version numbers are verified: Clojure 1.12.4 was released in December 2025, 
 
 
 
+from merciful potato
+
+/
+Claude finished the response
+I have this problem when upgrading to xunit 4 
+please review the dump completely and give me full files for all files that need to change 
+the github actions might need to change as well
+
+Ran 19 commands, read 6 pages, and 11 more tools
+I read the whole dump. Here's the diagnosis.
+
+What actually broke
+Nothing in your test code is wrong, and nothing needs downgrading. dotnet build succeeds; only dotnet test fails.
+
+xunit.v3 4.0 drops Microsoft.Testing.Platform v1 and ships MTP v2 in the box. MTP v2 removed the VSTest bridge target on the .NET 10 SDK, which is exactly the error you're seeing from Microsoft.Testing.Platform.MSBuild.targets. The xUnit 4.0.0 release notes say directly: if you see "Testing with VSTest target is no longer supported by Microsoft.Testing.Platform on .NET 10 SDK and later", update your global.json. 
+xUnit.net
+
+The fix is one stanza in global.json:
+
+To enable MTP mode, add {"test": {"runner": "Microsoft.Testing.Platform"}} to your global.json file. Since this mode is specifically designed for MTP, neither TestingPlatformDotnetTestSupport nor the additional -- are required. 
+microsoft
+
+While there, the two VSTest-only packages become dead weight. xUnit's own docs: "If you want to rely solely on Microsoft Testing Platform support, you can remove the package references to xunit.runner.visualstudio and Microsoft.NET.Test.Sdk." I verified against the .NET 10 SDK source that MTP-mode project selection is driven purely by IsTestingPlatformApplication (the _MTPBuild target in Microsoft.TestPlatform.ImportAfter.targets is Condition="'$(IsTestingPlatformApplication)'=='true'"), so dropping Microsoft.NET.Test.Sdk cannot break discovery — and your Web and ContentProcessor projects will never be mistaken for test modules. 
+xUnit.net
+
+Your workflows keep working as-is (--no-restore and --verbosity are both valid in MTP mode), but I've tightened them: --verbosity normal only controls MSBuild noise in MTP mode, and dotnet test <path> is a removed syntax, so being explicit with --solution is the safe long-term form.
+
+Files to change
+1. global.json — this is the actual fix
+json
+{
+  "sdk": {
+    "version": "10.0.104",
+    "rollForward": "latestFeature"
+  },
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}
+2. Directory.Packages.props
+xml
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!-- Version variables — touch these to update all related packages -->
+    <MicrosoftAspNetCoreVersion>10.0.12</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>10.0.12</MicrosoftExtensionsVersion>
+    <XunitVersion>4.0.1</XunitVersion>
+    <MarkdigVersion>1.3.2</MarkdigVersion>
+    <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
+    <BunitVersion>2.10.3</BunitVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Web -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
+
+    <!-- Content Processing -->
+    <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
+    <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+
+    <!--
+      Testing — Microsoft.Testing.Platform (MTP) only.
+
+      xunit.v3 4.0 ships MTP v2 in the box and has dropped MTP v1. MTP v2 removed the
+      VSTest bridge on the .NET 10 SDK, so the two VSTest-only packages that used to
+      live here (xunit.runner.visualstudio, Microsoft.NET.Test.Sdk) are gone:
+
+        - xunit.runner.visualstudio -> VSTest adapter. Only needed by VSTest-era
+          runners; xunit.v3 carries its own MTP runner natively.
+        - Microsoft.NET.Test.Sdk    -> VSTest host. MTP test projects are plain
+          executables and do not need it.
+
+      `dotnet test` is switched into MTP mode by the "test" section in global.json.
+      Fewer packages also means a faster restore, which matters because these tests
+      are meant to run after every change.
+    -->
+    <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
+    <PackageVersion Include="bunit" Version="$(BunitVersion)" />
+  </ItemGroup>
+</Project>
+3. tests/ObserverMagazine.Web.Tests/ObserverMagazine.Web.Tests.csproj
+xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ObserverMagazine.Web.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!--
+      Microsoft.Testing.Platform. xunit.v3 4.0 already sets
+      IsTestingPlatformApplication=true on its own; setting this makes the intent
+      explicit and gives `dotnet run` the same MTP command line that `dotnet test`
+      uses, so local and CI output match. Remove it if you prefer xUnit's native
+      console UX when running the test project directly.
+    -->
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="bunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ObserverMagazine.Web\ObserverMagazine.Web.csproj" />
+  </ItemGroup>
+
+</Project>
+4. tests/ObserverMagazine.Integration.Tests/ObserverMagazine.Integration.Tests.csproj
+xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ObserverMagazine.Integration.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!-- See ObserverMagazine.Web.Tests.csproj for why this is here. -->
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+</Project>
+5. .github/workflows/deploy.yml
+yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Rebuild daily at 6 AM UTC to publish scheduled posts
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # xunit.v3 pulls in Microsoft.Testing.Extensions.Telemetry. Opt out in CI.
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Run content processor (markdown → JSON + HTML)
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      # ── Audio generation with caching ──────────────────────────────
+      # Cache key is based on the content of all blog markdown files.
+      # Exact hit  → all MP3s restored, ALL Python steps skipped.
+      # Partial hit → most MP3s restored, only changed posts regenerated.
+      # Miss        → full regeneration (first run or cache eviction).
+
+      - name: Restore audio cache
+        id: audio-cache
+        uses: actions/cache@v5
+        with:
+          path: .audio-cache
+          key: audio-v1-${{ hashFiles('content/blog/**/*.md') }}
+          restore-keys: |
+            audio-v1-
+
+      - name: Copy cached audio to output
+        run: |
+          mkdir -p src/ObserverMagazine.Web/wwwroot/blog-data
+          if [ -d .audio-cache ] && [ "$(ls -A .audio-cache 2>/dev/null)" ]; then
+            cp .audio-cache/*.mp3 src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            cp .audio-cache/audio-manifest.json src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            echo "Restored $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) cached MP3 file(s)"
+          else
+            echo "No audio cache to restore"
+          fi
+
+      # All Python/audio steps are skipped on exact cache hit
+      - name: Setup Python 3.12 (for TTS audio generation)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies (espeak-ng + ffmpeg)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
+
+      - name: Cache HuggingFace model
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/huggingface
+          key: hf-kitten-tts-nano-0.8
+
+      - name: Cache pip packages
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: pip-audio-${{ hashFiles('tools/requirements-audio.txt') }}
+          restore-keys: |
+            pip-audio-
+
+      - name: Install Python audio dependencies
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: |
+          pip install onnxruntime
+          pip install -r tools/requirements-audio.txt
+
+      - name: Generate TTS audio (markdown → MP3)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
+
+      - name: Update audio cache
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .audio-cache
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/*.mp3 .audio-cache/ 2>/dev/null || true
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/audio-manifest.json .audio-cache/ 2>/dev/null || true
+          echo "Cached $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) MP3 file(s) for next build"
+
+      # ── End audio generation ───────────────────────────────────────
+
+      # Microsoft.Testing.Platform mode (opted in via global.json).
+      # `dotnet test <path>` is no longer valid syntax; the target is named with
+      # --solution / --project / --test-modules. MTP fails the run if zero tests
+      # execute, so a silently empty run cannot pass CI.
+      - name: Run tests
+        run: dotnet test --solution ObserverMagazine.slnx --no-restore
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare GitHub Pages artifacts
+        run: |
+          cp publish/wwwroot/.nojekyll publish/wwwroot/.nojekyll 2>/dev/null || touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: publish/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+6. .github/workflows/pr-check.yml
+yaml
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # xunit.v3 pulls in Microsoft.Testing.Extensions.Telemetry. Opt out in CI.
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run content processor
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      # Microsoft.Testing.Platform mode (opted in via global.json).
+      - name: Run tests
+        run: dotnet test --solution ObserverMagazine.slnx --no-restore
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare preview
+        run: |
+          touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Upload preview site
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-preview
+          path: publish/wwwroot
+          retention-days: 7
+7. README.md
+The version table was stale on every row (Markdig 1.1.1, YamlDotNet 16.3.0, xUnit 3.2.2, bUnit 2.6.2). Corrected to what dotnet list package actually resolves.
+
+markdown
+# Merciful Potato Magazine
+
+A free, open-source Blazor WebAssembly application deployed to GitHub Pages.
+
+Built with **.NET 10** (LTS) and **C# 14**.
+
+## Features
+
+- **Blog** — Write posts in Markdown with YAML front matter; compiled to static JSON at build time
+- **RSS Feed** — Auto-generated `feed.xml`
+- **Responsive Tables** — Sortable, filterable data tables that work on mobile
+- **Master-Detail Flow** — Click a list item to view full details
+- **OpenTelemetry-ready Logging** — Structured logging via `ILogger`
+- **Full Test Suite** — bUnit component tests + xUnit.net v3 integration tests, running on Microsoft.Testing.Platform
+
+## Quick Start
+```bash
+# Restore & process blog content
+dotnet run --project tools/ObserverMagazine.ContentProcessor
+
+# Run the app locally
+dotnet run --project src/ObserverMagazine.Web
+
+# Run all tests
+dotnet test
+```
+
+## Testing
+
+Tests run on **Microsoft.Testing.Platform (MTP)**, not VSTest. The opt-in lives in
+`global.json`:
+
+```json
+{ "test": { "runner": "Microsoft.Testing.Platform" } }
+```
+
+Test projects are ordinary executables, so each one can also be run on its own:
+
+```bash
+# Whole solution
+dotnet test --solution ObserverMagazine.slnx
+
+# One project
+dotnet test --project tests/ObserverMagazine.Web.Tests
+
+# Filter by class, or by trait
+dotnet test --filter-class ObserverMagazine.Web.Tests.Services.BlogServiceTests
+dotnet test --filter-trait Category=Integration
+
+# Run a test project directly, no dotnet test involved
+dotnet run --project tests/ObserverMagazine.Integration.Tests
+```
+
+Run `dotnet test -?` from the repo root for the full option list, which is built
+from whichever MTP extensions the test projects reference.
+
+xUnit configuration for MTP lives in `testconfig.json` next to a test project
+(not `xunit.runner.json`, which is the VSTest-era file).
+
+## Technology
+
+| Component | Technology | License |
+|-----------|-----------|---------|
+| Framework | .NET 10 / Blazor WASM 10.0.12 | MIT |
+| Markdown | Markdig 1.3.2 | BSD-2-Clause |
+| YAML | YamlDotNet 18.1.0 | MIT |
+| Test framework | xUnit.net v3 4.0.1 | Apache-2.0 |
+| Component testing | bUnit 2.10.3 | MIT |
+| Test runner | Microsoft.Testing.Platform v2 | MIT |
+
+All dependencies are free for any use — no payment required, ever.
+
+## License
+
+AGPLv3
+Verify
+bash
+dotnet restore --force-evaluate   # drops the two removed packages from the lock/obj state
+dotnet build
+dotnet test
+You should see MTP output (Test run summary: total: N, failed: 0, ...) rather than the VSTest adapter banner. dotnet list package should show only xunit.v3 and bunit under Testing.
+
+Two things I deliberately did not change, in case you want them later:
+
+Full test parallelization. xUnit 4.0 adds ParallelMode.All, which runs every test in parallel regardless of collection. Your bUnit tests each construct a BunitContext and render on a synchronization context, so I left the default collection-level parallelism alone rather than hand you a flaky suite. If you want to try it, it goes in a testconfig.json, not the csproj.
+TRX / coverage reports in CI. --report-trx and --coverage now require explicitly referencing Microsoft.Testing.Extensions.TrxReport or Microsoft.Testing.Extensions.CodeCoverage — they are no longer built in. Both are MIT and free, so say the word and I'll wire up test-result artifacts on the PR check.
+
+
+
+
+
+
+Claude is AI and can make mistakes. Please double-check cited sources.
+
+
+
+
+
+

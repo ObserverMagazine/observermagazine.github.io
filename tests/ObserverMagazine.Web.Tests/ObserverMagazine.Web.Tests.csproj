@@ -4,13 +4,21 @@
     <RootNamespace>ObserverMagazine.Web.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+
+    <!--
+      Microsoft.Testing.Platform. xunit.v3 4.0 already sets
+      IsTestingPlatformApplication=true on its own; setting this makes the intent
+      explicit and gives `dotnet run` the same MTP command line that `dotnet test`
+      uses, so local and CI output match. Remove it if you prefer xUnit's native
+      console UX when running the test project directly.
+    -->
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="bunit" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>
 
   <ItemGroup>
