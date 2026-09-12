@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-09-12 20:51:57 UTC
+DATE: 2026-09-12 20:53:23 UTC
 ===============================================================================
 
 ===============================================================================
@@ -68,7 +68,8 @@ DIRECTORY TREE (all git-tracked files)
 │       ├── output.txt
 │       └── vendor
 │           ├── claude-instructions.md
-│           └── claude-memory.md
+│           ├── claude-memory.md
+│           └── terminal.txt
 ├── export.sh
 ├── .github
 │   └── workflows
@@ -164,7 +165,7 @@ DIRECTORY TREE (all git-tracked files)
     │   └── RssGenerator.cs
     └── requirements-audio.txt
 
-28 directories, 128 files
+28 directories, 129 files
 
 
 -------------------------------------------------------------------------------
@@ -1091,7 +1092,7 @@ FILE: Directory.Build.props
     <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 </Project>
