@@ -1,19 +1,19 @@
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m9.144s
-user	0m14.106s
-sys	0m1.264s
+real	0m8.006s
+user	0m13.209s
+sys	0m1.105s
 Restore complete (0.5s)
 
-Build succeeded in 0.6s
+Build succeeded in 0.7s
 
-real	0m0.793s
-user	0m0.829s
-sys	0m0.181s
+real	0m0.830s
+user	0m0.854s
+sys	0m0.190s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-10-31 06:40:03 UTC
+Publish before:    2026-10-31 06:45:35 UTC
 Found 3 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -111,24 +111,24 @@ Processing: 2026-04-24-clojure-beginners-guide.md
 Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (42 posts, 1 drafts skipped, 1 future posts skipped)
 Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
 Content processing complete.
-Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
 Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
-tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (710ms)
-tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (948ms)
+Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
+tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (701ms)
+tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (952ms)
 
 Test run summary: Passed!
-  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (948ms)
-  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (710ms)
+  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (701ms)
+  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (952ms)
 
   total: 81
   failed: 0
   succeeded: 81
   skipped: 0
-  duration: 1s 151ms
+  duration: 1s 140ms
 
-real	0m4.582s
-user	0m5.523s
-sys	0m0.910s
+real	0m4.417s
+user	0m5.407s
+sys	0m0.852s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -153,7 +153,7 @@ Project 'ObserverMagazine.Integration.Tests' has the following package reference
 Project 'ObserverMagazine.Web.Tests' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > bunit                2.10.3      2.10.3  
+   > bunit                2.13.3      2.13.3  
    > xunit.v3             4.0.2       4.0.2   
 
 Project 'ObserverMagazine.ContentProcessor' has the following package references
@@ -164,9 +164,9 @@ Project 'ObserverMagazine.ContentProcessor' has the following package references
 
 (A) : Auto-referenced package.
 
-real	0m1.642s
-user	0m1.683s
-sys	0m0.373s
+real	0m1.599s
+user	0m1.639s
+sys	0m0.353s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -176,23 +176,19 @@ The following sources were used:
 
 The given project `ObserverMagazine.Web` has no updates given the current sources.
 The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-Project `ObserverMagazine.Web.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > bunit                2.10.3      2.10.3     2.13.3
-
+The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
 The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-real	0m1.902s
-user	0m1.968s
-sys	0m0.345s
+real	0m1.813s
+user	0m1.841s
+sys	0m0.364s
 Export complete: docs/llm/dump.txt
   Total files: 122
   Blog posts (front matter only): 44
   Full content files: 76
   Binary files skipped: 2
 
-real	0m0.118s
-user	0m0.056s
+real	0m0.116s
+user	0m0.050s
 sys	0m0.050s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 
