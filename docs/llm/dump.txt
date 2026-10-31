@@ -1,6 +1,6 @@
 ===============================================================================
 PROJECT EXPORT: observermagazine.github.io
-DATE: 2026-10-31 06:40:12 UTC
+DATE: 2026-10-31 06:41:20 UTC
 ===============================================================================
 
 ===============================================================================
@@ -1111,7 +1111,7 @@ FILE: Directory.Packages.props
     <XunitVersion>4.0.2</XunitVersion>
     <MarkdigVersion>1.5.1</MarkdigVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
-    <BunitVersion>2.10.3</BunitVersion>
+    <BunitVersion>2.13.3</BunitVersion>
   </PropertyGroup>
 
   <ItemGroup>
