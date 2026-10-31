@@ -1,19 +1,19 @@
-kushal@fedora:~/src/dotnet/chaos-velixir-run$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m8.576s
-user	0m12.631s
-sys	0m1.149s
+real	0m9.144s
+user	0m14.106s
+sys	0m1.264s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
 
-real	0m0.733s
-user	0m0.775s
-sys	0m0.153s
+real	0m0.793s
+user	0m0.829s
+sys	0m0.181s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-10-31 06:38:34 UTC
+Publish before:    2026-10-31 06:40:03 UTC
 Found 3 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -113,22 +113,22 @@ Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
 Content processing complete.
 Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
 Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
-tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (691ms)
-tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (897ms)
+tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (710ms)
+tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (948ms)
 
 Test run summary: Passed!
-  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (691ms)
-  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (897ms)
+  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (948ms)
+  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (710ms)
 
   total: 81
   failed: 0
   succeeded: 81
   skipped: 0
-  duration: 1s 091ms
+  duration: 1s 151ms
 
-real	0m6.223s
-user	0m5.442s
-sys	0m0.806s
+real	0m4.582s
+user	0m5.523s
+sys	0m0.910s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -136,37 +136,37 @@ Project 'ObserverMagazine.Web' has the following package references
    [net10.0]: 
    Top-level Package                                        Requested      Resolved
    > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.13, )    10.0.13 
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.12        10.0.12 
+   > Microsoft.AspNetCore.Components.WebAssembly            10.0.14        10.0.14 
    > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.113, )   10.0.113
-   > Microsoft.Extensions.Http                              10.0.12        10.0.12 
-   > Microsoft.Extensions.Logging.Configuration             10.0.12        10.0.12 
+   > Microsoft.Extensions.Http                              10.0.14        10.0.14 
+   > Microsoft.Extensions.Logging.Configuration             10.0.14        10.0.14 
    > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.13, )    10.0.13 
    > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
 
 Project 'ObserverMagazine.Integration.Tests' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > Markdig              1.3.2       1.3.2   
-   > xunit.v3             4.0.1       4.0.1   
+   > Markdig              1.5.1       1.5.1   
+   > xunit.v3             4.0.2       4.0.2   
    > YamlDotNet           18.1.0      18.1.0  
 
 Project 'ObserverMagazine.Web.Tests' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
    > bunit                2.10.3      2.10.3  
-   > xunit.v3             4.0.1       4.0.1   
+   > xunit.v3             4.0.2       4.0.2   
 
 Project 'ObserverMagazine.ContentProcessor' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > Markdig              1.3.2       1.3.2   
+   > Markdig              1.5.1       1.5.1   
    > YamlDotNet           18.1.0      18.1.0  
 
 (A) : Auto-referenced package.
 
-real	0m1.583s
-user	0m1.618s
-sys	0m0.359s
+real	0m1.642s
+user	0m1.683s
+sys	0m0.373s
 Restore complete (0.5s)
 
 Build succeeded in 0.6s
@@ -174,41 +174,25 @@ Build succeeded in 0.6s
 The following sources were used:
    https://api.nuget.org/v3/index.json
 
-Project `ObserverMagazine.Web` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package                                  Requested   Resolved   Latest 
-   > Microsoft.AspNetCore.Components.WebAssembly      10.0.12     10.0.12    10.0.14
-   > Microsoft.Extensions.Http                        10.0.12     10.0.12    10.0.14
-   > Microsoft.Extensions.Logging.Configuration       10.0.12     10.0.12    10.0.14
-
-Project `ObserverMagazine.Integration.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > Markdig              1.3.2       1.3.2      1.5.1 
-   > xunit.v3             4.0.1       4.0.1      4.0.2 
-
+The given project `ObserverMagazine.Web` has no updates given the current sources.
+The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
 Project `ObserverMagazine.Web.Tests` has the following updates to its packages
    [net10.0]: 
    Top-level Package      Requested   Resolved   Latest
    > bunit                2.10.3      2.10.3     2.13.3
-   > xunit.v3             4.0.1       4.0.1      4.0.2 
 
-Project `ObserverMagazine.ContentProcessor` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > Markdig              1.3.2       1.3.2      1.5.1 
+The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-
-real	0m2.751s
-user	0m2.179s
-sys	0m0.462s
+real	0m1.902s
+user	0m1.968s
+sys	0m0.345s
 Export complete: docs/llm/dump.txt
   Total files: 122
   Blog posts (front matter only): 44
   Full content files: 76
   Binary files skipped: 2
 
-real	0m0.117s
-user	0m0.051s
-sys	0m0.048s
+real	0m0.118s
+user	0m0.056s
+sys	0m0.050s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 
