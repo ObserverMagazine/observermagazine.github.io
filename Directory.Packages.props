@@ -6,9 +6,9 @@
     <MicrosoftAspNetCoreVersion>10.0.14</MicrosoftAspNetCoreVersion>
     <MicrosoftExtensionsVersion>10.0.14</MicrosoftExtensionsVersion>
     <XunitVersion>4.0.2</XunitVersion>
-    <MarkdigVersion>1.5.1</MarkdigVersion>
+    <MarkdigVersion>1.6.0</MarkdigVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
-    <BunitVersion>2.13.3</BunitVersion>
+    <BunitVersion>2.14.0</BunitVersion>
   </PropertyGroup>
 
   <ItemGroup>
