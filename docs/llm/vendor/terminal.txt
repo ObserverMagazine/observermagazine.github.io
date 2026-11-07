@@ -1,19 +1,19 @@
-kushal@fedora:~/src/dotnet/MyOpenTelemetry$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m9.452s
-user	0m13.445s
-sys	0m1.175s
-Restore complete (0.5s)
+real	0m9.679s
+user	0m15.114s
+sys	0m1.460s
+Restore complete (0.6s)
 
 Build succeeded in 0.7s
 
-real	0m0.873s
-user	0m0.876s
-sys	0m0.186s
+real	0m0.909s
+user	0m0.941s
+sys	0m0.205s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-11-07 02:26:22 UTC
+Publish before:    2026-11-07 02:29:46 UTC
 Found 3 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -111,25 +111,25 @@ Processing: 2026-04-24-clojure-beginners-guide.md
 Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (42 posts, 1 drafts skipped, 1 future posts skipped)
 Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
 Content processing complete.
-Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
 Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
-tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (770ms)
-tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 005ms)
+Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
+tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (822ms)
+tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 085ms)
 
 Test run summary: Passed!
-  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (770ms)
-  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 005ms)
+  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 085ms)
+  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (822ms)
 
   total: 81
   failed: 0
   succeeded: 81
   skipped: 0
-  duration: 1s 240ms
+  duration: 1s 307ms
 
-real	0m6.548s
-user	0m5.999s
-sys	0m0.914s
-Restore complete (0.5s)
+real	0m5.183s
+user	0m6.462s
+sys	0m0.929s
+Restore complete (0.6s)
 
 Build succeeded in 0.7s
 Project 'ObserverMagazine.Web' has the following package references
@@ -146,27 +146,27 @@ Project 'ObserverMagazine.Web' has the following package references
 Project 'ObserverMagazine.Integration.Tests' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > Markdig              1.5.1       1.5.1   
+   > Markdig              1.6.0       1.6.0   
    > xunit.v3             4.0.2       4.0.2   
    > YamlDotNet           18.1.0      18.1.0  
 
 Project 'ObserverMagazine.Web.Tests' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > bunit                2.13.3      2.13.3  
+   > bunit                2.14.0      2.14.0  
    > xunit.v3             4.0.2       4.0.2   
 
 Project 'ObserverMagazine.ContentProcessor' has the following package references
    [net10.0]: 
    Top-level Package      Requested   Resolved
-   > Markdig              1.5.1       1.5.1   
+   > Markdig              1.6.0       1.6.0   
    > YamlDotNet           18.1.0      18.1.0  
 
 (A) : Auto-referenced package.
 
-real	0m1.763s
-user	0m1.738s
-sys	0m0.408s
+real	0m1.818s
+user	0m1.790s
+sys	0m0.427s
 Restore complete (0.6s)
 
 Build succeeded in 0.7s
@@ -175,32 +175,20 @@ The following sources were used:
    https://api.nuget.org/v3/index.json
 
 The given project `ObserverMagazine.Web` has no updates given the current sources.
-Project `ObserverMagazine.Integration.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > Markdig              1.5.1       1.5.1      1.6.0 
+The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
+The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
+The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-Project `ObserverMagazine.Web.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > bunit                2.13.3      2.13.3     2.14.0
-
-Project `ObserverMagazine.ContentProcessor` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > Markdig              1.5.1       1.5.1      1.6.0 
-
-
-real	0m2.965s
-user	0m2.473s
-sys	0m0.501s
+real	0m1.993s
+user	0m1.953s
+sys	0m0.449s
 Export complete: docs/llm/dump.txt
   Total files: 122
   Blog posts (front matter only): 44
   Full content files: 76
   Binary files skipped: 2
 
-real	0m0.104s
-user	0m0.052s
-sys	0m0.048s
+real	0m0.100s
+user	0m0.051s
+sys	0m0.046s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 
