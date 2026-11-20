@@ -1,209 +1,185 @@
-kushal@fedora:~/src/bash$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+kushal@fedora:~/src/dotnet/observermagazine.github.io$ dotnet --info
+.NET SDK:
+ Version:           10.0.113
+ Commit:            4099f83977
+ Workload version:  10.0.101.1
+ MSBuild version:   18.0.36+4099f8397
 
-real	0m8.853s
-user	0m13.151s
-sys	0m1.178s
-Restore complete (0.5s)
+Runtime Environment:
+ OS Name:     fedora
+ OS Version:  45
+ OS Platform: Linux
+ RID:         fedora.45-x64
+ Base Path:   /usr/lib64/dotnet/sdk/10.0.113/
 
-Build succeeded in 0.6s
+.NET workloads installed:
+ [android]
+   Installation Source: SDK 10.0.100
+   Manifest Version:    36.1.2/10.0.100
+   Manifest Path:       /home/kushal/.dotnet/sdk-manifests/10.0.100/microsoft.net.sdk.android/36.1.2/WorkloadManifest.json
+   Install Type:        FileBased
 
-real	0m0.757s
-user	0m0.809s
-sys	0m0.131s
-Content directory: content/blog
-Output directory:  src/ObserverMagazine.Web/wwwroot
-Authors directory: content/authors
-Publish before:    2026-11-20 13:27:40 UTC
-Found 3 author profile(s)
-  Loaded author: observer-team (Observer Team)
-  Loaded author: kushal (kushal)
-  Loaded author: abraham-lincoln (Abraham Lincoln)
-Wrote authors index: src/ObserverMagazine.Web/wwwroot/blog-data/authors.json (3 authors)
-Found 44 markdown files
-Processing: 2026-01-15-welcome-to-observer-magazine.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/welcome-to-observer-magazine.html (~1 min read)
-Processing: 2026-02-20-getting-started-with-blazor-wasm.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/getting-started-with-blazor-wasm.html (~1 min read)
-Processing: 2026-03-10-responsive-design-patterns.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/responsive-design-patterns.html (~1 min read)
-Processing: 2026-03-20-hello-world.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/hello-world.html (~1 min read)
-Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspnet-lifecycle-deep-dive.html (~16 min read)
-Processing: 2099-01-01-draft-template.md
-  SKIPPED: Draft post 'Your Post Title Here'
-Processing: 2027-01-01-happy-new-year-2027.md
-  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-11-20)
-Processing: 2026-03-22-good-morning.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/good-morning.html (~1 min read)
-Processing: 2026-03-22-the-year-2025-in-review.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/the-year-2025-in-review.html (~14 min read)
-Processing: 2026-03-22-modernizing-to-dotnet-10.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/modernizing-to-dotnet-10.html (~13 min read)
-Processing: 2026-03-23-honk-drive.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/honk-drive.html (~7 min read)
-Processing: 2026-03-24-avalonia-ui-comprehensive-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/avalonia-ui-comprehensive-guide.html (~35 min read)
-Processing: 2026-03-25-git-and-trunk-based-development.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/git-and-trunk-based-development.html (~31 min read)
-Processing: 2026-03-26-typescript-comprehensive-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/typescript-comprehensive-guide.html (~38 min read)
-Processing: 2026-03-27-sql-server-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/sql-server-complete-guide.html (~48 min read)
-Processing: 2026-03-28-postgresql-npgsql-comprehensive-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/postgresql-npgsql-comprehensive-guide.html (~42 min read)
-Processing: 2026-03-29-why-qa-matters-more-than-ever.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/why-qa-matters-more-than-ever.html (~29 min read)
-Processing: 2026-03-30-the-cloud-toilet-problem.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/the-cloud-toilet-problem.html (~17 min read)
-Processing: 2026-03-31-solid-principles.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/solid-principles.html (~44 min read)
-Processing: 2026-04-02-open-closed-principle.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/open-closed-principle.html (~41 min read)
-Processing: 2026-04-01-single-responsibility-principle-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/single-responsibility-principle-complete-guide.html (~47 min read)
-Processing: 2026-04-03-liskov-substitution.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/liskov-substitution.html (~42 min read)
-Processing: 2026-04-04-interface-segregation.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/interface-segregation.html (~34 min read)
-Processing: 2026-04-05-dependency-injection.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/dependency-injection.html (~44 min read)
-Processing: 2026-04-06-most-important-solid-principle.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/most-important-solid-principle.html (~30 min read)
-Processing: 2026-04-07-2007-toyota-camry-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/2007-toyota-camry-complete-guide.html (~42 min read)
-Processing: 2026-04-08-aspire-containers-self-hosting-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/aspire-containers-self-hosting-guide.html (~37 min read)
-Processing: 2026-04-09-dotnet-data-structures-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/dotnet-data-structures-complete-guide.html (~62 min read)
-Processing: 2026-04-10-relational-databases-normalization-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/relational-databases-normalization-guide.html (~36 min read)
-Processing: 2026-04-11-dotnet10-csharp14-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/dotnet10-csharp14-complete-guide.html (~39 min read)
-Processing: 2026-04-14-happy-new-year.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/happy-new-year.html (~1 min read)
-Processing: 2026-04-12-dfw-home-buying-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/dfw-home-buying-complete-guide.html (~52 min read)
-Processing: 2026-04-13-bikram-sambat-nepal-sambat-comprehensive-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/bikram-sambat-nepal-sambat-comprehensive-guide.html (~53 min read)
-Processing: 2026-04-14-web-browser-technology-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/web-browser-technology-complete-guide.html (~55 min read)
-Processing: 2026-04-15-blazor-not-found-page-postmortem.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/blazor-not-found-page-postmortem.html (~28 min read)
-Processing: 2026-04-16-global-money-machine-currency-payments-remittance-nepal.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/global-money-machine-currency-payments-remittance-nepal.html (~44 min read)
-Processing: 2026-04-17-grand-unified-novel-timeline.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/grand-unified-novel-timeline.html (~85 min read)
-Processing: 2026-04-18-global-gnss-and-atomic-synchronization.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/global-gnss-and-atomic-synchronization.html (~100 min read)
-Processing: 2026-04-19-sql-server-connection-pooling-complete-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/sql-server-connection-pooling-complete-guide.html (~85 min read)
-Processing: 2026-04-20-httpclientfactory-typed-clients-deep-dive.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/httpclientfactory-typed-clients-deep-dive.html (~67 min read)
-Processing: 2026-04-21-threadpool-starvation-and-connection-pooling.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/threadpool-starvation-and-connection-pooling.html (~74 min read)
-Processing: 2026-04-22-git-comprehensive-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/git-comprehensive-guide.html (~77 min read)
-Processing: 2026-04-23-git-sha1-vs-sha256.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/git-sha1-vs-sha256.html (~82 min read)
-Processing: 2026-04-24-clojure-beginners-guide.md
-  Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/clojure-beginners-guide.html (~62 min read)
-Wrote posts index: src/ObserverMagazine.Web/wwwroot/blog-data/posts-index.json (42 posts, 1 drafts skipped, 1 future posts skipped)
-Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
-Content processing complete.
-Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
-Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
-tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (716ms)
-tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (910ms)
+Configured to use workload sets when installing new manifests.
 
-Test run summary: Passed!
-  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (910ms)
-  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (716ms)
+Host:
+  Version:      11.0.0-rc.3.26522.148
+  Architecture: x64
+  Commit:       5254d8bcf5
 
-  total: 81
-  failed: 0
-  succeeded: 81
-  skipped: 0
-  duration: 1s 099ms
+.NET SDKs installed:
+  10.0.113 [/usr/lib64/dotnet/sdk]
+  11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
 
-real	0m6.008s
-user	0m5.364s
-sys	0m0.751s
-Restore complete (0.5s)
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 10.0.13 [/usr/lib64/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.AspNetCore.App 11.0.0-rc.3.26522.148 [/usr/lib64/dotnet/shared/Microsoft.AspNetCore.App]
+  Microsoft.NETCore.App 10.0.13 [/usr/lib64/dotnet/shared/Microsoft.NETCore.App]
+  Microsoft.NETCore.App 11.0.0-rc.3.26522.148 [/usr/lib64/dotnet/shared/Microsoft.NETCore.App]
 
-Build succeeded in 0.6s
-Project 'ObserverMagazine.Web' has the following package references
-   [net10.0]: 
-   Top-level Package                                        Requested      Resolved
-   > Microsoft.AspNetCore.App.Internal.Assets         (A)   [10.0.13, )    10.0.13 
-   > Microsoft.AspNetCore.Components.WebAssembly            10.0.14        10.0.14 
-   > Microsoft.DotNet.HotReload.WebAssembly.Browser   (A)   [10.0.113, )   10.0.113
-   > Microsoft.Extensions.Http                              10.0.14        10.0.14 
-   > Microsoft.Extensions.Logging.Configuration             10.0.14        10.0.14 
-   > Microsoft.NET.ILLink.Tasks                       (A)   [10.0.13, )    10.0.13 
-   > Microsoft.NET.Sdk.WebAssembly.Pack               (A)   [10.0.1, )     10.0.1  
+Other architectures found:
+  None
 
-Project 'ObserverMagazine.Integration.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.6.0       1.6.0   
-   > xunit.v3             4.0.2       4.0.2   
-   > YamlDotNet           18.1.0      18.1.0  
+Environment variables:
+  Not set
 
-Project 'ObserverMagazine.Web.Tests' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > bunit                2.14.0      2.14.0  
-   > xunit.v3             4.0.2       4.0.2   
+global.json file:
+  /home/kushal/src/dotnet/observermagazine.github.io/global.json
 
-Project 'ObserverMagazine.ContentProcessor' has the following package references
-   [net10.0]: 
-   Top-level Package      Requested   Resolved
-   > Markdig              1.6.0       1.6.0   
-   > YamlDotNet           18.1.0      18.1.0  
+Learn more:
+  https://aka.ms/dotnet/info
 
-(A) : Auto-referenced package.
+Download .NET:
+  https://aka.ms/dotnet/download
+kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'format' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
 
-real	0m1.573s
-user	0m1.586s
-sys	0m0.290s
-Restore complete (0.5s)
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
 
-Build succeeded in 0.6s
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
 
-The following sources were used:
-   https://api.nuget.org/v3/index.json
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
 
-Project `ObserverMagazine.Web` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package                                  Requested   Resolved   Latest
-   > Microsoft.AspNetCore.Components.WebAssembly      10.0.14     10.0.14    11.0.0
-   > Microsoft.Extensions.Http                        10.0.14     10.0.14    11.0.0
-   > Microsoft.Extensions.Logging.Configuration       10.0.14     10.0.14    11.0.0
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
 
-Project `ObserverMagazine.Integration.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > xunit.v3             4.0.2       4.0.2      4.0.3 
+real	0m0.002s
+user	0m0.001s
+sys	0m0.001s
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'restore' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
 
-Project `ObserverMagazine.Web.Tests` has the following updates to its packages
-   [net10.0]: 
-   Top-level Package      Requested   Resolved   Latest
-   > bunit                2.14.0      2.14.0     2.15.2
-   > xunit.v3             4.0.2       4.0.2      4.0.3 
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
 
-The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
 
-real	0m3.103s
-user	0m2.419s
-sys	0m0.421s
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+
+real	0m0.002s
+user	0m0.000s
+sys	0m0.001s
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'run' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
+
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
+
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
+
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'test' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
+
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
+
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
+
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+
+real	0m0.002s
+user	0m0.002s
+sys	0m0.000s
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'list' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
+
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
+
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
+
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+
+real	0m0.001s
+user	0m0.000s
+sys	0m0.001s
+The command could not be loaded, possibly because:
+  * You intended to execute a .NET application:
+      The application 'list' does not exist or is not a managed .dll or .exe.
+  * You intended to execute a .NET SDK command:
+      A compatible .NET SDK was not found.
+
+Requested SDK version: 11.0.100
+global.json file: /home/kushal/src/dotnet/observermagazine.github.io/global.json
+
+Installed SDKs:
+10.0.113 [/usr/lib64/dotnet/sdk]
+11.0.100-rc.3.26522.148 [/usr/lib64/dotnet/sdk]
+
+Install the [11.0.100] .NET SDK or update [/home/kushal/src/dotnet/observermagazine.github.io/global.json] to match an installed SDK.
+
+Learn about SDK resolution:
+https://aka.ms/dotnet/sdk-not-found
+
+real	0m0.002s
+user	0m0.002s
+sys	0m0.000s
 Export complete: docs/llm/dump.txt
-  Total files: 122
+  Total files: 126
   Blog posts (front matter only): 44
-  Full content files: 76
+  Full content files: 80
   Binary files skipped: 2
 
-real	0m0.119s
-user	0m0.054s
-sys	0m0.051s
+real	0m0.117s
+user	0m0.047s
+sys	0m0.055s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 
