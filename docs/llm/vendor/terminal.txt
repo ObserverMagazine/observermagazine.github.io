@@ -1,19 +1,19 @@
-kushal@fedora:~/src/dotnet/observermagazine.github.io$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
+kushal@fedora:~/src/bash$ cd /home/kushal/src/dotnet/observermagazine.github.io/; time dotnet format; time dotnet restore; dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot; time dotnet test; time dotnet list package; time dotnet list package --outdated; time bash export.sh;
 
-real	0m9.679s
-user	0m15.114s
-sys	0m1.460s
-Restore complete (0.6s)
+real	0m8.853s
+user	0m13.151s
+sys	0m1.178s
+Restore complete (0.5s)
 
-Build succeeded in 0.7s
+Build succeeded in 0.6s
 
-real	0m0.909s
-user	0m0.941s
-sys	0m0.205s
+real	0m0.757s
+user	0m0.809s
+sys	0m0.131s
 Content directory: content/blog
 Output directory:  src/ObserverMagazine.Web/wwwroot
 Authors directory: content/authors
-Publish before:    2026-11-07 02:29:46 UTC
+Publish before:    2026-11-20 13:27:40 UTC
 Found 3 author profile(s)
   Loaded author: observer-team (Observer Team)
   Loaded author: kushal (kushal)
@@ -33,7 +33,7 @@ Processing: 2026-03-21-aspnet-lifecycle-deep-dive.md
 Processing: 2099-01-01-draft-template.md
   SKIPPED: Draft post 'Your Post Title Here'
 Processing: 2027-01-01-happy-new-year-2027.md
-  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-11-07)
+  SKIPPED: Future post 'Happy New Year 2027: A Look Back and a Look Ahead' (date: 2027-01-01, publish-before: 2026-11-20)
 Processing: 2026-03-22-good-morning.md
   Wrote: src/ObserverMagazine.Web/wwwroot/blog-data/good-morning.html (~1 min read)
 Processing: 2026-03-22-the-year-2025-in-review.md
@@ -113,25 +113,25 @@ Wrote RSS feed: src/ObserverMagazine.Web/wwwroot/feed.xml
 Content processing complete.
 Running tests from tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64)
 Running tests from tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64)
-tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (822ms)
-tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 085ms)
+tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (716ms)
+tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (910ms)
 
 Test run summary: Passed!
-  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (1s 085ms)
-  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (822ms)
+  tests/ObserverMagazine.Web.Tests/bin/Debug/net10.0/ObserverMagazine.Web.Tests.dll (net10.0|x64) passed (910ms)
+  tests/ObserverMagazine.Integration.Tests/bin/Debug/net10.0/ObserverMagazine.Integration.Tests.dll (net10.0|x64) passed (716ms)
 
   total: 81
   failed: 0
   succeeded: 81
   skipped: 0
-  duration: 1s 307ms
+  duration: 1s 099ms
 
-real	0m5.183s
-user	0m6.462s
-sys	0m0.929s
-Restore complete (0.6s)
+real	0m6.008s
+user	0m5.364s
+sys	0m0.751s
+Restore complete (0.5s)
 
-Build succeeded in 0.7s
+Build succeeded in 0.6s
 Project 'ObserverMagazine.Web' has the following package references
    [net10.0]: 
    Top-level Package                                        Requested      Resolved
@@ -164,31 +164,46 @@ Project 'ObserverMagazine.ContentProcessor' has the following package references
 
 (A) : Auto-referenced package.
 
-real	0m1.818s
-user	0m1.790s
-sys	0m0.427s
-Restore complete (0.6s)
+real	0m1.573s
+user	0m1.586s
+sys	0m0.290s
+Restore complete (0.5s)
 
-Build succeeded in 0.7s
+Build succeeded in 0.6s
 
 The following sources were used:
    https://api.nuget.org/v3/index.json
 
-The given project `ObserverMagazine.Web` has no updates given the current sources.
-The given project `ObserverMagazine.Integration.Tests` has no updates given the current sources.
-The given project `ObserverMagazine.Web.Tests` has no updates given the current sources.
+Project `ObserverMagazine.Web` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package                                  Requested   Resolved   Latest
+   > Microsoft.AspNetCore.Components.WebAssembly      10.0.14     10.0.14    11.0.0
+   > Microsoft.Extensions.Http                        10.0.14     10.0.14    11.0.0
+   > Microsoft.Extensions.Logging.Configuration       10.0.14     10.0.14    11.0.0
+
+Project `ObserverMagazine.Integration.Tests` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package      Requested   Resolved   Latest
+   > xunit.v3             4.0.2       4.0.2      4.0.3 
+
+Project `ObserverMagazine.Web.Tests` has the following updates to its packages
+   [net10.0]: 
+   Top-level Package      Requested   Resolved   Latest
+   > bunit                2.14.0      2.14.0     2.15.2
+   > xunit.v3             4.0.2       4.0.2      4.0.3 
+
 The given project `ObserverMagazine.ContentProcessor` has no updates given the current sources.
 
-real	0m1.993s
-user	0m1.953s
-sys	0m0.449s
+real	0m3.103s
+user	0m2.419s
+sys	0m0.421s
 Export complete: docs/llm/dump.txt
   Total files: 122
   Blog posts (front matter only): 44
   Full content files: 76
   Binary files skipped: 2
 
-real	0m0.100s
-user	0m0.051s
-sys	0m0.046s
+real	0m0.119s
+user	0m0.054s
+sys	0m0.051s
 kushal@fedora:~/src/dotnet/observermagazine.github.io$ 
