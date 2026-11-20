@@ -25,7 +25,7 @@ Console.WriteLine($"Authors directory: {authorsDir}");
 Console.WriteLine($"Publish before:    {publishBefore:yyyy-MM-dd HH:mm:ss} UTC");
 
 // --- Process author profiles ---
-var authorProfiles = new Dictionary<string, AuthorProfile>(StringComparer.OrdinalIgnoreCase);
+Dictionary<string, AuthorProfile> authorProfiles = [with(StringComparer.OrdinalIgnoreCase)];
 
 if (Directory.Exists(authorsDir))
 {
@@ -79,8 +79,8 @@ if (!Directory.Exists(contentDir))
 var markdownFiles = Directory.GetFiles(contentDir, "*.md", SearchOption.TopDirectoryOnly);
 Console.WriteLine($"Found {markdownFiles.Length} markdown files");
 
-var allPostMetadata = new List<PostIndexEntry>();
-var postHtmlMap = new Dictionary<string, string>();
+List<PostIndexEntry> allPostMetadata = [];
+Dictionary<string, string> postHtmlMap = [];
 int skippedDrafts = 0;
 int skippedFuture = 0;
 
@@ -172,7 +172,7 @@ Console.WriteLine($"Wrote posts index: {indexPath} ({allPostMetadata.Count} post
 var feedPath = Path.Combine(outputDir, "feed.xml");
 var rssXml = RssGenerator.Generate(
     title: "Observer Magazine",
-    description: "A free, open-source Blazor WebAssembly showcase on .NET 10",
+    description: "A free, open-source Blazor WebAssembly showcase on .NET 11",
     siteUrl: "https://observermagazine.github.io",
     posts: allPostMetadata,
     getPostHtml: slug => postHtmlMap.GetValueOrDefault(slug)

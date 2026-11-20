@@ -3,10 +3,12 @@
   <PropertyGroup>
     <RootNamespace>ObserverMagazine.Web</RootNamespace>
     <AssemblyName>ObserverMagazine.Web</AssemblyName>
+    <StaticWebAssetSpaFallbackEnabled>true</StaticWebAssetSpaFallbackEnabled>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Gateway" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>

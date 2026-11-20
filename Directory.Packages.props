@@ -2,40 +2,27 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 
-    <!-- Version variables — touch these to update all related packages -->
-    <MicrosoftAspNetCoreVersion>10.0.14</MicrosoftAspNetCoreVersion>
-    <MicrosoftExtensionsVersion>10.0.14</MicrosoftExtensionsVersion>
-    <XunitVersion>4.0.2</XunitVersion>
+    <MicrosoftAspNetCoreVersion>11.0.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>11.0.0</MicrosoftExtensionsVersion>
+    <XunitVersion>4.0.3</XunitVersion>
     <MarkdigVersion>1.6.0</MarkdigVersion>
     <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
-    <BunitVersion>2.14.0</BunitVersion>
+    <BunitVersion>2.15.2</BunitVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Web -->
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Gateway" Version="$(MicrosoftAspNetCoreVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
 
-    <!-- Content Processing -->
     <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
     <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
 
     <!--
-      Testing — Microsoft.Testing.Platform (MTP) only.
-
-      xunit.v3 4.0 ships MTP v2 in the box and has dropped MTP v1. MTP v2 removed the
-      VSTest bridge on the .NET 10 SDK, so the two VSTest-only packages that used to
-      live here (xunit.runner.visualstudio, Microsoft.NET.Test.Sdk) are gone:
-
-        - xunit.runner.visualstudio -> VSTest adapter. Only needed by VSTest-era
-          runners; xunit.v3 carries its own MTP runner natively.
-        - Microsoft.NET.Test.Sdk    -> VSTest host. MTP test projects are plain
-          executables and do not need it.
-
-      `dotnet test` is switched into MTP mode by the "test" section in global.json.
-      Fewer packages also means a faster restore, which matters because these tests
-      are meant to run after every change.
+      Microsoft.Testing.Platform only (selected by the "test" section in global.json).
+      xunit.v3 ships its own MTP runner, so xunit.runner.visualstudio and
+      Microsoft.NET.Test.Sdk are intentionally absent.
     -->
     <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
     <PackageVersion Include="bunit" Version="$(BunitVersion)" />

@@ -42022,3 +42022,1160 @@ if there are a lot of files that need to change
     No bespoke sed/patch scripts — full files only for anything that changes
     Docs updated alongside code changes
     Low verbosity, no code comments
+
+I hit the tool limit before I could package the tarball, so every changed file is below in full instead. No files need deleting.
+
+I couldn't compile anything because the .NET 11 SDK can't be downloaded in my sandbox. Please run your usual `dotnet format; dotnet restore; …; dotnet test` script before you push.
+
+**What changed and why**
+- **SDK and target:** moved to SDK 11.0.100, `net11.0` and C# 15. ASP.NET Core packages go to 11.0.0, xunit.v3 to 4.0.3 and bUnit to 2.15.2 (its first release that supports .NET 11).
+- **Dev server:** `Microsoft.AspNetCore.Components.Gateway` replaces the old DevServer for `dotnet run`, matching the .NET 11 template. It is development-only and doesn't change the published output.
+- **Startup telemetry:** this now runs through `IHostedService`, which Blazor WebAssembly supports from .NET 11. Registration moved into a testable `AddObserverMagazine()` extension, so `Program.cs` only wires things together.
+- **No new package for `IHostedService`:** .NET 11 puts `Microsoft.Extensions.Hosting.Abstractions` in the shared framework. Referencing it explicitly would raise warning NU1510, which your `TreatWarningsAsErrors` setting turns into a build failure.
+- **C# 15:** I used collection expression arguments, for example `[with(StringComparer.OrdinalIgnoreCase)]`, in a few places. I also switched one lock to `System.Threading.Lock`.
+- **Workflows:** setup-dotnet now reads its version from `global.json`, and setup-python moves to v7 with its built-in pip cache. I removed the redundant `pip install onnxruntime` because KittenTTS already depends on it. `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` is gone because every action already runs on Node 24.
+- **Python stays on 3.12:** misaki, which KittenTTS depends on, requires Python below 3.13.
+- **Docs and visible text:** README, the About table, the Home and footer text, the RSS description and the team bio all now say .NET 11.
+- **New tests:** one file for the hosted service and one for the DI registration. The registration test uses `ValidateOnBuild`, so a service accidentally depending on a shorter-lived one fails the test.
+
+---
+
+### `global.json`
+```json
+{
+  "sdk": {
+    "version": "11.0.100",
+    "rollForward": "latestFeature"
+  },
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}
+```
+
+### `Directory.Build.props`
+```xml
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <LangVersion>15.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>
+```
+
+### `Directory.Packages.props`
+```xml
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <MicrosoftAspNetCoreVersion>11.0.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftExtensionsVersion>11.0.0</MicrosoftExtensionsVersion>
+    <XunitVersion>4.0.3</XunitVersion>
+    <MarkdigVersion>1.6.0</MarkdigVersion>
+    <YamlDotNetVersion>18.1.0</YamlDotNetVersion>
+    <BunitVersion>2.15.2</BunitVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Gateway" Version="$(MicrosoftAspNetCoreVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsVersion)" />
+
+    <PackageVersion Include="Markdig" Version="$(MarkdigVersion)" />
+    <PackageVersion Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+
+    <!--
+      Microsoft.Testing.Platform only (selected by the "test" section in global.json).
+      xunit.v3 ships its own MTP runner, so xunit.runner.visualstudio and
+      Microsoft.NET.Test.Sdk are intentionally absent.
+    -->
+    <PackageVersion Include="xunit.v3" Version="$(XunitVersion)" />
+    <PackageVersion Include="bunit" Version="$(BunitVersion)" />
+  </ItemGroup>
+</Project>
+```
+
+### `.github/workflows/deploy.yml`
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Rebuild daily at 6 AM UTC to publish scheduled posts
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET (version from global.json)
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Run content processor (markdown → JSON + HTML)
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      # ── Audio generation with caching ──────────────────────────────
+      # Exact hit  → all MP3s restored, ALL Python steps skipped.
+      # Partial hit → most MP3s restored, only changed posts regenerated.
+      # Miss        → full regeneration (first run or cache eviction).
+
+      - name: Restore audio cache
+        id: audio-cache
+        uses: actions/cache@v6
+        with:
+          path: .audio-cache
+          key: audio-v1-${{ hashFiles('content/blog/**/*.md') }}
+          restore-keys: |
+            audio-v1-
+
+      - name: Copy cached audio to output
+        run: |
+          mkdir -p src/ObserverMagazine.Web/wwwroot/blog-data
+          if [ -d .audio-cache ] && [ "$(ls -A .audio-cache 2>/dev/null)" ]; then
+            cp .audio-cache/*.mp3 src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            cp .audio-cache/audio-manifest.json src/ObserverMagazine.Web/wwwroot/blog-data/ 2>/dev/null || true
+            echo "Restored $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) cached MP3 file(s)"
+          else
+            echo "No audio cache to restore"
+          fi
+
+      # Python stays on 3.12: misaki (a KittenTTS dependency) requires Python < 3.13.
+      - name: Setup Python 3.12 (for TTS audio generation)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements-audio.txt
+
+      - name: Install system dependencies (espeak-ng + ffmpeg)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: sudo apt-get update && sudo apt-get install -y espeak-ng ffmpeg
+
+      - name: Cache HuggingFace model
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/huggingface
+          key: hf-kitten-tts-nano-0.8
+
+      - name: Install Python audio dependencies
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: pip install -r tools/requirements-audio.txt
+
+      - name: Generate TTS audio (markdown → MP3)
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: python tools/generate_audio.py --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot/blog-data --voice Bella --model KittenML/kitten-tts-nano-0.8
+
+      - name: Update audio cache
+        if: steps.audio-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .audio-cache
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/*.mp3 .audio-cache/ 2>/dev/null || true
+          cp src/ObserverMagazine.Web/wwwroot/blog-data/audio-manifest.json .audio-cache/ 2>/dev/null || true
+          echo "Cached $(ls .audio-cache/*.mp3 2>/dev/null | wc -l) MP3 file(s) for next build"
+
+      # ── End audio generation ───────────────────────────────────────
+
+      # Microsoft.Testing.Platform mode (global.json). MTP fails the run if zero tests execute.
+      - name: Run tests
+        run: dotnet test --solution ObserverMagazine.slnx --no-restore
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare GitHub Pages artifacts
+        run: |
+          touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: publish/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
+```
+
+### `.github/workflows/pr-check.yml`
+```yaml
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET (version from global.json)
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run content processor
+        run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+
+      - name: Run tests
+        run: dotnet test --solution ObserverMagazine.slnx --no-restore
+
+      - name: Publish Blazor WASM
+        run: dotnet publish src/ObserverMagazine.Web/ObserverMagazine.Web.csproj -c Release -o publish
+
+      - name: Strip source map references from framework JS
+        run: |
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/# sourceMappingURL=/d' {} + 2>/dev/null || true
+          find publish/wwwroot/_framework -name "*.js" -exec sed -i '/^\/\/@ sourceMappingURL=/d' {} + 2>/dev/null || true
+
+      - name: Prepare preview
+        run: |
+          touch publish/wwwroot/.nojekyll
+          cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Upload preview site
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-preview
+          path: publish/wwwroot
+          retention-days: 7
+```
+
+### `content/authors/observer-team.yml`
+```yaml
+name: Observer Team
+email: hello@observermagazine.example
+bio: The team behind Observer Magazine — building free, open-source tools with .NET 11 and Blazor WebAssembly.
+avatar: images/authors/observer-team.png
+socials:
+  github: ObserverMagazine
+```
+
+### `src/ObserverMagazine.Web/ObserverMagazine.Web.csproj`
+```xml
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <RootNamespace>ObserverMagazine.Web</RootNamespace>
+    <AssemblyName>ObserverMagazine.Web</AssemblyName>
+    <StaticWebAssetSpaFallbackEnabled>true</StaticWebAssetSpaFallbackEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Gateway" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+</Project>
+```
+
+### `src/ObserverMagazine.Web/Program.cs`
+```csharp
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using ObserverMagazine.Web;
+using ObserverMagazine.Web.Services;
+
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
+
+builder.Services.AddObserverMagazine(new Uri(builder.HostEnvironment.BaseAddress));
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+await builder.Build().RunAsync();
+```
+
+### `src/ObserverMagazine.Web/Services/ServiceCollectionExtensions.cs` (new)
+```csharp
+namespace ObserverMagazine.Web.Services;
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddObserverMagazine(this IServiceCollection services, Uri baseAddress)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(baseAddress);
+
+        services.AddScoped(_ => new HttpClient { BaseAddress = baseAddress });
+        services.AddScoped<IBlogService, BlogService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddSingleton<TelemetryService>();
+        services.AddHostedService<AppLifetimeTelemetryService>();
+
+        return services;
+    }
+}
+```
+
+### `src/ObserverMagazine.Web/Services/AppLifetimeTelemetryService.cs` (new)
+```csharp
+using Microsoft.Extensions.Hosting;
+
+namespace ObserverMagazine.Web.Services;
+
+public sealed class AppLifetimeTelemetryService(
+    TelemetryService telemetry,
+    ILogger<AppLifetimeTelemetryService> logger) : IHostedService
+{
+    public const string StartedEvent = "AppStarted";
+    public const string StoppedEvent = "AppStopped";
+    public const string StartCounter = "app.starts";
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Observer Magazine started at {Time}", DateTime.UtcNow);
+        telemetry.IncrementCounter(StartCounter);
+        telemetry.TrackEvent(StartedEvent);
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        telemetry.TrackEvent(StoppedEvent);
+        return Task.CompletedTask;
+    }
+}
+```
+
+### `src/ObserverMagazine.Web/Services/TelemetryService.cs`
+```csharp
+namespace ObserverMagazine.Web.Services;
+
+/// <summary>
+/// Lightweight telemetry service for tracking events and metrics in the browser.
+/// Logs to ILogger (browser console). Can be extended with a real OpenTelemetry
+/// collector endpoint when one is available.
+/// </summary>
+public sealed class TelemetryService(ILogger<TelemetryService> logger)
+{
+    private readonly Dictionary<string, long> _counters = [];
+    private readonly Lock _gate = new();
+
+    public void TrackEvent(string eventName, IDictionary<string, string>? properties = null)
+    {
+        var props = properties is not null
+            ? string.Join(", ", properties.Select(kv => $"{kv.Key}={kv.Value}"))
+            : "";
+        logger.LogInformation("[Telemetry] Event: {EventName} {Properties}", eventName, props);
+    }
+
+    public void IncrementCounter(string counterName, long value = 1)
+    {
+        lock (_gate)
+        {
+            _counters.TryGetValue(counterName, out var current);
+            _counters[counterName] = current + value;
+        }
+        logger.LogDebug("[Telemetry] Counter: {CounterName} += {Value}", counterName, value);
+    }
+
+    public long GetCounter(string counterName)
+    {
+        lock (_gate)
+        {
+            return _counters.GetValueOrDefault(counterName, 0);
+        }
+    }
+
+    public void TrackPageView(string pageName)
+    {
+        IncrementCounter($"pageview:{pageName}");
+        TrackEvent("PageView", new Dictionary<string, string> { ["page"] = pageName });
+    }
+}
+```
+
+### `src/ObserverMagazine.Web/Services/ProductDataGenerator.cs`
+```csharp
+using ObserverMagazine.Web.Models;
+
+namespace ObserverMagazine.Web.Services;
+
+/// <summary>
+/// Generates deterministic sample product data for the showcase catalog.
+/// Uses a seeded Random so the same 20_000 products are generated every time.
+/// </summary>
+public static class ProductDataGenerator
+{
+    private static readonly string[] Adjectives =
+    [
+        "Premium", "Classic", "Essential", "Ultra", "Pro", "Elite", "Compact",
+        "Advanced", "Basic", "Deluxe", "Slim", "Turbo", "Eco", "Smart", "Vintage",
+        "Modern", "Rugged", "Portable", "Wireless", "Ergonomic", "Heavy-Duty",
+        "Lightweight", "Industrial", "Professional", "Everyday", "Travel", "Mini",
+        "Mega", "Flex", "Rapid", "Silent", "Solar", "Titanium", "Carbon", "Nano"
+    ];
+
+    private static readonly string[] Colors =
+    [
+        "Black", "White", "Silver", "Navy", "Red", "Blue", "Green", "Gray",
+        "Rose Gold", "Matte Black", "Space Gray", "Forest Green", "Ocean Blue",
+        "Pearl White", "Crimson", "Teal", "Champagne", "Slate", "Ivory",
+        "Graphite", "Copper", "Olive", "Sand", "Midnight", "Arctic White",
+        "Charcoal", "Burgundy", "Cobalt", "Amber", "Lavender"
+    ];
+
+    // Must match the SelectOptions in Showcase.razor Status column and the test expectations
+    private static readonly string[] Statuses = ["Active", "Active", "Active", "Active", "Draft", "Out of Stock"];
+
+    private static readonly (string Category, string[] Products, string[] Brands, decimal MinPrice, decimal MaxPrice, double MinWeight, double MaxWeight, int MinWarranty, int MaxWarranty)[] Categories =
+    [
+        ("Electronics", ["Keyboard", "Mouse", "Monitor", "Headphones", "Speaker", "Webcam", "Microphone", "Charger", "USB Hub", "SSD", "Flash Drive", "Router", "Earbuds", "Power Bank", "Docking Station", "Trackpad", "Stylus Pen", "Card Reader", "Surge Protector", "Streaming Box"],
+         ["TechVibe", "SwiftGear", "NexGen", "ClearView", "VoltEdge", "PixelCore", "ZenByte", "ByteForge", "Quantum", "SonicEdge"],
+         19.99m, 899.99m, 0.05, 12.0, 6, 36),
+
+        ("Furniture", ["Standing Desk", "Office Chair", "Bookshelf", "Filing Cabinet", "Coffee Table", "Desk Lamp", "Bar Stool", "Monitor Stand", "Keyboard Tray", "Footrest", "Side Table", "Storage Ottoman", "Coat Rack", "Plant Stand", "Magazine Rack"],
+         ["ZenFlow", "CoreMade", "IronForge", "ArcLine", "OakCraft", "SteelFrame", "NordicNest", "UrbanForm", "TimberLine", "VelvetRidge"],
+         29.99m, 1299.99m, 1.5, 45.0, 3, 60),
+
+        ("Clothing", ["T-Shirt", "Hoodie", "Jacket", "Running Shoes", "Cap", "Socks Pack", "Polo Shirt", "Cargo Pants", "Rain Coat", "Beanie", "Gloves", "Scarf", "Vest", "Shorts", "Sneakers"],
+         ["PeakForm", "SkyBound", "GreenLeaf", "PurePath", "TrailBlaze", "UrbanThread", "FlexWear", "StormGear", "PaceLine", "VitalMove"],
+         9.99m, 299.99m, 0.1, 2.5, 0, 12),
+
+        ("Home & Kitchen", ["Blender", "Knife Set", "Cutting Board", "Dutch Oven", "Electric Kettle", "Toaster", "Food Scale", "Mixing Bowls", "Storage Containers", "Spice Rack", "Wine Opener", "Colander", "Rolling Pin", "Thermometer", "Timer"],
+         ["SilkWave", "BlueShift", "FreshField", "SteelChef", "HomeEdge", "PureCook", "VividKitchen", "HarvestPro", "GrainMill", "BrightHome"],
+         7.99m, 349.99m, 0.2, 8.0, 3, 24),
+
+        ("Sports & Outdoors", ["Dumbbell Set", "Yoga Mat", "Resistance Bands", "Water Bottle", "Hiking Backpack", "Cycling Gloves", "Fitness Tracker", "Jump Rope", "Foam Roller", "Camping Tent", "Sleeping Bag", "Trekking Poles", "Swim Goggles", "Bike Lock", "Climbing Harness"],
+         ["PeakForm", "SkyBound", "TrailBlaze", "IronForge", "VitalMove", "SummitGear", "RapidStride", "AquaPulse", "GritZone", "BoulderForce"],
+         4.99m, 499.99m, 0.1, 15.0, 0, 24),
+
+        ("Office Supplies", ["Pen Set", "Notebook", "Planner", "Stapler", "Desk Organizer", "Label Maker", "Calculator", "Whiteboard", "Marker Set", "Binder Clips", "Paper Shredder", "Tape Dispenser", "Envelope Pack", "Sticky Notes", "Pencil Case"],
+         ["CoreMade", "ClearView", "ArcLine", "BlueShift", "PurePath", "DeskPrime", "InkWell", "PageCraft", "ScribeLine", "SharpPoint"],
+         2.99m, 199.99m, 0.05, 10.0, 0, 12),
+
+        ("Accessories", ["Phone Case", "Laptop Bag", "Desk Mat", "Cable Organizer", "Screen Protector", "Wallet", "Watch Band", "Sunglasses", "Belt", "Key Holder", "Passport Cover", "Wrist Rest", "Mousepad", "Webcam Cover", "Ring Holder"],
+         ["TechVibe", "SilkWave", "PurePath", "ArcLine", "VoltEdge", "CaseCraft", "SnapShield", "LinkLoop", "WrapArt", "GripLine"],
+         3.99m, 149.99m, 0.02, 2.0, 0, 12)
+    ];
+
+    public static List<CatalogProduct> Generate(int count = 20_000, int seed = 42)
+    {
+        var rng = new Random(seed);
+        List<CatalogProduct> products = [with(count)];
+        var baseDate = new DateTime(2024, 1, 1);
+        HashSet<string> usedSkus = [with(count)];
+
+        for (int i = 0; i < count; i++)
+        {
+            var catEntry = Categories[rng.Next(Categories.Length)];
+            var adj = Adjectives[rng.Next(Adjectives.Length)];
+            var productType = catEntry.Products[rng.Next(catEntry.Products.Length)];
+            var brand = catEntry.Brands[rng.Next(catEntry.Brands.Length)];
+            var color = Colors[rng.Next(Colors.Length)];
+            var name = $"{adj} {productType}";
+
+            // Generate unique SKU
+            string sku;
+            do
+            {
+                sku = $"{catEntry.Category[..3].ToUpperInvariant()}-{rng.Next(10000, 99999)}";
+            } while (!usedSkus.Add(sku));
+
+            var priceRange = catEntry.MaxPrice - catEntry.MinPrice;
+            var price = Math.Round(catEntry.MinPrice + (decimal)(rng.NextDouble() * (double)priceRange), 2);
+
+            // ~30% chance of having a compare-at price (sale)
+            decimal? compareAt = rng.NextDouble() < 0.3
+                ? Math.Round(price * (1m + (decimal)(rng.NextDouble() * 0.4 + 0.1)), 2)
+                : null;
+
+            var weightRange = catEntry.MaxWeight - catEntry.MinWeight;
+            var weight = Math.Round(catEntry.MinWeight + rng.NextDouble() * weightRange, 2);
+
+            var warrantyRange = catEntry.MaxWarranty - catEntry.MinWarranty;
+            var warranty = catEntry.MinWarranty + rng.Next(warrantyRange + 1);
+
+            var rating = Math.Round(2.5 + rng.NextDouble() * 2.5, 1);
+            var reviewCount = rng.Next(0, 2500);
+            var stock = rng.Next(0, 1000);
+            var daysAgo = rng.Next(0, 730);
+            var status = Statuses[rng.Next(Statuses.Length)];
+
+            products.Add(new CatalogProduct
+            {
+                Id = CreateDeterministicGuid(seed, i),
+                Sku = sku,
+                Name = name,
+                Brand = brand,
+                Category = catEntry.Category,
+                Price = price,
+                CompareAtPrice = compareAt,
+                Stock = stock,
+                Rating = rating,
+                ReviewCount = reviewCount,
+                WeightKg = weight,
+                Color = color,
+                WarrantyMonths = warranty,
+                DateAdded = baseDate.AddDays(daysAgo),
+                Status = status,
+                Description = $"{adj} {productType.ToLowerInvariant()} by {brand}. Available in {color.ToLowerInvariant()}. {(warranty > 0 ? $"Includes {warranty}-month warranty." : "No warranty.")}"
+            });
+        }
+
+        return products;
+    }
+
+    /// <summary>
+    /// Creates a deterministic GUID from a seed and index so we get the same IDs every time.
+    /// </summary>
+    private static Guid CreateDeterministicGuid(int seed, int index)
+    {
+        var bytes = new byte[16];
+        BitConverter.GetBytes(seed).CopyTo(bytes, 0);
+        BitConverter.GetBytes(index).CopyTo(bytes, 4);
+        BitConverter.GetBytes(seed ^ unchecked((int)(index * 2654435761u))).CopyTo(bytes, 8);
+        BitConverter.GetBytes(index ^ unchecked((int)(seed * 2246822519u))).CopyTo(bytes, 12);
+        return new Guid(bytes);
+    }
+}
+```
+
+### `src/ObserverMagazine.Web/Layout/MainLayout.razor`
+```razor
+@inherits LayoutComponentBase
+
+<div class="page">
+    <header class="top-bar">
+        <div class="container top-bar-inner">
+            <a class="brand" href="/">
+                <strong>Observer</strong> Magazine
+            </a>
+            <NavMenu />
+        </div>
+    </header>
+
+    <main class="container main-content">
+        @Body
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>
+                &copy; @DateTime.UtcNow.Year Observer Magazine &mdash; Built with
+                <a href="https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor" target="_blank"
+                   rel="noopener noreferrer">Blazor WebAssembly</a>
+                on .NET 11.
+            </p>
+            <p>
+                <a href="/feed.xml">RSS Feed</a>
+                &middot;
+                <a href="https://github.com/ObserverMagazine/observermagazine.github.io"
+                   target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+            </p>
+        </div>
+    </footer>
+</div>
+```
+
+### `src/ObserverMagazine.Web/Pages/About.razor`
+```razor
+@page "/about"
+@inject IAnalyticsService Analytics
+
+<PageTitle>About — Observer Magazine</PageTitle>
+
+<h1>About Observer Magazine</h1>
+
+<p>
+    Observer Magazine is a free, open-source sample project demonstrating how to build
+    a modern static web application using <strong>Blazor WebAssembly</strong> on
+    <strong>.NET 11</strong>.
+</p>
+
+<h2>Goals</h2>
+<p>
+    This project serves as both a learning resource and a starting point for developers who
+    want to build high-performance, cross-platform web applications at zero cost. Every library
+    used is free for any purpose — no "free for non-commercial" caveats.
+</p>
+
+<h2>Technology Stack</h2>
+<table class="simple-table">
+    <thead>
+        <tr>
+            <th>Layer</th>
+            <th>Technology</th>
+            <th>License</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>Runtime</td><td>.NET 11 (STS)</td><td>MIT</td></tr>
+        <tr><td>UI Framework</td><td>Blazor WebAssembly</td><td>MIT</td></tr>
+        <tr><td>Language</td><td>C# 15</td><td>MIT</td></tr>
+        <tr><td>Dev Server</td><td>Blazor WebAssembly Gateway</td><td>MIT</td></tr>
+        <tr><td>Markdown</td><td>Markdig 1.6.0</td><td>BSD-2-Clause</td></tr>
+        <tr><td>YAML</td><td>YamlDotNet 18.1.0</td><td>MIT</td></tr>
+        <tr><td>Testing</td><td>xUnit v3 4.0.3 + bUnit 2.15.2</td><td>Apache-2.0 / MIT</td></tr>
+        <tr><td>Hosting</td><td>GitHub Pages</td><td>Free</td></tr>
+        <tr><td>Backend</td><td>Cloudflare Workers (D1)</td><td>Free tier</td></tr>
+    </tbody>
+</table>
+
+<h2>Source Code</h2>
+<p>
+    <a href="https://github.com/ObserverMagazine/observermagazine.github.io"
+       target="_blank" rel="noopener noreferrer">
+        github.com/ObserverMagazine/observermagazine.github.io
+    </a>
+</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Analytics.TrackPageViewAsync("About");
+    }
+}
+```
+
+### `src/ObserverMagazine.Web/Pages/Home.razor`
+```razor
+@page "/"
+@inject IAnalyticsService Analytics
+@inject IBlogService BlogService
+
+<PageTitle>Observer Magazine</PageTitle>
+
+<section class="hero">
+    <h1>Observer Magazine</h1>
+    <p class="lead">
+        A free, open-source Blazor WebAssembly showcase built on .NET 11.
+        Explore modern web patterns, read our blog, and use this as a starting point
+        for your own projects.
+    </p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" href="blog">Read the Blog</a>
+        <a class="btn btn-secondary" href="showcase">View Showcases</a>
+    </div>
+</section>
+
+@if (_featuredPosts is { Length: > 0 })
+{
+    <section>
+        <h2>Featured</h2>
+        <div class="blog-list">
+            @foreach (var post in _featuredPosts)
+            {
+                <article class="blog-card">
+                    <span class="featured-badge">Featured</span>
+                    <h3><a href="blog/@post.Slug">@post.Title</a></h3>
+                    <div class="blog-meta">
+                        <time datetime="@post.Date.ToString("yyyy-MM-dd")">
+                            @post.Date.ToString("MMMM d, yyyy")
+                        </time>
+                        @if (post.ReadingTimeMinutes > 0)
+                        {
+                            <span> · @post.ReadingTimeMinutes min read</span>
+                        }
+                    </div>
+                    <p>@post.Summary</p>
+                    @if (post.Tags is { Length: > 0 })
+                    {
+                        <div class="tag-list">
+                            @foreach (var tag in post.Tags)
+                            {
+                                <a class="tag" href="blog/tag/@Uri.EscapeDataString(tag)">@tag</a>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+}
+
+<section class="features-grid">
+    <div class="feature-card">
+        <h3>Responsive Tables</h3>
+        <p>Sortable, filterable data tables that adapt gracefully to any screen size.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Master-Detail CRUD</h3>
+        <p>Create, edit, and delete items in a master-detail layout — persisted locally.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Blog Engine</h3>
+        <p>Write in Markdown with YAML front matter. Compiled to static JSON at build time.</p>
+    </div>
+    <div class="feature-card">
+        <h3>RSS Feed</h3>
+        <p>Auto-generated <code>feed.xml</code> so readers can subscribe in any RSS reader.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Multiple Themes</h3>
+        <p>Light, Dark, Sepia, Solarized, and High Contrast — your choice, persisted locally.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Full Test Suite</h3>
+        <p>bUnit component tests and xUnit integration tests run on every commit.</p>
+    </div>
+</section>
+
+@code {
+    private BlogPostMetadata[]? _featuredPosts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Analytics.TrackPageViewAsync("Home");
+
+        try
+        {
+            var allPosts = await BlogService.GetPostsAsync();
+            _featuredPosts = allPosts.Where(p => p.Featured).Take(3).ToArray();
+        }
+        catch
+        {
+            _featuredPosts = [];
+        }
+    }
+}
+```
+
+### `tools/ObserverMagazine.ContentProcessor/Program.cs`
+```csharp
+using System.Text.Json;
+using ObserverMagazine.ContentProcessor;
+
+// Parse command-line arguments
+string contentDir = "content/blog";
+string outputDir = "src/ObserverMagazine.Web/wwwroot";
+string authorsDir = "content/authors";
+DateTime publishBefore = DateTime.UtcNow;
+
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--content-dir" && i + 1 < args.Length)
+        contentDir = args[++i];
+    else if (args[i] == "--output-dir" && i + 1 < args.Length)
+        outputDir = args[++i];
+    else if (args[i] == "--authors-dir" && i + 1 < args.Length)
+        authorsDir = args[++i];
+    else if (args[i] == "--publish-before" && i + 1 < args.Length)
+        publishBefore = DateTime.Parse(args[++i]);
+}
+
+Console.WriteLine($"Content directory: {contentDir}");
+Console.WriteLine($"Output directory:  {outputDir}");
+Console.WriteLine($"Authors directory: {authorsDir}");
+Console.WriteLine($"Publish before:    {publishBefore:yyyy-MM-dd HH:mm:ss} UTC");
+
+// --- Process author profiles ---
+Dictionary<string, AuthorProfile> authorProfiles = [with(StringComparer.OrdinalIgnoreCase)];
+
+if (Directory.Exists(authorsDir))
+{
+    var authorFiles = Directory.GetFiles(authorsDir, "*.yml", SearchOption.TopDirectoryOnly);
+    Console.WriteLine($"Found {authorFiles.Length} author profile(s)");
+
+    foreach (var authorFile in authorFiles)
+    {
+        var authorId = Path.GetFileNameWithoutExtension(authorFile);
+        var yamlContent = File.ReadAllText(authorFile);
+        var profile = FrontMatterParser.ParseAuthor(yamlContent, authorId);
+
+        if (profile is not null)
+        {
+            authorProfiles[authorId] = profile;
+            Console.WriteLine($"  Loaded author: {authorId} ({profile.Name})");
+        }
+        else
+        {
+            Console.WriteLine($"  WARNING: Could not parse author file {authorFile}");
+        }
+    }
+}
+else
+{
+    Console.WriteLine($"Authors directory '{authorsDir}' does not exist. No author profiles loaded.");
+}
+
+// Write authors.json
+string blogDataDir = Path.Combine(outputDir, "blog-data");
+Directory.CreateDirectory(blogDataDir);
+
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true
+};
+
+var authorsPath = Path.Combine(blogDataDir, "authors.json");
+var authorsJson = JsonSerializer.Serialize(authorProfiles.Values.ToArray(), jsonOptions);
+File.WriteAllText(authorsPath, authorsJson);
+Console.WriteLine($"Wrote authors index: {authorsPath} ({authorProfiles.Count} authors)");
+
+// --- Process blog posts ---
+if (!Directory.Exists(contentDir))
+{
+    Console.WriteLine($"Content directory '{contentDir}' does not exist. Creating with no posts.");
+    Directory.CreateDirectory(contentDir);
+}
+
+var markdownFiles = Directory.GetFiles(contentDir, "*.md", SearchOption.TopDirectoryOnly);
+Console.WriteLine($"Found {markdownFiles.Length} markdown files");
+
+List<PostIndexEntry> allPostMetadata = [];
+Dictionary<string, string> postHtmlMap = [];
+int skippedDrafts = 0;
+int skippedFuture = 0;
+
+foreach (var mdFile in markdownFiles)
+{
+    Console.WriteLine($"Processing: {Path.GetFileName(mdFile)}");
+
+    var rawContent = File.ReadAllText(mdFile);
+    var (frontMatter, markdownBody) = FrontMatterParser.Parse(rawContent);
+
+    if (string.IsNullOrEmpty(frontMatter.Title))
+    {
+        Console.WriteLine($"  WARNING: No title in front matter, skipping {mdFile}");
+        continue;
+    }
+
+    // Skip drafts
+    if (frontMatter.Draft)
+    {
+        Console.WriteLine($"  SKIPPED: Draft post '{frontMatter.Title}'");
+        skippedDrafts++;
+        continue;
+    }
+
+    // Skip future-dated posts
+    if (frontMatter.Date > publishBefore)
+    {
+        Console.WriteLine($"  SKIPPED: Future post '{frontMatter.Title}' (date: {frontMatter.Date:yyyy-MM-dd}, publish-before: {publishBefore:yyyy-MM-dd})");
+        skippedFuture++;
+        continue;
+    }
+
+    // Derive slug from filename
+    var fileName = Path.GetFileNameWithoutExtension(mdFile);
+    var slug = FrontMatterParser.DeriveSlug(fileName);
+
+    var html = MarkdownProcessor.ToHtml(markdownBody);
+    var readingTime = FrontMatterParser.CalculateReadingTime(markdownBody);
+
+    // Resolve author display name
+    var authorId = frontMatter.Author ?? "";
+    var authorName = authorId;
+    string? authorEmail = null;
+    if (authorProfiles.TryGetValue(authorId, out var authorProfile))
+    {
+        authorName = authorProfile.Name;
+        authorEmail = authorProfile.Email;
+    }
+    else if (!string.IsNullOrEmpty(authorId))
+    {
+        Console.WriteLine($"  WARNING: No author profile found for '{authorId}'");
+    }
+
+    // Write individual post HTML
+    var htmlPath = Path.Combine(blogDataDir, $"{slug}.html");
+    File.WriteAllText(htmlPath, html);
+    Console.WriteLine($"  Wrote: {htmlPath} (~{readingTime} min read)");
+
+    postHtmlMap[slug] = html;
+
+    allPostMetadata.Add(new PostIndexEntry
+    {
+        Slug = slug,
+        Title = frontMatter.Title,
+        Date = frontMatter.Date,
+        Updated = frontMatter.Updated,
+        Author = authorId,
+        AuthorName = authorName,
+        AuthorEmail = authorEmail,
+        Summary = frontMatter.Summary ?? "",
+        Tags = frontMatter.Tags ?? [],
+        Featured = frontMatter.Featured,
+        Series = frontMatter.Series,
+        Image = frontMatter.Image,
+        ReadingTimeMinutes = readingTime
+    });
+}
+
+// Sort by date descending
+allPostMetadata.Sort((a, b) => b.Date.CompareTo(a.Date));
+
+// Write posts index JSON
+var indexPath = Path.Combine(blogDataDir, "posts-index.json");
+var indexJson = JsonSerializer.Serialize(allPostMetadata, jsonOptions);
+File.WriteAllText(indexPath, indexJson);
+Console.WriteLine($"Wrote posts index: {indexPath} ({allPostMetadata.Count} posts, {skippedDrafts} drafts skipped, {skippedFuture} future posts skipped)");
+
+// Generate RSS feed with full post content
+var feedPath = Path.Combine(outputDir, "feed.xml");
+var rssXml = RssGenerator.Generate(
+    title: "Observer Magazine",
+    description: "A free, open-source Blazor WebAssembly showcase on .NET 11",
+    siteUrl: "https://observermagazine.github.io",
+    posts: allPostMetadata,
+    getPostHtml: slug => postHtmlMap.GetValueOrDefault(slug)
+);
+File.WriteAllText(feedPath, rssXml);
+Console.WriteLine($"Wrote RSS feed: {feedPath}");
+
+Console.WriteLine("Content processing complete.");
+
+// --- Types used by the index ---
+public sealed class PostIndexEntry
+{
+    public string Slug { get; init; } = "";
+    public string Title { get; init; } = "";
+    public DateTime Date { get; init; }
+    public DateTime? Updated { get; init; }
+    public string Author { get; init; } = "";
+    public string AuthorName { get; init; } = "";
+    public string? AuthorEmail { get; init; }
+    public string Summary { get; init; } = "";
+    public string[] Tags { get; init; } = [];
+    public bool Featured { get; init; }
+    public string? Series { get; init; }
+    public string? Image { get; init; }
+    public int ReadingTimeMinutes { get; init; }
+}
+```
+
+### `tests/ObserverMagazine.Web.Tests/Services/AppLifetimeTelemetryServiceTests.cs` (new)
+```csharp
+using Microsoft.Extensions.Logging.Abstractions;
+using ObserverMagazine.Web.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Services;
+
+public class AppLifetimeTelemetryServiceTests
+{
+    private static (AppLifetimeTelemetryService Service, TelemetryService Telemetry) CreateSut()
+    {
+        var telemetry = new TelemetryService(NullLogger<TelemetryService>.Instance);
+        var service = new AppLifetimeTelemetryService(telemetry, NullLogger<AppLifetimeTelemetryService>.Instance);
+        return (service, telemetry);
+    }
+
+    [Fact]
+    public async Task StartAsync_IncrementsStartCounter()
+    {
+        var (service, telemetry) = CreateSut();
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1L, telemetry.GetCounter(AppLifetimeTelemetryService.StartCounter));
+    }
+
+    [Fact]
+    public async Task StartAsync_CalledTwice_CountsEachStart()
+    {
+        var (service, telemetry) = CreateSut();
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(2L, telemetry.GetCounter(AppLifetimeTelemetryService.StartCounter));
+    }
+
+    [Fact]
+    public async Task StopAsync_DoesNotChangeStartCounter()
+    {
+        var (service, telemetry) = CreateSut();
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(1L, telemetry.GetCounter(AppLifetimeTelemetryService.StartCounter));
+    }
+
+    [Fact]
+    public async Task StartAsync_CompletesSynchronously()
+    {
+        var (service, _) = CreateSut();
+
+        var task = service.StartAsync(TestContext.Current.CancellationToken);
+
+        Assert.True(task.IsCompletedSuccessfully);
+        await task;
+    }
+}
+```
+
+### `tests/ObserverMagazine.Web.Tests/Services/ServiceCollectionExtensionsTests.cs` (new)
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ObserverMagazine.Web.Services;
+using Xunit;
+
+namespace ObserverMagazine.Web.Tests.Services;
+
+public class ServiceCollectionExtensionsTests
+{
+    private static readonly Uri BaseAddress = new("https://test.local/");
+
+    private static ServiceProvider BuildProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddObserverMagazine(BaseAddress);
+        return services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateScopes = true,
+            ValidateOnBuild = true
+        });
+    }
+
+    [Fact]
+    public void AddObserverMagazine_RegistersAppLifetimeTelemetryAsHostedService()
+    {
+        using var provider = BuildProvider();
+
+        var hosted = provider.GetServices<IHostedService>();
+
+        Assert.IsType<AppLifetimeTelemetryService>(Assert.Single(hosted));
+    }
+
+    [Fact]
+    public void AddObserverMagazine_ResolvesScopedServicesWithinScope()
+    {
+        using var provider = BuildProvider();
+        using var scope = provider.CreateScope();
+
+        Assert.IsType<BlogService>(scope.ServiceProvider.GetRequiredService<IBlogService>());
+        Assert.IsType<AnalyticsService>(scope.ServiceProvider.GetRequiredService<IAnalyticsService>());
+        Assert.Equal(BaseAddress, scope.ServiceProvider.GetRequiredService<HttpClient>().BaseAddress);
+    }
+
+    [Fact]
+    public void AddObserverMagazine_TelemetryServiceIsSingleton()
+    {
+        using var provider = BuildProvider();
+        using var scopeA = provider.CreateScope();
+        using var scopeB = provider.CreateScope();
+
+        Assert.Same(
+            scopeA.ServiceProvider.GetRequiredService<TelemetryService>(),
+            scopeB.ServiceProvider.GetRequiredService<TelemetryService>());
+    }
+
+    [Fact]
+    public void AddObserverMagazine_ThrowsOnNullArguments()
+    {
+        Assert.Throws<ArgumentNullException>(() => ServiceCollectionExtensions.AddObserverMagazine(null!, BaseAddress));
+        Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddObserverMagazine(null!));
+    }
+}
+```
+
+### `README.md`
+````markdown
+# Observer Magazine
+
+A free, open-source Blazor WebAssembly application deployed to GitHub Pages.
+
+Built with **.NET 11** (STS) and **C# 15**.
+
+## Features
+
+- **Blog** — Markdown posts with YAML front matter, compiled to static JSON and HTML at build time
+- **RSS Feed** — Auto-generated `feed.xml` with full post content
+- **Responsive Tables** — Sortable, filterable data tables that work on mobile
+- **Master-Detail Flow** — Click a list item to view full details, with local CRUD
+- **Text-to-Speech** — MP3 narration generated in CI with KittenTTS
+- **Structured Logging and Telemetry** — `ILogger` plus an app-lifetime `IHostedService`
+- **Full Test Suite** — bUnit component tests and xUnit v3 integration tests on Microsoft.Testing.Platform
+
+## Requirements
+
+- .NET SDK 11.0.100 or later (pinned in `global.json`)
+
+## Quick Start
+
+```bash
+dotnet restore
+dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
+dotnet run --project src/ObserverMagazine.Web
+dotnet test
+```
+
+`dotnet run` serves the app with the Blazor WebAssembly Gateway, which replaces the old DevServer from .NET 11 onwards.
+
+## Technology
+
+| Component | Technology | License |
+|-----------|------------|---------|
+| Framework | .NET 11 / Blazor WebAssembly | MIT |
+| Dev server | Microsoft.AspNetCore.Components.Gateway | MIT |
+| Markdown | Markdig 1.6.0 | BSD-2-Clause |
+| YAML | YamlDotNet 18.1.0 | MIT |
+| Testing | xUnit v3 4.0.3 + bUnit 2.15.2 | Apache-2.0 / MIT |
+| TTS | KittenTTS 0.8.1 (Python 3.12) | Apache-2.0 |
+
+All dependencies are free for any use — no payment required, ever.
+
+## License
+
+AGPLv3
+````
+
+---
+
+**Left as they were:** `index.html` and `404.html`. Moving `index.html` to the template's fingerprinted `blazor.webassembly` script with `OverrideHtmlAssetPlaceholders` is a good next step, but it touches a 500-line file I couldn't test here, so I left it for a separate change.
+

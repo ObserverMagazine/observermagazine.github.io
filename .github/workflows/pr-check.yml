@@ -4,10 +4,12 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # xunit.v3 pulls in Microsoft.Testing.Extensions.Telemetry. Opt out in CI.
   TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
 jobs:
   build-and-test:
@@ -16,10 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup .NET
+      - name: Setup .NET (version from global.json)
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
+          global-json-file: global.json
 
       - name: Restore dependencies
         run: dotnet restore
@@ -27,7 +29,6 @@ jobs:
       - name: Run content processor
         run: dotnet run --project tools/ObserverMagazine.ContentProcessor -- --content-dir content/blog --output-dir src/ObserverMagazine.Web/wwwroot --authors-dir content/authors
 
-      # Microsoft.Testing.Platform mode (opted in via global.json).
       - name: Run tests
         run: dotnet test --solution ObserverMagazine.slnx --no-restore
 

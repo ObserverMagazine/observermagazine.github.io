@@ -63,9 +63,9 @@ public static class ProductDataGenerator
     public static List<CatalogProduct> Generate(int count = 20_000, int seed = 42)
     {
         var rng = new Random(seed);
-        var products = new List<CatalogProduct>(count);
+        List<CatalogProduct> products = [with(count)];
         var baseDate = new DateTime(2024, 1, 1);
-        var usedSkus = new HashSet<string>();
+        HashSet<string> usedSkus = [with(count)];
 
         for (int i = 0; i < count; i++)
         {
