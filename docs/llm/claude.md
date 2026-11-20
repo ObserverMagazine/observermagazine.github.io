@@ -43179,3 +43179,34 @@ AGPLv3
 
 **Left as they were:** `index.html` and `404.html`. Moving `index.html` to the template's fingerprinted `blazor.webassembly` script with `OverrideHtmlAssetPlaceholders` is a good next step, but it touches a 500-line file I couldn't test here, so I left it for a separate change.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+25
+98
+
+Please continue. 
+I forgot to tell you earlier. 
+My local machine is on rc3 
+but that shouldn't change much 
+I have made some changes because I needed it to run on my local 
+I noticed these two errors 
+/home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Layout/NavMenu.razor(90,15): error BL0016: JS interop call 'InvokeVoidAsync' is not guarded with a try/catch block.
+/home/kushal/src/dotnet/observermagazine.github.io/src/ObserverMagazine.Web/Layout/NavMenu.razor(82,35): error BL0016: JS interop call 'InvokeAsync' is not guarded with a try/catch block.
+Build failed with exit code: 1.
