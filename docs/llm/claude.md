@@ -42002,6 +42002,11 @@ Claude is AI and can make mistakes. Please double-check cited sources.
 95
 
 I need to update this project to the latest dotnet 11 
+if anything can be rewritten for the new way of doing things 
+notice i didn't say HAS TO BE rewritten 
+if it can be rewritten at all or modified 
+because there is a new capability
+please do it 
 all dependencies, github actions, whatever we have 
 also should update to the latest stable version
 as we do all of this 
